@@ -37,6 +37,3 @@ def sentencize():
                 out.close()
 
 sentencize()
-
-#out = codecs.open("art.txt", "w", "utf-8")
-#out.write("\n\n".join(getSentences(codecs.open("art0.txt", "r", "utf-8").read())))
