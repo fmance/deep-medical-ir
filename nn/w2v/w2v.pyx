@@ -26,7 +26,7 @@ class Sentences(object):
 
 def w2v():
     sentences = Sentences("../../data/sentences/")
-    model = gensim.models.Word2Vec(sentences, workers = 4)
+    model = gensim.models.Word2Vec(sentences, workers = 4, iter=5, size=52, min_count=1)
     model.save("model")
 
 
