@@ -1,76 +1,40 @@
 #!/usr/bin/python
 
-import gensim
 import tensorflow as tf
 import numpy as np
 import os
 import time
 
-QRELS_2014 = "../data/qrels2014.txt"
-
-#VEC_LEN = 100
 NUM_CLASSES = 3
-#MAX_DOC_LEN = 416007
 VOCAB_SIZE = 4262098
 EMBED_SIZE = 52
-
-def get_doc_stats():
-    max_len = 0
-    max_doc = 0
-    count_big = 0
-    big_docs = []
-    big_docs2 = []
-    start = time.time()
-    count = 0
-    vocab = set([])
-    for sdir in [os.path.join("../data/sentences", d) for d in ["00", "01", "02", "03"]]:
-        for ssdir in [os.path.join(sdir, ssdir) for ssdir in sorted(os.listdir(sdir))]:
-            for fname in [os.path.join(ssdir, fname) for fname in sorted(os.listdir(ssdir))]:
-                count += 1
-                if count % 1000 == 0:
-                    print "%d files (%s, %d %s %d %s) in %.2f minutes" % (count, count_big, max_len, max_doc, len(vocab), ssdir, (time.time() - start)/60.0)
-                words = open(fname).read().split()
-                doc_len = len(words)
-                #vocab.update(words)
-                if (doc_len > 80000):
-                    count_big += 1
-                    big_docs.append((os.path.basename(fname), doc_len))
-                    big_docs2.append(os.path.basename(fname))
-                if (doc_len > max_len):
-                    max_len = doc_len
-                    max_doc = os.path.basename(fname)
-    return max_len, max_doc, len(vocab), count_big, big_docs, big_docs2
-
-print get_doc_stats()
-
-def read_labels(qrels_file):
-    count_diag = 0
-    count_test = 0
-    count_treat = 0
-    vectors = np.empty(shape=[0, VEC_LEN])
-    labels = np.empty(shape=[0,NUM_CLASSES])
-    for line in open(qrels_file):
-        qrel = line.split()
-        topic = int(qrel[0])
-        doc_id = qrel[2]
-        relevance = int(qrel[3])
-        if topic <= 10:
-            if relevance > 0:
-                count_diag += 1
-                labels = np.vstack([labels, [1,0,0]])
-        elif topic <= 20:
-            if relevance > 0:
-                count_test += 1
-                labels = np.vstack([labels, [0,1,0]])
-        else:
-            if relevance > 0:
-                count_treat += 1
-                labels = np.vstack([labels, [0,0,1]])
-    return labels, count_diag, count_test, count_treat
-    
-
 FILTER_DIM = 5
 NUM_FILTERS = 100
+MAX_DOC_LEN = 50000
+
+def read_embeddings():
+    return np.reshape(np.fromfile("../data/training/w2v.txt", dtype=np.float32, count=-1,sep=" "), (-1, EMBED_SIZE))
+
+print "reading embeddings"
+embeddings = tf.constant(read_embeddings())
+print "done"
+
+print "reading labels"
+labels = np.reshape(np.fromfile("../data/training/labels.txt", dtype=np.int32, count=-1,sep=" "), (-1, 3))
+print "done"
+
+print "reading training docs"
+docs = np.reshape(np.fromfile("../data/training/docs.txt", dtype=np.int32, count=-1,sep=" "), (-1, MAX_DOC_LEN))
+print "done"
+
+train_size = docs.shape[0]
+
+
+def get_batch(size):
+    shuffle_indices = np.random.permutation(np.arange(train_size))
+    shuffle_docs = docs[shuffle_indices]
+    shuffle_labels = labels[shuffle_indices]
+    return shuffle_docs[0:size], shuffle_labels[0:size]
 
 # each row is an array corresponding to indices of the words in the vocabulary
 x = tf.placeholder(tf.int32, [None, MAX_DOC_LEN], name = "x")
@@ -80,8 +44,6 @@ y_ = tf.placeholder(tf.float32, shape=[None, NUM_CLASSES], name = "y_")
 
 keep_prob = tf.placeholder(tf.float32, name = "keep_prob")
 
-#TODO use the ones from w2v
-embeddings = tf.Variable(tf.random_uniform([VOCAB_SIZE, EMBED_SIZE], -1.0, 1.0))
 embed = tf.nn.embedding_lookup(embeddings, x)
 embed_expanded = tf.expand_dims(embed, -1)
 
@@ -112,6 +74,37 @@ b_fc1 = bias_variable([NUM_CLASSES])
 scores = tf.add(tf.matmul(h_drop1, W_fc1), b_fc1)
 
 y_conv=tf.nn.softmax(scores)
-cross_entropy = -tf.reduce_sum(y_*tf.log(y_conv))
+cross_entropy = -tf.reduce_sum(y_*tf.log(tf.clip_by_value(y_conv,1e-10,1.0)))
 
-tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
+train_step = tf.train.AdamOptimizer(1e-4).minimize(cross_entropy)
+
+sess = tf.InteractiveSession()
+correct_prediction = tf.equal(tf.argmax(y_conv,1), tf.argmax(y_,1))
+accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
+sess.run(tf.initialize_all_variables())
+for i in range(100):
+  print "getting batch"
+  batch = get_batch(100)
+  print "done"
+  #if i%10 == 0:
+  pr = y_conv.eval(feed_dict={
+        x:batch[0], y_: batch[1], keep_prob: 1.0})
+  for l in pr:
+        print "%.10f   %.10f   %.10f" % (l[0], l[1], l[2])
+  train_accuracy = accuracy.eval(feed_dict={
+        x:batch[0], y_: batch[1], keep_prob: 1.0})
+  print("step %d, training accuracy %g"%(i, train_accuracy))
+  print "\n\n"
+  train_step.run(feed_dict={x: batch[0], y_: batch[1], keep_prob: 0.5})
+
+print "reading test labels"
+test_labels = np.reshape(np.fromfile("../data/test/labels.txt", dtype=np.int32, count=-1,sep=" "), (-1, 3))
+print "done"
+
+print "reading test docs"
+test_docs = np.reshape(np.fromfile("../data/test/docs.txt", dtype=np.int32, count=-1,sep=" "), (-1, MAX_DOC_LEN))
+print "done"
+
+
+print("test accuracy %g"%accuracy.eval(feed_dict={
+    x: test_docs, y_: test_labels, keep_prob: 1.0}))

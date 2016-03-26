@@ -1,8 +1,20 @@
 #!/bin/python
 
-import os, time, codecs
+import os, time, codecs, gensim, time
 from shutil import copyfile
+import numpy as np
 
+EMBED_SIZE = 52
+
+QRELS_2014 = "../../data/qrels2014.txt"
+TRAIN_DIR = "../../data/training/docs/"
+LABELS_TRAIN = "../../data/training/labels.txt"
+DOCS_TRAIN = "../../data/training/docs.txt"
+
+QRELS_2015 = "../../data/qrels-treceval-2015.txt"
+TEST_DIR = "../../data/test/docs/"
+LABELS_TEST = "../../data/test/labels.txt"
+DOCS_TEST = "../../data/test/docs.txt"
 
 def write_vocabulary_mapping():
     count = 0
@@ -28,16 +40,15 @@ def read_vocabulary_mapping():
     vocmap = {}
     for line in codecs.open("../vocmap.txt", "r", "utf-8"):
         s = line.split()
-        vocmap[s[0]] = s[1]
-    return vocmap   
-    
+        vocmap[s[0]] = int(s[1])
+    return vocmap
 
-def get_train_docs():
+def get_docs(qrel_file):
     diag = set([])
     test = set([])
     treat = set([])
     valid_doc_ids = set(open("../../data/valid-doc-ids.txt").read().split())
-    for line in open("../../data/qrels2014.txt"):
+    for line in open(qrel_file):
         qrel = line.split()
         topic = int(qrel[0])
         doc_id = qrel[2]
@@ -69,33 +80,65 @@ def locate_docs(doc_ids):
                 paths[doc_names[doc_name]] = os.path.join(root, doc_name)
     return paths
 
-def copy_training():
-    labels = get_train_docs()
+def copy_docs(qrel_file, dest_dir):
+    labels = get_docs(qrel_file)
     paths = locate_docs(labels.keys())
     print "found locations " + str(len(paths))
     for doc_id, path in paths.items():
-        copyfile(path, os.path.join("../../data/training/docs/", os.path.basename(path)))
+        copyfile(path, os.path.join(dest_dir, os.path.basename(path)))
 
-def write_training_data():
-    labels = get_train_docs()
+def write_data(qrel_file, label_file, docs_file, docs_dir):
+    labels = get_docs(qrel_file)
     vocab_map = read_vocabulary_mapping()
-    
+
     doc_ids = sorted(labels.keys())
-    label_file = open("../../data/training/labels.txt", "w")
+    label_file = open(label_file, "w")
     for doc_id in doc_ids:
         l = labels[doc_id]
         label_file.write(str(l[0]) + " " + str(l[1]) + " " + str(l[2]) + "\n")
     label_file.close()
     print doc_ids
-    
-    # TODO padding
-    doc_file = open("../../data/training/docs.txt", "w")
+
+    doc_file = open(docs_file, "w")
     for doc_id in doc_ids:
-        words = codecs.open(os.path.join("../../data/training/docs/", doc_id + ".txt.sent"), "r", "utf-8").read().split()
+        words = codecs.open(os.path.join(docs_dir, doc_id + ".txt.sent"), "r", "utf-8").read().split()
+        #truncate/pad to 50,000 words
+        words = words[0:50000]
         word_ids = [vocab_map[w] for w in words]
+        padmap = vocab_map["<PAD>"]
+        word_ids += [padmap] * (50000 - len(words))
         for wid in word_ids:
             doc_file.write(str(wid) + " ")
         doc_file.write("\n")
     doc_file.close()
 
-write_training_data()
+write_data(QRELS_2015, LABELS_TEST, DOCS_TEST, TEST_DIR)
+
+# !! also account for <PAD>
+# the w2v floats are truncated to 6 digits
+def write_embeddings():
+    vocab_map = read_vocabulary_mapping()
+    print "Read mapping"
+    inv_map = {index:word for word,index in vocab_map.items()}
+    sorted_indexes = range(0, len(vocab_map))
+    print "reading w2v"
+    model = gensim.models.Word2Vec.load("../w2v/model")
+    print "read w2v"
+    embeddings = open("../../data/training/w2v.txt", "w")
+    
+    counter = 0
+    for index in sorted_indexes:
+        emb = [0.0] * EMBED_SIZE
+        word = inv_map[index]
+        if word in model:
+            emb = model[word]
+        embeddings.write(" ".join(str(x) for x in emb))
+        embeddings.write("\n")
+        
+        counter += 1
+        if (counter % 100000 == 0):
+            print counter
+    embeddings.close()
+
+#write_embeddings()
+
