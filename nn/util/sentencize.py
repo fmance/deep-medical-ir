@@ -19,10 +19,8 @@ def sentencize():
     count = 0
     start = time.time()
     sent_dir = "../../data/sentences/"
-    os.mkdir(sent_dir)
-    for sdir in ["../../data/plaintext/" + d for d in ["00", "01", "02", "03"]]:
+    for sdir in ["../../data/plaintext/" + d for d in ["03"]]:
         sent_sdir = os.path.join(sent_dir, os.path.basename(sdir))
-        os.mkdir(sent_sdir)
         for ssdir in [os.path.join(sdir, ssdir) for ssdir in sorted(os.listdir(sdir))]:
             sent_ssdir = os.path.join(sent_sdir, os.path.basename(ssdir))
             os.mkdir(sent_ssdir)
@@ -32,7 +30,13 @@ def sentencize():
                     print "Sentencized %d files (%s), took %.2f minutes" % (count, ssdir, (time.time() - start)/60.0)
                 fp = codecs.open(fname, "r", "utf-8")
                 out = codecs.open(os.path.join(sent_ssdir, os.path.basename(fname) + ".sent"), "w", "utf-8")
-                for sentence in getSentences(fp.read()):
+                content = fp.readlines()
+                
+                for sentence in getSentences(content[0]):
+                    out.write(sentence + "\n")
+
+                rest = "".join(content[1:])
+                for sentence in getSentences(rest):
                     out.write(sentence + "\n")
                 fp.close()
                 out.close()
