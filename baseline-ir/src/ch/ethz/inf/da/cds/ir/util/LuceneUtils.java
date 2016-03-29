@@ -30,7 +30,7 @@ import ch.ethz.inf.da.cds.ir.SearchResult;
 import ch.ethz.inf.da.cds.ir.Topic;
 
 public class LuceneUtils {
-	private static final int MAX_SEARCH_RESULTS = 1000;
+	private static final int MAX_SEARCH_RESULTS = 100;
 	private static final String PMCID_FIELD = "pmcid";
 	private static final String TITLE_FIELD = "title";
 	private static final String TEXT_FIELD = "text";
