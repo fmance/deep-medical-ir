@@ -3,6 +3,7 @@ package ch.ethz.inf.da.cds.ir.util;
 import java.io.File;
 import java.io.IOException;
 import java.util.List;
+import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
@@ -22,6 +23,16 @@ import ch.ethz.inf.da.cds.ir.Article;
 import ch.ethz.inf.da.cds.ir.Topic;
 
 public class XmlUtils {
+	public static Set<String> docs2014, docs2015;
+
+	static {
+		try {
+			docs2014 = QrelUtils.getQrels("../data/qrels2014.txt");
+			docs2015 = QrelUtils.getQrels("../data/qrels-treceval-2015.txt");
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+	}
 
 	public static Article parseArticle(File file) throws IOException, ParserConfigurationException {
 		DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
@@ -42,14 +53,30 @@ public class XmlUtils {
 		if (titleNodeList.getLength() > 0) {
 			title = titleNodeList.item(0).getTextContent();
 		}
-		StringBuilder text = new StringBuilder();
-		NodeList nodes = doc.getElementsByTagName("p");
-		for (int i = 0; i < nodes.getLength(); i++) {
-			text.append(nodes.item(i).getTextContent());
-			text.append("\n\n");
+
+		StringBuilder abstr = new StringBuilder();
+		NodeList abstractNodes = doc.getElementsByTagName("abstract");
+		for (int i = 0; i < abstractNodes.getLength(); i++) {
+			abstr.append(abstractNodes.item(i).getTextContent());
+			abstr.append("\n\n");
+		}
+		if (abstractNodes.getLength() == 0) {
+			if (docs2014.contains(pmcid)) {
+				System.out.println("No abstract for 2014 article " + file.getAbsolutePath());
+			}
+			if (docs2015.contains(pmcid)) {
+				System.out.println("No abstract for 2015 article " + file.getAbsolutePath());
+			}
 		}
 
-		return new Article(pmcid, title, text.toString());
+		// StringBuilder text = new StringBuilder();
+		// NodeList nodes = doc.getElementsByTagName("p");
+		// for (int i = 0; i < nodes.getLength(); i++) {
+		// text.append(nodes.item(i).getTextContent());
+		// text.append("\n\n");
+		// }
+
+		return new Article(pmcid, title, abstr.toString(), null); // text.toString());
 	}
 
 	public static List<Topic> parseTopics(File file) throws ParserConfigurationException, SAXException, IOException {
@@ -80,6 +107,12 @@ public class XmlUtils {
 		}
 
 		return topics;
+	}
+
+	public static void main(String[] args) throws IOException, ParserConfigurationException {
+		Article art = parseArticle(new File(""));
+
+		System.out.println(art.getAbstract());
 	}
 
 }

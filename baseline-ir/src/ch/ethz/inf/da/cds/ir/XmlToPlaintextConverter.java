@@ -78,7 +78,8 @@ public class XmlToPlaintextConverter {
 						File textFile = destDir.toPath().resolve(article.getPmcid() + ".txt").toFile();
 						PrintWriter pw = new PrintWriter(textFile);
 						pw.println(article.getTitle());
-						pw.println(article.getText());
+						pw.println(article.getAbstract());
+						// pw.println(article.getText());
 						pw.close();
 						filesWritten++;
 					} else {

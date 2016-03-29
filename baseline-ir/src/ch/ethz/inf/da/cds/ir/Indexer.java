@@ -82,7 +82,7 @@ public class Indexer {
 						List<String> lines = FileUtils.readLines(articleFile);
 						String title = lines.get(0);
 						String text = Joiner.on("").join(lines.subList(1, lines.size()));
-						LuceneUtils.index(indexWriter, new Article(pmcid, title, text));
+						LuceneUtils.index(indexWriter, new Article(pmcid, title, "", text));
 					} else {
 						System.out.println("Ignoring invalid or duplicate article " + articleFile.toPath().normalize());
 					}
