@@ -1,6 +1,7 @@
 package ch.ethz.inf.da.cds.ir.util;
 
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.util.List;
 
@@ -27,6 +28,14 @@ public class DocUtils {
 		}
 
 		return validIds;
+	}
+
+	public static void main(String[] args) throws IOException {
+		PrintWriter pw = new PrintWriter(FilePaths.DATA_DIR.resolve("valid-doc-ids.txt").toFile());
+		for (String id : getValidDocIds()) {
+			pw.println(id);
+		}
+		pw.close();
 	}
 
 }

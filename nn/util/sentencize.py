@@ -6,6 +6,8 @@ import codecs
 import time
 import regex
 
+MAX_DOC_LEN = 1000
+
 sent_detector = nltk.data.load('tokenizers/punkt/english.pickle')
 
 def stripAndLower(s):
@@ -32,12 +34,24 @@ def sentencize():
                 out = codecs.open(os.path.join(sent_ssdir, os.path.basename(fname) + ".sent"), "w", "utf-8")
                 content = fp.readlines()
                 
+                sentences = []
                 for sentence in getSentences(content[0]):
-                    out.write(sentence + "\n")
+                    sentences.append(sentence)
+                for sentence in getSentences("".join(content[1:])):
+                    sentences.append(sentence)
+                nw = 0
+                i = 0
+                while nw < MAX_DOC_LEN and i < len(sentences):
+                    sentence = sentences[i]
+                    out.write(sentence)
+                    out.write("\n")
+                    nw += len(sentence.split())
+                    i += 1
+                
+                padding = ["<PAD>"] * (MAX_DOC_LEN - nw)
+                out.write(" ".join(padding))
+                out.write("\n")
 
-                rest = "".join(content[1:])
-                for sentence in getSentences(rest):
-                    out.write(sentence + "\n")
                 fp.close()
                 out.close()
 
