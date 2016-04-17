@@ -14,7 +14,7 @@ MAX_DOC_LEN = 1000
 
 FC1_SIZE = 25
 
-class_id = "diag"
+class_id = "treat"
 class_dir = "../data/nn/" + class_id + "/"
 class_res_dir = "res/" + class_id + "/"
 
@@ -32,43 +32,51 @@ embeddings = tf.constant(read_embeddings())
 #                name="embeddings")
 print "done"
 
-print "reading labels"
-labels = np.reshape(np.fromfile(class_dir + "train/labels.txt", dtype=np.int32, count=-1,sep=" "), (-1, NUM_CLASSES))
-print "done"
+#print "reading labels"
+#labels = np.reshape(np.fromfile(class_dir + "train/labels.txt", dtype=np.int32, count=-1,sep=" "), (-1, NUM_CLASSES))
+#print "done"
 
-print "reading training docs"
-docs = np.reshape(np.fromfile(class_dir + "train/docs.txt", dtype=np.int32, count=-1,sep=" "), (-1, MAX_DOC_LEN))
-print "done"
+#print "reading training docs"
+#docs = np.reshape(np.fromfile(class_dir + "train/docs.txt", dtype=np.int32, count=-1,sep=" "), (-1, MAX_DOC_LEN))
+#print "done"
 
-print "reading test labels"
-test_labels_pos = np.reshape(np.fromfile(class_dir + "test/pos-labels.txt", dtype=np.int32, count=-1,sep=" "), (-1, NUM_CLASSES))
-print "done"
+#print "reading test labels"
+#test_labels_pos = np.reshape(np.fromfile(class_dir + "test/pos-labels.txt", dtype=np.int32, count=-1,sep=" "), (-1, NUM_CLASSES))
+#print "done"
 
-print "reading test docs"
-test_docs_pos = np.reshape(np.fromfile(class_dir + "test/pos-docs.txt", dtype=np.int32, count=-1,sep=" "), (-1, MAX_DOC_LEN))
-print "done"
+#print "reading test docs"
+#test_docs_pos = np.reshape(np.fromfile(class_dir + "test/pos-docs.txt", dtype=np.int32, count=-1,sep=" "), (-1, MAX_DOC_LEN))
+#print "done"
 
-print "reading test labels"
-test_labels_neg = np.reshape(np.fromfile(class_dir + "test/neg-labels.txt", dtype=np.int32, count=-1,sep=" "), (-1, NUM_CLASSES))
-print "done"
+#print "reading test labels"
+#test_labels_neg = np.reshape(np.fromfile(class_dir + "test/neg-labels.txt", dtype=np.int32, count=-1,sep=" "), (-1, NUM_CLASSES))
+#print "done"
 
-print "reading test docs"
-test_docs_neg = np.reshape(np.fromfile(class_dir + "test/neg-docs.txt", dtype=np.int32, count=-1,sep=" "), (-1, MAX_DOC_LEN))
-print "done"
+#print "reading test docs"
+#test_docs_neg = np.reshape(np.fromfile(class_dir + "test/neg-docs.txt", dtype=np.int32, count=-1,sep=" "), (-1, MAX_DOC_LEN))
+#print "done"
 
 print "reading result docs"
 res_docs = np.reshape(np.fromfile(class_dir + "res/docs.txt", dtype=np.int32, count=-1,sep=" "), (-1, MAX_DOC_LEN))
 res_labels_dummy = np.reshape([-1, -1] * len(res_docs), (-1, NUM_CLASSES))
 print "done"
 
-test_doc_pos_chunks = chunks(test_docs_pos, 100)
-test_label_pos_chunks = chunks(test_labels_pos, 100)
+print "reading qrel docs"
+qrel_docs = np.reshape(np.fromfile(class_dir + "qrels/docs.txt", dtype=np.int32, count=-1,sep=" "), (-1, MAX_DOC_LEN))
+qrel_labels_dummy = np.reshape([-1, -1] * len(qrel_docs), (-1, NUM_CLASSES))
+print "done"
 
-test_doc_neg_chunks = chunks(test_docs_neg, 100)
-test_label_neg_chunks = chunks(test_labels_neg, 100)
+#test_doc_pos_chunks = chunks(test_docs_pos, 100)
+#test_label_pos_chunks = chunks(test_labels_pos, 100)
+
+#test_doc_neg_chunks = chunks(test_docs_neg, 100)
+#test_label_neg_chunks = chunks(test_labels_neg, 100)
 
 res_docs_chunks = chunks(res_docs, 100)
 res_labels_dummy_chunks = chunks(res_labels_dummy, 100)
+
+qrel_docs_chunks = chunks(qrel_docs, 100)
+qrel_labels_dummy_chunks = chunks(qrel_labels_dummy, 100)
 
 def get_batch(size):
     shuffle_indices = np.random.permutation(np.arange(len(docs)))
@@ -145,10 +153,10 @@ saver = tf.train.Saver()
 sess = tf.InteractiveSession()
 
 ############# TODO comment out when restoring
-sess.run(tf.initialize_all_variables())
+#sess.run(tf.initialize_all_variables())
 #############
 
-#saver.restore(sess, "tf5000-treat.save")
+saver.restore(sess, "res/" + class_id + "/nn5000" + class_id + ".save")
 
 def evaluate(filename, doc_chunks, label_chunks):
     sum_acc = 0.0
@@ -166,22 +174,25 @@ def evaluate(filename, doc_chunks, label_chunks):
     print "\n\ntotal test docs %d: test accuracy %g\n\n" % (sum_w, acc)
     return acc
 
-def train(num_iter):
+def train(offset, num_iter):
     acc_train = 0.0
-    for it in range(num_iter):
+    for it in range(offset, offset+num_iter):
         batch = get_batch(100)
         _, train_loss, train_accuracy = sess.run([train_step, loss, accuracy], feed_dict={
             x:batch[0], y_: batch[1], keep_prob: 0.5})
         print("step %d, loss %g, training accuracy %g"%(it, train_loss, train_accuracy))
         acc_train += train_accuracy
         
-        if it > 0 and it % 100 == 0:
+        if it > 0 and it % 1000 == 0:
             acc_pos = evaluate(class_res_dir + "test-pos-predictions.txt", test_doc_pos_chunks, test_label_pos_chunks)
             acc_neg = evaluate(class_res_dir + "test-neg-predictions.txt", test_doc_neg_chunks, test_label_neg_chunks)
             ovr = (acc_pos + acc_neg) / 2
             print "overall accuracy:\t\ttrain: %g\t\ttest: %g" % (acc_train/it, ovr)
             evaluate(class_res_dir + "predictions-on-ir-res.txt", res_docs_chunks, res_labels_dummy_chunks)
+            evaluate(class_res_dir + "predictions-on-qrels.txt", qrel_docs_chunks, qrel_labels_dummy_chunks)
         if it > 0 and it % 1000 == 0:
             saver.save(sess, class_res_dir + "nn" + str(it) + class_id + ".save")
 
-train(5001)        
+#train(5001, 10000)
+evaluate(class_res_dir + "predictions-on-ir-res.txt", res_docs_chunks, res_labels_dummy_chunks)
+evaluate(class_res_dir + "predictions-on-qrels.txt", qrel_docs_chunks, qrel_labels_dummy_chunks)

@@ -7,7 +7,7 @@ from collections import Counter
 
 MAX_DOC_LEN = 1000
 
-class_id = "treat"
+class_id = "diag"
 class_dir = "../../data/nn/" + class_id + "/"
 ids_file = class_dir + class_id + ".txt"
 
@@ -144,26 +144,30 @@ test_doc_ids = pos_test + neg_test
 test_labels = [1] * test_size + [0] * test_size
 
 result_doc_ids = list(get_results_docs())
-all_docs = set(train_doc_ids) | set(test_doc_ids) | set(result_doc_ids)
+qrels2014_doc_ids = get_docs_in_qrel_file("../../data/qrels-treceval-2014-" + class_id + ".txt")
+qrels2015_doc_ids = get_docs_in_qrel_file("../../data/qrels-treceval-2015-" + class_id + ".txt")
+qrels_doc_ids = list(qrels2014_doc_ids | qrels2015_doc_ids)
+qrel_and_res_doc_ids = list(set(result_doc_ids) | set(qrels_doc_ids))
+all_docs = set(train_doc_ids) | set(test_doc_ids) | set(result_doc_ids) | set(qrels_doc_ids)
     
-def locate_docs(doc_ids):
-    doc_names = {str(doc_id) + ".txt.sent" : doc_id for doc_id in doc_ids}
+def locate_docs(doc_ids, extension, src_directory):
+    doc_names = {str(doc_id) + extension : doc_id for doc_id in doc_ids}
     doc_filenames = doc_names.keys()
     paths = {}
     counter = 0
-    for root, dirs, files in os.walk("../../data/sentences"):
+    for root, dirs, files in os.walk(src_directory):
         counter += 1
         matches = set(files) & set(doc_filenames)
         for m in matches:
             paths[doc_names[m]] = os.path.join(root, m)
     return paths
 
-def copy_docs(ids, directory):
-    paths = locate_docs(ids)
+def copy_docs(ids, extension, src_directory, dest_directory):
+    paths = locate_docs(ids, extension, src_directory)
     print "located %d/%d paths" % (len(paths), len(ids))
     counter = 0
     for doc_id, path in paths.items():
-        copyfile(path, os.path.join(directory, os.path.basename(path)))
+        copyfile(path, os.path.join(dest_directory, os.path.basename(path)))
         counter += 1
         if counter % 1000 == 0:
             print counter
@@ -241,5 +245,11 @@ def write_datasets():
     write_doc_ids(result_doc_ids, class_dir + "res/ids.txt")
     write_doc_mapping(vocab_map, result_doc_ids, class_dir + "res/docs.txt")
 
-copy_docs(all_docs, class_dir + "labeled/")
-write_datasets()
+    print "Writing qrels set"
+    write_doc_ids(qrels_doc_ids, class_dir + "qrels/ids.txt")
+    write_doc_mapping(vocab_map, qrels_doc_ids, class_dir + "qrels/docs.txt")
+
+write_doc_ids(qrel_and_res_doc_ids, "../../data/nn/qrel-and-res-docs/ids.txt")
+copy_docs(qrel_and_res_doc_ids, ".txt", "../../data/plaintext", "../../data/nn/qrel-and-res-docs/")
+#copy_docs(all_docs, ".txt.sent", "../../data/sentences", class_dir + "labeled/")
+#write_datasets()

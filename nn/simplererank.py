@@ -6,9 +6,17 @@ from scipy import stats
 import subprocess
 import numpy as np
 import pprint
+import itertools
+import random
 
-class_id = "treat"
-topic_offset = 21
+from rankpy.queries import Queries
+from rankpy.queries import find_constant_features
+
+from rankpy.models import LambdaMART
+import logging
+
+
+class_id = "diag"
 
 classifier = ""
 #classifier = ".SGDClassifier"
@@ -18,6 +26,8 @@ qrel_file = "../data/qrels-treceval-2015.txt"
 baseline_results_file = "../data/results-2015-A-" + class_id + ".txt"
 reranked_results_file = baseline_results_file + ".reranked" + classifier
 eval_progname = "../eval/trec_eval.9.0/trec_eval"
+
+topic_offsets = {"diag": 1, "test": 11, "treat": 21}
 
 def read_baseline_results(res_file):
     results = {}
@@ -39,11 +49,7 @@ def read_class_predictions_nn():
     i = 0
     for line in open("res/" + class_id + "/predictions-on-ir-res.txt"):
         parts = line.split()
-        pred = int(parts[0])
-        if pred == 0:
-            predictions[doc_ids[i]] = 1
-        else:
-            predictions[doc_ids[i]] = -1
+        predictions[doc_ids[i]] = float(parts[1]) - float(parts[2])
         i += 1
     return predictions
 
@@ -64,10 +70,23 @@ def read_class_predictions_non_nn():
 def interpolate(x, y, w):
     return w * x + (1 - w) * y #* (randint(0,10) < 7)
 
+def zscore_dict_of_pairs(d):
+    k, v = zip(*d.items())
+    flat_v = list(itertools.chain(*v))
+    flat_v = stats.zscore(flat_v)
+    it = iter(flat_v)
+    v = zip(it, it)
+    return dict(zip(k, v))
+
+def zscore_dict(d):
+    return dict(zip(d.keys(), stats.zscore(d.values())))
+
 def simple_rerank(weight):
     baseline_results = read_baseline_results(baseline_results_file)   
-    class_predictions = read_class_predictions_nn()    
+    class_predictions = read_class_predictions_nn()
+    class_predictions = zscore_dict(class_predictions)
     reranked_results = open(reranked_results_file, "w")
+    topic_offset = topic_offsets[class_id]
     for topic_id in range(topic_offset, topic_offset + 10):
         doc, scores = zip(*(baseline_results[topic_id]))
         norm_scores = dict(zip(doc, stats.zscore(scores)))
@@ -102,9 +121,12 @@ def get_best_weight(prec_num):
             best_weight = weight
     return best_weight, prec_max, all_res
 
-best_weight, prec_max, all_res = get_best_weight(10)
-for res in all_res:
-    print "%g %g" % (res[0], res[1])
-print "\nbest weight %g prec = %g" % (best_weight, prec_max)
+def lambda_rerank():
+    best_weight, prec_max, all_res = get_best_weight(10)
+    for res in all_res:
+        print "%g %g" % (res[0], res[1])
+    print "\nbest weight %g prec = %g" % (best_weight, prec_max)
+    simple_rerank(best_weight)
+    
+lambda_rerank()
 
-simple_rerank(best_weight)
