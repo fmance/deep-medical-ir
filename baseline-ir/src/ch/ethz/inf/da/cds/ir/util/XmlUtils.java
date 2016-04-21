@@ -2,6 +2,7 @@ package ch.ethz.inf.da.cds.ir.util;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.List;
 import java.util.Set;
 
@@ -20,6 +21,7 @@ import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 
 import ch.ethz.inf.da.cds.ir.Article;
+import ch.ethz.inf.da.cds.ir.FilePaths;
 import ch.ethz.inf.da.cds.ir.Topic;
 
 public class XmlUtils {
@@ -27,7 +29,7 @@ public class XmlUtils {
 
 	static {
 		try {
-			docs2014 = QrelUtils.getQrels("../data/qrels2014.txt");
+			docs2014 = QrelUtils.getQrels("../data/qrels-treceval-2014.txt");
 			docs2015 = QrelUtils.getQrels("../data/qrels-treceval-2015.txt");
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -109,10 +111,23 @@ public class XmlUtils {
 		return topics;
 	}
 
-	public static void main(String[] args) throws IOException, ParserConfigurationException {
-		Article art = parseArticle(new File(""));
+	public static void writeTopicsPlaintext(File topicsFile, File outFile)
+			throws ParserConfigurationException, SAXException, IOException {
+		List<Topic> topics = parseTopics(topicsFile);
+		PrintWriter pw = new PrintWriter(outFile);
+		for (Topic topic : topics) {
+			pw.printf("%d %s\n", topic.getId(), topic.getSummary());
+		}
+		pw.close();
+	}
 
-		System.out.println(art.getAbstract());
+	public static void main(String[] args) throws Exception {
+		writeTopicsPlaintext(FilePaths.QUERIES_2014_FILE.toFile(),
+				new File(FilePaths.QUERIES_2014_FILE.toString() + ".plaintext"));
+		writeTopicsPlaintext(FilePaths.QUERIES_2015_A_FILE.toFile(),
+				new File(FilePaths.QUERIES_2015_A_FILE.toString() + ".plaintext"));
+		writeTopicsPlaintext(FilePaths.QUERIES_2015_B_FILE.toFile(),
+				new File(FilePaths.QUERIES_2015_B_FILE.toString() + ".plaintext"));
 	}
 
 }

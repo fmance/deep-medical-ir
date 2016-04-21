@@ -11,17 +11,14 @@ import ch.ethz.inf.da.cds.ir.util.QrelUtils;
 import ch.ethz.inf.da.cds.ir.util.XmlUtils;
 
 public class QueryRunner {
-	private static final Path QUERIES_2014_FILE = FilePaths.DATA_DIR.resolve("topics-2014.xml");
 	private static final Path RESULTS_2014_FILE = FilePaths.DATA_DIR.resolve("results-2014.txt");
-	private static final Path QUERIES_2015_A_FILE = FilePaths.DATA_DIR.resolve("topics-2015-A.xml");
 	private static final Path RESULTS_2015_A_FILE = FilePaths.DATA_DIR.resolve("results-2015-A.txt");
-	private static final Path QUERIES_2015_B_FILE = FilePaths.DATA_DIR.resolve("topics-2015-B.xml");
 	private static final Path RESULTS_2015_B_FILE = FilePaths.DATA_DIR.resolve("results-2015-B.txt");
 
 	public static void main(String[] args) throws Exception {
-		runQueries(QUERIES_2014_FILE.toFile(), RESULTS_2014_FILE.toFile(), false);
-		runQueries(QUERIES_2015_A_FILE.toFile(), RESULTS_2015_A_FILE.toFile(), false);
-		runQueries(QUERIES_2015_B_FILE.toFile(), RESULTS_2015_B_FILE.toFile(), false);
+		runQueries(FilePaths.QUERIES_2014_FILE.toFile(), RESULTS_2014_FILE.toFile(), false);
+		runQueries(FilePaths.QUERIES_2015_A_FILE.toFile(), RESULTS_2015_A_FILE.toFile(), false);
+		runQueries(FilePaths.QUERIES_2015_B_FILE.toFile(), RESULTS_2015_B_FILE.toFile(), false);
 	}
 
 	private static void runQueries(File queriesFile, File resultsFile, boolean filterKnownDocs2014) throws Exception {

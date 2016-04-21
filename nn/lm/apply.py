@@ -1,29 +1,37 @@
 #!/bin/python
 
-class_id = "diag"
-baseline_res_file = "../../data/results-2015-A-" + class_id + ".txt"
+from collections import defaultdict
+import pprint
+
+baseline_res_file = "../../data/results-2015-A.txt"
+DOC_IDS_FILE = "results-2015-features.txt.ids"
+QUERY_OFFSET = 100
 
 rerankings = []
 for line in open("rankings.txt"):
     rankings = map(int, line.split())
     rerankings.append(rankings)
+    
+docIds = defaultdict(list)
+for line in open(DOC_IDS_FILE):
+    parts = line.split()
+    qid = int(parts[0])
+    did = int(parts[1])
+    docIds[qid - QUERY_OFFSET].append(did)
+    
+rankings = {}
+for qid in range(1,31):
+    dids = docIds[qid]
+    rankings[qid] = [dids[i] for i in rerankings[qid-1]]
 
-baseline_res = open(baseline_res_file).readlines()
-baseline_res = [baseline_res[i:i+100] for i in range(0, len(baseline_res), 100)]
-
-assert(len(baseline_res) == 10)
-
-reranked = []
-for rankings, res in zip(rerankings,baseline_res):
-    reranked.append([res[i] for i in rankings])
+rankings = sorted(rankings.items(), key=lambda kv:kv[0])
 
 out = open(baseline_res_file + ".reranked.lm", "w")
-for res in reranked:
+for qid, dids in rankings:
     rank = 1
     score = 100
-    for line in res:
-        parts = line.split()
-        out.write("%s %s %s %g %g STANDARD\n" % (parts[0], parts[1], parts[2], rank, score))
+    for did in dids:
+        out.write("%d Q0 %d %d %f STANDARD\n" % (qid, did, rank, score))
         rank += 1
         score -= 1
         

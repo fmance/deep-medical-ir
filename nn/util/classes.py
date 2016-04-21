@@ -144,8 +144,8 @@ test_doc_ids = pos_test + neg_test
 test_labels = [1] * test_size + [0] * test_size
 
 result_doc_ids = list(get_results_docs())
-qrels2014_doc_ids = get_docs_in_qrel_file("../../data/qrels-treceval-2014-" + class_id + ".txt")
-qrels2015_doc_ids = get_docs_in_qrel_file("../../data/qrels-treceval-2015-" + class_id + ".txt")
+qrels2014_doc_ids = get_docs_in_qrel_file("../../data/qrels-treceval-2014.txt")
+qrels2015_doc_ids = get_docs_in_qrel_file("../../data/qrels-treceval-2015.txt")
 qrels_doc_ids = list(qrels2014_doc_ids | qrels2015_doc_ids)
 qrel_and_res_doc_ids = list(set(result_doc_ids) | set(qrels_doc_ids))
 all_docs = set(train_doc_ids) | set(test_doc_ids) | set(result_doc_ids) | set(qrels_doc_ids)
