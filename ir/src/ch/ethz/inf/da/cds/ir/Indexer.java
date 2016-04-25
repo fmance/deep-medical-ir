@@ -9,6 +9,7 @@ import java.util.concurrent.Executors;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.lucene.index.IndexWriter;
+import org.apache.lucene.search.similarities.BM25Similarity;
 
 import ch.ethz.inf.da.cds.ir.util.LuceneUtils;
 import ch.ethz.inf.da.cds.ir.util.ThreadUtils;
@@ -38,7 +39,7 @@ public class Indexer {
         File[] subdirs = directory.listFiles();
         Arrays.sort(subdirs);
 
-        IndexWriter indexWriter = LuceneUtils.getIndexWriter(FilePaths.INDEX_DIR);
+        IndexWriter indexWriter = LuceneUtils.getIndexWriter(FilePaths.BM25_INDEX_DIR, new BM25Similarity());
 
         ExecutorService executor = Executors.newFixedThreadPool(INDEXER_THREAD_POOL_SIZE);
         for (File subdir : subdirs) {

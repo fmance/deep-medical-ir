@@ -30,5 +30,12 @@ public class FilePaths {
     public static final Path RESULTS_2015_A_FILE = FilePaths.RESULTS_DIR.resolve("results-2015-A.txt");
     public static final Path RESULTS_2015_B_FILE = FilePaths.RESULTS_DIR.resolve("results-2015-B.txt");
 
-    public static final Path INDEX_DIR = Paths.get("index");
+    public static final Path BM25_SCORES_2014_FILE = RESULTS_DIR.resolve("bm25-scores-2014.txt");
+    public static final Path BM25_SCORES_2015_FILE = RESULTS_DIR.resolve("bm25-scores-2015.txt");
+    public static final Path TFIDF_SCORES_2014_FILE = RESULTS_DIR.resolve("tfidf-scores-2014.txt");
+    public static final Path TFIDF_SCORES_2015_FILE = RESULTS_DIR.resolve("tfidf-scores-2015.txt");
+
+    public static final Path BM25_INDEX_DIR = Paths.get("index-bm25");
+    public static final Path TFIDF_INDEX_DIR = Paths.get("index-tfidf");
+
 }
