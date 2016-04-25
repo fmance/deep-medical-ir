@@ -2,48 +2,38 @@ package ch.ethz.inf.da.cds.ir;
 
 import java.io.File;
 import java.io.PrintWriter;
-import java.nio.file.Path;
 import java.util.List;
-import java.util.Set;
 
 import ch.ethz.inf.da.cds.ir.util.LuceneUtils;
-import ch.ethz.inf.da.cds.ir.util.QrelUtils;
 import ch.ethz.inf.da.cds.ir.util.XmlUtils;
 
 public class QueryRunner {
-	private static final Path RESULTS_2014_FILE = FilePaths.DATA_DIR.resolve("results-2014.txt");
-	private static final Path RESULTS_2015_A_FILE = FilePaths.DATA_DIR.resolve("results-2015-A.txt");
-	private static final Path RESULTS_2015_B_FILE = FilePaths.DATA_DIR.resolve("results-2015-B.txt");
+    private static final int NUM_SEARCH_RESULTS = 1000;
 
-	public static void main(String[] args) throws Exception {
-		runQueries(FilePaths.QUERIES_2014_FILE.toFile(), RESULTS_2014_FILE.toFile(), false);
-		runQueries(FilePaths.QUERIES_2015_A_FILE.toFile(), RESULTS_2015_A_FILE.toFile(), false);
-		runQueries(FilePaths.QUERIES_2015_B_FILE.toFile(), RESULTS_2015_B_FILE.toFile(), false);
-	}
+    public static void main(String[] args) throws Exception {
+        FilePaths.RESULTS_DIR.toFile().mkdir();
+        runQueries(FilePaths.QUERIES_2014_FILE.toFile(), FilePaths.RESULTS_2014_FILE.toFile());
+        runQueries(FilePaths.QUERIES_2015_A_FILE.toFile(), FilePaths.RESULTS_2015_A_FILE.toFile());
+        runQueries(FilePaths.QUERIES_2015_B_FILE.toFile(), FilePaths.RESULTS_2015_B_FILE.toFile());
+    }
 
-	private static void runQueries(File queriesFile, File resultsFile, boolean filterKnownDocs2014) throws Exception {
-		System.out.println("Running queries from " + queriesFile);
+    private static void runQueries(File queriesFile, File resultsFile) throws Exception {
+        System.out.println("Running queries from " + queriesFile);
 
-		Set<String> knownDocs2014 = QrelUtils.getQrels("../data/qrels2014.txt");
-		int skipped = 0;
+        List<TrecQuery> queries = XmlUtils.parseQueries(queriesFile);
+        PrintWriter pw = new PrintWriter(resultsFile);
 
-		List<Topic> topics = XmlUtils.parseTopics(queriesFile);
-		PrintWriter pw = new PrintWriter(resultsFile);
+        for (TrecQuery query : queries) {
+            List<SearchResult> results = LuceneUtils.searchIndex(FilePaths.INDEX_DIR, query,
+                    NUM_SEARCH_RESULTS);
+            for (SearchResult result : results) {
+                pw.println(query.getId() + " Q0 " + result.getPmcid() + " " + result.getRank() + " "
+                        + result.getScore() + " STANDARD");
+            }
+        }
 
-		for (Topic topic : topics) {
-			List<SearchResult> results = LuceneUtils.searchIndex(FilePaths.INDEX_DIR, topic);
-			for (SearchResult result : results) {
-				if (filterKnownDocs2014 && knownDocs2014.contains(result.getPmcid())) {
-					skipped++;
-					continue;
-				}
-				pw.println(topic.getId() + " Q0 " + result.getPmcid() + " " + result.getRank() + " " + result.getScore()
-						+ " STANDARD");
-			}
-		}
+        pw.close();
 
-		pw.close();
-
-		System.out.println("Done" + (skipped > 0 ? (" skipped " + skipped + " known docs from 2014.") : "."));
-	}
+        System.out.println("Done");
+    }
 }

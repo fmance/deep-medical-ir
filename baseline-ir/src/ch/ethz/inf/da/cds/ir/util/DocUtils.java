@@ -11,31 +11,38 @@ import org.apache.commons.io.FilenameUtils;
 import ch.ethz.inf.da.cds.ir.FilePaths;
 
 public class DocUtils {
-	public static List<String> getValidDocIds() throws IOException {
-		Path docIdsDir = FilePaths.DATA_DIR.resolve("doc-ids");
-		List<String> validIds = FileUtils.readLines(docIdsDir.resolve("docnos-2014.txt").toFile());
+    private static final Path DOC_IDS_PATH = FilePaths.DATA_DIR.resolve("doc-ids");
 
-		List<String> dup1 = FileUtils.readLines(docIdsDir.resolve("duplicates-1.txt").toFile());
-		for (String filename : dup1) {
-			validIds.remove(FilenameUtils.getBaseName(filename));
-		}
+    public static List<String> getValidDocIds() {
+        try {
+            List<String> validIds = FileUtils.readLines(DOC_IDS_PATH.resolve("docnos-2014.txt").toFile());
 
-		List<String> dup2 = FileUtils.readLines(docIdsDir.resolve("duplicates-2.txt").toFile());
-		for (String line : dup2) {
-			String[] filenames = line.split("\\s+");
-			validIds.remove(FilenameUtils.getBaseName(filenames[1]));
-			validIds.remove(FilenameUtils.getBaseName(filenames[2]));
-		}
+            List<String> dup1 = FileUtils.readLines(DOC_IDS_PATH.resolve("duplicates-1.txt").toFile());
+            for (String filename : dup1) {
+                validIds.remove(FilenameUtils.getBaseName(filename));
+            }
 
-		return validIds;
-	}
+            List<String> dup2 = FileUtils.readLines(DOC_IDS_PATH.resolve("duplicates-2.txt").toFile());
+            for (String line : dup2) {
+                String[] filenames = line.split("\\s+");
+                validIds.remove(FilenameUtils.getBaseName(filenames[1]));
+                validIds.remove(FilenameUtils.getBaseName(filenames[2]));
+            }
 
-	public static void main(String[] args) throws IOException {
-		PrintWriter pw = new PrintWriter(FilePaths.DATA_DIR.resolve("valid-doc-ids.txt").toFile());
-		for (String id : getValidDocIds()) {
-			pw.println(id);
-		}
-		pw.close();
-	}
+            return validIds;
+        } catch (IOException e) {
+            e.printStackTrace();
+            return null;
+        }
+
+    }
+
+    public static void main(String[] args) throws IOException {
+        PrintWriter pw = new PrintWriter(DOC_IDS_PATH.resolve("valid-doc-ids.txt").toFile());
+        for (String did : getValidDocIds()) {
+            pw.println(did);
+        }
+        pw.close();
+    }
 
 }
