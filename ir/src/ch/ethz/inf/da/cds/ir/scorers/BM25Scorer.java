@@ -3,15 +3,13 @@ package ch.ethz.inf.da.cds.ir.scorers;
 import java.io.IOException;
 import java.util.List;
 
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.CollectionStatistics;
-import org.apache.lucene.util.SmallFloat;
 
-import ch.ethz.inf.da.cds.ir.FilePaths;
 import ch.ethz.inf.da.cds.ir.TrecQuery;
 import ch.ethz.inf.da.cds.ir.util.LuceneUtils;
 
@@ -19,38 +17,13 @@ public class BM25Scorer extends Scorer {
     private static final float k1 = 1.2f;
     private static final float b = 0.75f;
 
-    public BM25Scorer() throws IOException {
-        super(FilePaths.BM25_INDEX_DIR);
-    }
-
-    public static void main(String[] args) throws Exception {
-        BM25Scorer scorer = new BM25Scorer();
-        scorer.scoreQueries(LuceneUtils.TEXT_FIELD, FilePaths.QUERIES_2014_FILE,
-                FilePaths.BM25_SCORES_2014_FILE, OutputType.ALL);
-        scorer.close();
+    public BM25Scorer(IndexReader reader) throws IOException {
+        super(reader);
     }
 
     @Override
-    protected float[] getNorms(String field) throws IOException {
-        CollectionStatistics stats = searcher.collectionStatistics(field);
-        float avgDocLen = ((float) stats.sumTotalTermFreq()) / stats.docCount();
-        float[] norms = new float[reader.maxDoc()];
-
-        for (LeafReaderContext ctx : reader.leaves()) {
-            LeafReader leafReader = ctx.reader();
-            NumericDocValues docValues = leafReader.getNormValues(field);
-            for (int docId = 0; docId < leafReader.numDocs(); docId++) {
-                float length = decodeNormValue(docValues.get(docId));
-                float norm = k1 * (1 - b + b * length / avgDocLen);
-                norms[docId + ctx.docBase] = norm;
-            }
-        }
-        return norms;
-    }
-
-    private float decodeNormValue(long value) {
-        float f = SmallFloat.byte315ToFloat((byte) value);
-        return 1 / (f * f);
+    protected float computeNorm(float docLength, float avgDocLength) {
+        return k1 * (1 - b + b * docLength / avgDocLength);
     }
 
     @Override

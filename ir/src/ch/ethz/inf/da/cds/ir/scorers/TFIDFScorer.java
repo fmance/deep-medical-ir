@@ -4,15 +4,14 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
-import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.PostingsEnum;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.search.CollectionStatistics;
 import org.apache.lucene.search.similarities.ClassicSimilarity;
 
-import ch.ethz.inf.da.cds.ir.FilePaths;
 import ch.ethz.inf.da.cds.ir.TrecQuery;
 import ch.ethz.inf.da.cds.ir.util.LuceneUtils;
 
@@ -21,28 +20,13 @@ import com.google.common.collect.Maps;
 public class TFIDFScorer extends Scorer {
     private static final ClassicSimilarity SIMILARITY = new ClassicSimilarity();
 
-    public TFIDFScorer() throws IOException {
-        super(FilePaths.TFIDF_INDEX_DIR);
-    }
-
-    public static void main(String[] args) throws Exception {
-        TFIDFScorer scorer = new TFIDFScorer();
-        scorer.scoreQueries(LuceneUtils.TEXT_FIELD, FilePaths.QUERIES_2014_FILE,
-                FilePaths.TFIDF_SCORES_2014_FILE, OutputType.ALL);
-        scorer.close();
+    public TFIDFScorer(IndexReader reader) throws IOException {
+        super(reader);
     }
 
     @Override
-    protected float[] getNorms(String field) throws IOException {
-        float[] norms = new float[reader.maxDoc()];
-        for (LeafReaderContext ctx : reader.leaves()) {
-            LeafReader leafReader = ctx.reader();
-            NumericDocValues docValues = leafReader.getNormValues(field);
-            for (int docId = 0; docId < leafReader.numDocs(); docId++) {
-                norms[docId + ctx.docBase] = SIMILARITY.decodeNormValue(docValues.get(docId));
-            }
-        }
-        return norms;
+    protected float computeNorm(float docLength, float avgDocLength) {
+        return (float) (1 / Math.sqrt(docLength));
     }
 
     @Override
