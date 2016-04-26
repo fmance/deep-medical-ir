@@ -9,7 +9,6 @@ import java.util.concurrent.Executors;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.lucene.index.IndexWriter;
-import org.apache.lucene.search.similarities.BM25Similarity;
 
 import ch.ethz.inf.da.cds.ir.util.LuceneUtils;
 import ch.ethz.inf.da.cds.ir.util.ThreadUtils;
@@ -23,7 +22,7 @@ import com.google.common.base.Joiner;
  *
  */
 public class Indexer {
-    private static final int INDEXER_THREAD_POOL_SIZE = 4;
+    private static final int INDEXER_THREAD_POOL_SIZE = 6;
 
     public static void main(String[] args) throws Exception {
         indexDirectory(FilePaths.PLAINTEXT_DIR_00.toFile());
@@ -39,7 +38,7 @@ public class Indexer {
         File[] subdirs = directory.listFiles();
         Arrays.sort(subdirs);
 
-        IndexWriter indexWriter = LuceneUtils.getIndexWriter(FilePaths.BM25_INDEX_DIR, new BM25Similarity());
+        IndexWriter indexWriter = LuceneUtils.getTFIDFIndexWriter();
 
         ExecutorService executor = Executors.newFixedThreadPool(INDEXER_THREAD_POOL_SIZE);
         for (File subdir : subdirs) {

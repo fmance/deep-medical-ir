@@ -4,8 +4,6 @@ import java.io.File;
 import java.io.PrintWriter;
 import java.util.List;
 
-import org.apache.lucene.search.similarities.BM25Similarity;
-
 import ch.ethz.inf.da.cds.ir.util.LuceneUtils;
 import ch.ethz.inf.da.cds.ir.util.XmlUtils;
 
@@ -27,8 +25,7 @@ public class QueryRunner {
         PrintWriter pw = new PrintWriter(resultsFile);
 
         for (TrecQuery query : queries) {
-            List<SearchResult> results = LuceneUtils.searchIndex(FilePaths.BM25_INDEX_DIR,
-                    new BM25Similarity(), query, field, NUM_SEARCH_RESULTS);
+            List<SearchResult> results = LuceneUtils.searchTFIDFIndex(query, field, NUM_SEARCH_RESULTS);
             for (SearchResult result : results) {
                 pw.println(query.getId() + " Q0 " + result.getPmcid() + " " + result.getRank() + " "
                         + result.getScore() + " STANDARD");

@@ -3,7 +3,6 @@ package ch.ethz.inf.da.cds.ir.util;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
 
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.document.Document;
@@ -23,16 +22,18 @@ import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TermQuery;
+import org.apache.lucene.search.similarities.BM25Similarity;
+import org.apache.lucene.search.similarities.ClassicSimilarity;
 import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
 
 import ch.ethz.inf.da.cds.ir.Article;
+import ch.ethz.inf.da.cds.ir.FilePaths;
 import ch.ethz.inf.da.cds.ir.SearchResult;
 import ch.ethz.inf.da.cds.ir.TrecQuery;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 
 public class LuceneUtils {
     public static final String PMCID_FIELD = "pmcid";
@@ -45,6 +46,14 @@ public class LuceneUtils {
         config.setRAMBufferSizeMB(4 * 1024);
         config.setSimilarity(similarity);
         return new IndexWriter(directory, config);
+    }
+
+    public static IndexWriter getBM25IndexWriter() throws IOException {
+        return getIndexWriter(FilePaths.BM25_INDEX_DIR, new BM25Similarity());
+    }
+
+    public static IndexWriter getTFIDFIndexWriter() throws IOException {
+        return getIndexWriter(FilePaths.TFIDF_INDEX_DIR, new ClassicSimilarity());
     }
 
     public static void index(IndexWriter indexWriter, Article article) throws IOException {
@@ -75,6 +84,16 @@ public class LuceneUtils {
         return results;
     }
 
+    public static List<SearchResult> searchBM25Index(TrecQuery trecQuery, String field, int numResults)
+            throws IOException, ParseException {
+        return searchIndex(FilePaths.BM25_INDEX_DIR, new BM25Similarity(), trecQuery, field, numResults);
+    }
+
+    public static List<SearchResult> searchTFIDFIndex(TrecQuery trecQuery, String field, int numResults)
+            throws IOException, ParseException {
+        return searchIndex(FilePaths.TFIDF_INDEX_DIR, new ClassicSimilarity(), trecQuery, field, numResults);
+    }
+
     private static Query constructLuceneQuery(TrecQuery trecQuery, String field) throws ParseException {
         QueryParser parser = new QueryParser(field, new EnglishAnalyzer());
         Query summaryQuery = parser.parse(QueryParser.escape(trecQuery.getSummary()));
@@ -101,11 +120,11 @@ public class LuceneUtils {
         return queryTerms;
     }
 
-    public static Map<Integer, Integer> getLuceneToPmcIdMapping(IndexReader reader) throws IOException {
-        Map<Integer, Integer> mapping = Maps.newHashMap();
-        for (int docId = 0; docId < reader.numDocs(); docId++) {
+    public static int[] getLuceneToPmcIdMapping(IndexReader reader) throws IOException {
+        int[] mapping = new int[reader.maxDoc()];
+        for (int docId = 0; docId < reader.maxDoc(); docId++) {
             int pmcid = Integer.parseInt(reader.document(docId).getField(PMCID_FIELD).stringValue());
-            mapping.put(docId, pmcid);
+            mapping[docId] = pmcid;
         }
         return mapping;
     }
