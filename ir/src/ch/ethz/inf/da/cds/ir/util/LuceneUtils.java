@@ -13,11 +13,15 @@ import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.index.IndexWriter;
 import org.apache.lucene.index.IndexWriterConfig;
+import org.apache.lucene.index.LeafReader;
+import org.apache.lucene.index.LeafReaderContext;
+import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.BooleanClause;
 import org.apache.lucene.search.BooleanQuery;
+import org.apache.lucene.search.CollectionStatistics;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
@@ -27,6 +31,7 @@ import org.apache.lucene.search.similarities.ClassicSimilarity;
 import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
+import org.apache.lucene.util.SmallFloat;
 
 import ch.ethz.inf.da.cds.ir.Article;
 import ch.ethz.inf.da.cds.ir.FilePaths;
@@ -45,7 +50,8 @@ public class LuceneUtils {
         IndexWriterConfig config = new IndexWriterConfig(new EnglishAnalyzer());
         config.setRAMBufferSizeMB(4 * 1024);
         config.setSimilarity(similarity);
-        return new IndexWriter(directory, config);
+        return new IndexWriter(directory,
+                               config);
     }
 
     public static IndexWriter getBM25IndexWriter() throws IOException {
@@ -58,9 +64,15 @@ public class LuceneUtils {
 
     public static void index(IndexWriter indexWriter, Article article) throws IOException {
         Document doc = new Document();
-        doc.add(new StringField(PMCID_FIELD, article.getPmcid(), Field.Store.YES));
-        doc.add(new TextField(TITLE_FIELD, article.getTitle(), Field.Store.NO));
-        doc.add(new TextField(TEXT_FIELD, article.getText(), Field.Store.NO));
+        doc.add(new StringField(PMCID_FIELD,
+                                article.getPmcid(),
+                                Field.Store.YES));
+        doc.add(new TextField(TITLE_FIELD,
+                              article.getTitle(),
+                              Field.Store.NO));
+        doc.add(new TextField(TEXT_FIELD,
+                              article.getTitle() + article.getText(),
+                              Field.Store.NO));
         indexWriter.addDocument(doc);
     }
 
@@ -77,7 +89,9 @@ public class LuceneUtils {
         int rank = 1;
         for (ScoreDoc hit : hits) {
             Document doc = isearcher.doc(hit.doc);
-            results.add(new SearchResult(doc.getField(PMCID_FIELD).stringValue(), rank++, hit.score));
+            results.add(new SearchResult(doc.getField(PMCID_FIELD).stringValue(),
+                                         rank++,
+                                         hit.score));
         }
         ireader.close();
 
@@ -95,7 +109,8 @@ public class LuceneUtils {
     }
 
     private static Query constructLuceneQuery(TrecQuery trecQuery, String field) throws ParseException {
-        QueryParser parser = new QueryParser(field, new EnglishAnalyzer());
+        QueryParser parser = new QueryParser(field,
+                                             new EnglishAnalyzer());
         Query summaryQuery = parser.parse(QueryParser.escape(trecQuery.getSummary()));
         if (trecQuery.getDiagnosis().isPresent()) {
             Query diagnosisQuery = parser.parse(QueryParser.escape(trecQuery.getDiagnosis().get()));
@@ -127,5 +142,35 @@ public class LuceneUtils {
             mapping[docId] = pmcid;
         }
         return mapping;
+    }
+
+    public static float[] readFieldLengths(String field, IndexReader reader) throws IOException {
+        float[] lengths = new float[reader.maxDoc()];
+
+        for (LeafReaderContext ctx : reader.leaves()) {
+            LeafReader leafReader = ctx.reader();
+            NumericDocValues docValues = leafReader.getNormValues(field);
+            for (int docId = 0; docId < leafReader.numDocs(); docId++) {
+                lengths[docId + ctx.docBase] = decodeNormValue(docValues.get(docId));
+            }
+        }
+        return lengths;
+    }
+
+    private static float decodeNormValue(long value) {
+        float f = SmallFloat.byte315ToFloat((byte) value);
+        return 1 / (f * f);
+    }
+
+    public static long getDocCount(String field, IndexReader reader) throws IOException {
+        IndexSearcher searcher = new IndexSearcher(reader);
+        CollectionStatistics stats = searcher.collectionStatistics(field);
+        return stats.docCount();
+    }
+
+    public static float getAvgFieldLength(String field, IndexReader reader) throws IOException {
+        IndexSearcher searcher = new IndexSearcher(reader);
+        CollectionStatistics stats = searcher.collectionStatistics(field);
+        return ((float) stats.sumTotalTermFreq()) / stats.docCount();
     }
 }

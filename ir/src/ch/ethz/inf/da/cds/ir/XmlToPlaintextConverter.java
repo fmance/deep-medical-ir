@@ -32,10 +32,10 @@ public class XmlToPlaintextConverter {
         convertPmcDirectory(FilePaths.PMC_01_DIR.toFile(), FilePaths.PLAINTEXT_DIR_01.toFile(), validIds);
         convertPmcDirectory(FilePaths.PMC_02_DIR.toFile(), FilePaths.PLAINTEXT_DIR_02.toFile(), validIds);
         convertPmcDirectory(FilePaths.PMC_03_DIR.toFile(), FilePaths.PLAINTEXT_DIR_03.toFile(), validIds);
-        convertQuerySummaries(FilePaths.QUERIES_2014_FILE.toFile(),
-                FilePaths.QUERIES_2014_PLAINTEXT_FILE.toFile());
-        convertQuerySummaries(FilePaths.QUERIES_2015_A_FILE.toFile(),
-                FilePaths.QUERIES_2015_A_PLAINTEXT_FILE.toFile());
+        // convertQuerySummaries(FilePaths.QUERIES_2014_FILE.toFile(),
+        // FilePaths.QUERIES_2014_PLAINTEXT_FILE.toFile());
+        // convertQuerySummaries(FilePaths.QUERIES_2015_A_FILE.toFile(),
+        // FilePaths.QUERIES_2015_A_PLAINTEXT_FILE.toFile());
     }
 
     private static void convertPmcDirectory(File pmcDir, File plaintextDir, List<String> validDocIds)
@@ -49,8 +49,9 @@ public class XmlToPlaintextConverter {
 
         ExecutorService executor = Executors.newFixedThreadPool(WRITER_THREAD_POOL_SIZE);
         for (File subdir : subdirs) {
-            executor.submit(new ConverterThread(subdir, plaintextDir.toPath().resolve(subdir.getName())
-                    .toFile(), validDocIds));
+            executor.submit(new ConverterThread(subdir,
+                                                plaintextDir.toPath().resolve(subdir.getName()).toFile(),
+                                                validDocIds));
         }
         ThreadUtils.shutdownExecutor(executor);
 
@@ -88,6 +89,7 @@ public class XmlToPlaintextConverter {
                         File textFile = destDir.toPath().resolve(article.getPmcid() + ".txt").toFile();
                         PrintWriter pw = new PrintWriter(textFile);
                         pw.println(article.getTitle());
+                        pw.println();
                         pw.println(article.getText());
                         pw.close();
                         filesWritten++;

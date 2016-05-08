@@ -8,7 +8,7 @@ import ch.ethz.inf.da.cds.ir.util.LuceneUtils;
 import ch.ethz.inf.da.cds.ir.util.XmlUtils;
 
 public class QueryRunner {
-    private static final int NUM_SEARCH_RESULTS = 1000;
+    private static final int NUM_SEARCH_RESULTS = 100;
 
     public static void main(String[] args) throws Exception {
         FilePaths.RESULTS_DIR.toFile().mkdir();
@@ -25,7 +25,7 @@ public class QueryRunner {
         PrintWriter pw = new PrintWriter(resultsFile);
 
         for (TrecQuery query : queries) {
-            List<SearchResult> results = LuceneUtils.searchTFIDFIndex(query, field, NUM_SEARCH_RESULTS);
+            List<SearchResult> results = LuceneUtils.searchBM25Index(query, field, NUM_SEARCH_RESULTS);
             for (SearchResult result : results) {
                 pw.println(query.getId() + " Q0 " + result.getPmcid() + " " + result.getRank() + " "
                         + result.getScore() + " STANDARD");

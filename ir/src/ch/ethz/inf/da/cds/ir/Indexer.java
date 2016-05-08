@@ -38,11 +38,12 @@ public class Indexer {
         File[] subdirs = directory.listFiles();
         Arrays.sort(subdirs);
 
-        IndexWriter indexWriter = LuceneUtils.getTFIDFIndexWriter();
+        IndexWriter indexWriter = LuceneUtils.getBM25IndexWriter();
 
         ExecutorService executor = Executors.newFixedThreadPool(INDEXER_THREAD_POOL_SIZE);
         for (File subdir : subdirs) {
-            executor.submit(new IndexerThread(subdir, indexWriter));
+            executor.submit(new IndexerThread(subdir,
+                                              indexWriter));
         }
         ThreadUtils.shutdownExecutor(executor);
 
@@ -77,7 +78,9 @@ public class Indexer {
                     List<String> lines = FileUtils.readLines(articleFile);
                     String title = lines.get(0);
                     String text = Joiner.on("").join(lines.subList(1, lines.size()));
-                    LuceneUtils.index(indexWriter, new Article(pmcid, title, text));
+                    LuceneUtils.index(indexWriter, new Article(pmcid,
+                                                               title,
+                                                               text));
                 } catch (Throwable e) {
                     e.printStackTrace();
                 }
