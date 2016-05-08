@@ -24,9 +24,9 @@ class Sentences(object):
                     for sentence in codecs.open(fname, "r", "utf-8"):
                         yield sentence.split()
 
-def w2v():
-    sentences = Sentences("../../data/sentences/")
-    model = gensim.models.Word2Vec(sentences, workers = 4, iter=5, size=100, min_count=1)
+def run():
+    sentences = Sentences("../classification/data/sentences/")
+    model = gensim.models.Word2Vec(sentences, workers=4, iter=5, size=100, min_count=1)
     model.save("model")
 
 

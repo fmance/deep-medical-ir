@@ -8,6 +8,7 @@ import numpy as np
 import pprint
 import itertools
 import random
+import sys
 
 from rankpy.queries import Queries
 from rankpy.queries import find_constant_features
@@ -16,14 +17,17 @@ from rankpy.models import LambdaMART
 import logging
 
 
-class_id = "diag"
+class_id = sys.argv[1]
 
-classifier = ""
-#classifier = ".SGDClassifier"
+#classifier = ""
+classifier = ".SGDClassifier"
 #classifier = ".MultinomialNB"
 
-qrel_file = "../data/qrels-treceval-2015.txt"
-baseline_results_file = "../data/results-2015-A-" + class_id + ".txt"
+resYear = sys.argv[2]
+qrelYear = resYear[:4]
+
+qrel_file = "../data/qrels/qrels-treceval-" + qrelYear + ".txt"
+baseline_results_file = "../ir/results/results-" + resYear + "-" + class_id + ".txt"
 reranked_results_file = baseline_results_file + ".reranked" + classifier
 eval_progname = "../eval/trec_eval.9.0/trec_eval"
 
@@ -54,10 +58,10 @@ def read_class_predictions_nn():
     return predictions
 
 def read_class_predictions_non_nn():
-    doc_ids = map(lambda did: int(did), open("../baseline-classification/res/" + class_id + "/res/ids.txt").read().split())
+    doc_ids = map(lambda did: int(did), open("../classification/data/ir-res/ids.txt").read().split())
     predictions = {}
     i = 0
-    for line in open("../baseline-classification/res/" + class_id + "/predictions-on-ir-res.txt" + classifier):
+    for line in open("../classification/data/" + class_id + "/predictions-on-ir-res.txt" + classifier):
         parts = line.split()
         pred = int(parts[0])
         if pred == 1: #!!!!#
@@ -68,7 +72,7 @@ def read_class_predictions_non_nn():
     return predictions
 
 def interpolate(x, y, w):
-    return w * x + (1 - w) * y #* (randint(0,10) < 7)
+    return w * x + (1 - w) * y #*(randint(0,10) < 7)
 
 def zscore_dict_of_pairs(d):
     k, v = zip(*d.items())
@@ -83,7 +87,7 @@ def zscore_dict(d):
 
 def simple_rerank(weight):
     baseline_results = read_baseline_results(baseline_results_file)   
-    class_predictions = read_class_predictions_nn()
+    class_predictions = read_class_predictions_non_nn()
     class_predictions = zscore_dict(class_predictions)
     reranked_results = open(reranked_results_file, "w")
     topic_offset = topic_offsets[class_id]
@@ -110,8 +114,8 @@ def get_precision_at(prec_num, weight):
     return float(output[index + 2])
 
 def get_best_weight(prec_num):
-    best_weight = 0
-    prec_max = 0
+    best_weight = 0.0
+    prec_max = 0.0
     all_res = []
     for weight in np.linspace(0,1,101):
         prec = get_precision_at(prec_num, weight)
