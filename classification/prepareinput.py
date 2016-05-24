@@ -23,12 +23,14 @@ resultsDocIds = set(utils.getResultsDocIds(results2014)) | set(utils.getResultsD
 
 nonQrelsOrResultsDids = utils.VALID_DOC_IDS - qrelsDocIds - resultsDocIds
 
+CATEGORY = sys.argv[1]
+
 def readPmcIds(pmcIdsFile):
 	return set(map(lambda pmcid: int(pmcid[3:]), open(pmcIdsFile).read().split()))
 
 
 def getPositivePmcIds(category):
-	catDir = os.path.join(CLASSIFICATION_DATA_DIR, category)
+	catDir = os.path.join(CLASSIFICATION_DATA_DIR, category, "positive-ids")
 	posIds = readPmcIds(os.path.join(catDir, "positive-pmc-ids.txt"))
 	if category == "diag":
 		posIds |= readPmcIds(os.path.join(catDir, "diag-services.txt"))
@@ -69,13 +71,13 @@ def getWords(filename):
 def readVocabMap():
 	print "Reading vocabulary map"
 	vocabMap = {}
-	for line in codecs.open("nn/vocmap.txt"), "r", "utf-8"):
+	for line in codecs.open("nn/vocmap.txt", "r", "utf-8"):
 		parts = line.split()
 		vocabMap[parts[0]] = int(parts[1])
 	return vocabMap
 
 MIN_DOC_LEN = 200
-MAX_DOC_LEN = 10000
+MAX_DOC_LEN = 1000
 EMBED_SIZE = 100
 
 # !! also account for <PAD>
@@ -87,7 +89,7 @@ def writeEmbeddings():
     out = open("nn/embeddings.txt", "w")
     
     out.write("%s\n" % ("0.0 " * EMBED_SIZE)) # zeros for <PAD/> (index 0)
-    for index in range(1, 1 + len(inverseMap))
+    for index in range(1, 1 + len(inverseMap)):
     	word = inverseMap[index]
     	embedding = " ".join(str(x) for x in model[word])
         out.write("%s\n" % embedding)
@@ -96,10 +98,11 @@ def writeEmbeddings():
 
     out.close()
 
-def writeDocsData(docIds, labels, wordsFile, mappingsFile, labelsFile, idsFile, ignoreShortDocs=False):
+def writeDocsData(docIds, labels, wordsFile, mappingsFile, labelsFile, nnLabelsFile, idsFile, ignoreShortDocs=False):
 	wordsOut = codecs.open(wordsFile, "w", "utf-8")
 	mappingsOut = codecs.open(mappingsFile, "w", "utf-8")
 	labelsOut = open(labelsFile, "w")
+	nnLabelsOut = open(nnLabelsFile, "w")
 	idsOut = open(idsFile, "w")
 	
 	fnames = map(lambda did: str(did) + ".txt.sent", docIds)
@@ -114,9 +117,14 @@ def writeDocsData(docIds, labels, wordsFile, mappingsFile, labelsFile, idsFile, 
 			continue
 		mappings = [VOCAB_MAP[word] for word in words]
 		mappings += [0] * (MAX_DOC_LEN - len(mappings))
-		mappingsOut.write("%s\n" % " ".join(mappings))
+		mappingsOut.write("%s\n" % " ".join(map(str, mappings)))
 		wordsOut.write("%s\n" % " ".join(words))
-		labelsOut.write("%s\n" % label)
+		labelsOut.write("%d\n" % label)
+		if label == 1:
+			nnLabelsOut.write("1 0\n")
+		else: #label == 0 or -1
+			nnLabelsOut.write("0 1\n")
+		
 		idsOut.write("%d\n" % did)
 		
 		counter += 1
@@ -127,19 +135,44 @@ def writeDocsData(docIds, labels, wordsFile, mappingsFile, labelsFile, idsFile, 
 	wordsOut.close()
 	mappingsOut.close()
 	labelsOut.close()
+	nnLabelsOut.close()
 	idsOut.close()
 
 
-def getLabels(pos, neg):
-	return ["1"] * len(pos) + ["0"] * len(neg)
+def getRelevantQrelDocIds(qrels):
+	dids = []
+	for qid, docRels in qrels.items():
+		for did, rel in docRels:
+			if rel > 0:
+				if (CATEGORY == "diag" and qid <= 10) or \
+				   (CATEGORY == "test" and qid > 10 and qid <= 20) or \
+				   (CATEGORY == "treat" and qid > 20):
+					dids.append(did)
+	return set(dids)
+				
 
-def writeIrResDataset():
-	print "Writing ir res mappings"
-	resDir = os.path.join(CLASSIFICATION_DATA_DIR, "ir-res")
-	writeDocsData(resultsDocIds, [-1] * len(resultsDocIds),	os.path.join(resDir, "words.txt"), \
-													  		os.path.join(resDir, "mappings.txt"), \
-													  		os.path.join(resDir, "labels.txt"), \
-													  		os.path.join(resDir, "ids.txt"))
+def getLabels(pos, neg):
+	return [1] * len(pos) + [0] * len(neg)
+
+def writeRelevantQrelDocsDataset():
+	print "Writing relevant qrel docs dataset"
+	resDir = os.path.join(CLASSIFICATION_DATA_DIR, "relevant-qrel-docs")
+	docIds = getRelevantQrelDocIds(qrels2014) | getRelevantQrelDocIds(qrels2015)
+	writeDocsData(docIds, [1] * len(docIds),	os.path.join(resDir, "words.txt"), \
+								  				os.path.join(resDir, "mappings.txt"), \
+								  				os.path.join(resDir, "labels.txt"), \
+										  		os.path.join(resDir, "labels-nn.txt"), \
+										  		os.path.join(resDir, "ids.txt"))
+
+def writeIrResAndQrelsDataset():
+	print "Writing ir res and qrels dataset"
+	resDir = os.path.join(CLASSIFICATION_DATA_DIR, "res-and-qrels")
+	resAndQrelsDocIds = resultsDocIds | qrelsDocIds
+	writeDocsData(resAndQrelsDocIds, [-1] * len(resAndQrelsDocIds),	os.path.join(resDir, "words.txt"), \
+													  				os.path.join(resDir, "mappings.txt"), \
+													  				os.path.join(resDir, "labels.txt"), \
+															  		os.path.join(resDir, "labels-nn.txt"), \
+															  		os.path.join(resDir, "ids.txt"))
 
 def writeDatasets(category):
 	posIds, negIds = getTrainingAndTestIdsForCategory(category)
@@ -156,6 +189,7 @@ def writeDatasets(category):
 	writeDocsData(trainPos + trainNeg, trainLabels, os.path.join(trainDir, "words.txt"), \
 													os.path.join(trainDir, "mappings.txt"), \
 													os.path.join(trainDir, "labels.txt"), \
+													os.path.join(trainDir, "labels-nn.txt"), \
 													os.path.join(trainDir, "ids.txt"), \
 													ignoreShortDocs=True)
 
@@ -163,9 +197,12 @@ def writeDatasets(category):
 	writeDocsData(testPos + testNeg, testLabels, os.path.join(testDir, "words.txt"), \
 												os.path.join(testDir, "mappings.txt"), \
 												os.path.join(testDir, "labels.txt"), \
+												os.path.join(testDir, "labels-nn.txt"), \
 												os.path.join(testDir, "ids.txt"), \
 												ignoreShortDocs=True)
 
 VOCAB_MAP = readVocabMap()
-writeIrResDataset()
-writeDatasets(sys.argv[1])
+#writeEmbeddings()
+#writeIrResAndQrelsDataset()
+#writeRelevantQrelDocsDataset()
+#writeDatasets(CATEGORY)
