@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
-import tensorflow as tf
 import numpy as np
+import tensorflow as tf
 import os
 import time
 import sys
@@ -11,15 +11,17 @@ NUM_CLASSES = 2
 VOCAB_SIZE = 3712634 + 1 #1726928
 EMBED_SIZE = 100
 NUM_FILTERS = 50
-MAX_DOC_LEN = 10000
+MAX_DOC_LEN = 1000
 
 FC1_SIZE = 25
 
 category = sys.argv[1]
 dataDir = "../data/"
 catDir = os.path.join(dataDir, category)
-irResDir = os.path.join(dataDir, "ir-res")
-resDir = "results"
+irResDir = os.path.join(dataDir, "res-and-qrels")
+resDir = os.path.join(irResDir, "results", category)
+resFile = os.path.join(resDir, "results.txt.NN")
+testFile = os.path.join(resDir, "results-on-test-docs.txt.NN")
 
 def chunks(l, n):
 	n = max(1, n)
@@ -37,7 +39,7 @@ print "done"
 
 def readDocsAndLabels(dirname):
 	print "Reading docs and labels from " + dirname
-	docs = np.reshape(np.fromfile(os.path.join(dirname, "mappings-nn.txt"), dtype=np.int32, count=-1,sep=" "), (-1, MAX_DOC_LEN))
+	docs = np.reshape(np.fromfile(os.path.join(dirname, "mappings.txt"), dtype=np.int32, count=-1,sep=" "), (-1, MAX_DOC_LEN))
 	labels = np.reshape(np.fromfile(os.path.join(dirname, "labels-nn.txt"), dtype=np.int32, count=-1,sep=" "), (-1, NUM_CLASSES))
 	return docs, labels
 
@@ -45,19 +47,11 @@ trainDocs, trainLabels = readDocsAndLabels(os.path.join(catDir, "train"))
 testDocs, testLabels = readDocsAndLabels(os.path.join(catDir, "test"))
 resultDocs, resultDummyLabels = readDocsAndLabels(irResDir)
 
-#print "reading qrel docs"
-#qrel_docs = np.reshape(np.fromfile(class_dir + "qrels/docs.txt", dtype=np.int32, count=-1,sep=" "), (-1, MAX_DOC_LEN))
-#qrel_labels_dummy = np.reshape([-1, -1] * len(qrel_docs), (-1, NUM_CLASSES))
-#print "done"
-
 testDocsChunks = chunks(testDocs, 100)
 testLabelsChunks = chunks(testLabels, 100)
 
 resultDocsChunks = chunks(resultDocs, 100)
-resultDummyLabelsChunks = chunks(resultLabels, 100)
-
-#qrel_docs_chunks = chunks(qrel_docs, 100)
-#qrel_labels_dummy_chunks = chunks(qrel_labels_dummy, 100)
+resultDummyLabelsChunks = chunks(resultDummyLabels, 100)
 
 def getTrainingBatch(batchSize):
 	randomIndices = np.random.permutation(np.arange(len(trainDocs)))[:batchSize]
@@ -87,7 +81,7 @@ def max_pool(x, filter_size, n):
 	return tf.nn.max_pool(x, ksize=[1, MAX_DOC_LEN - filter_size + 1, 1, 1],
 						strides=[1, 1, 1, 1], padding='VALID', name=n)
 
-filter_sizes = [2,3,4,5]
+filter_sizes = [5]
 
 #convolution filter
 
@@ -104,14 +98,14 @@ NUM_FILTERS_TOTAL = NUM_FILTERS * len(filter_sizes)
 h_pool = tf.reshape(tf.concat(3, poolings), [-1, NUM_FILTERS_TOTAL], name="h_pool")
 h_drop = tf.nn.dropout(h_pool, keep_prob, name="h_drop")
 
-W_fc1 = weight_variable([NUM_FILTERS_TOTAL, FC1_SIZE], "W_fc1")
-b_fc1 = bias_variable([FC1_SIZE], "b_fc1")
+W_fc1 = weight_variable([NUM_FILTERS_TOTAL, NUM_CLASSES], "W_fc1")
+b_fc1 = bias_variable([NUM_CLASSES], "b_fc1")
 h_fc1 = tf.nn.bias_add(tf.matmul(h_drop, W_fc1), b_fc1, name="h_fc1")
 
-W_fc2 = weight_variable([FC1_SIZE, NUM_CLASSES], "W_fc2")
-b_fc2 = bias_variable([NUM_CLASSES], "b_fc2")
+#W_fc2 = weight_variable([FC1_SIZE, NUM_CLASSES], "W_fc2")
+#b_fc2 = bias_variable([NUM_CLASSES], "b_fc2")
 
-scores = tf.nn.bias_add(tf.matmul(h_fc1, W_fc2), b_fc2, name="scores")
+scores = h_fc1#tf.nn.bias_add(tf.matmul(h_fc1, W_fc1), b_fc1, name="scores")
 predictions =  tf.argmax(scores, 1, name="predictions")
 
 loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(scores, y_), name="loss")
@@ -133,19 +127,24 @@ sess = tf.InteractiveSession()
 sess.run(tf.initialize_all_variables())
 #############
 
-#saver.restore(sess, "res/" + class_id + "/nn5000" + class_id + ".save")
+#saver.restore(sess, os.path.join(resDir, "nn1000.save"))
 
 def evaluate(outfile, doc_chunks, label_chunks):
+	print "Evaluating"
 	sum_acc = 0.0
 	sum_w = 0.0
 	pred = open(outfile, "w")
+	counter = 0
 	for tdc, tlc in zip(doc_chunks, label_chunks):
 		scr, prd, test_accuracy = sess.run([scores, predictions, accuracy], feed_dict={
 			x: tdc, y_: tlc, keep_prob: 1.0})
 		for idx in range(0, len(tdc)):
-			pred.write("%g %f %f\n" % (prd[idx], scr[idx][0], scr[idx][1]))
+			scoreIdx = scr[idx]
+			pred.write("%f\n" % (scoreIdx[0] - scoreIdx[1]))
 		sum_acc += len(tdc) * test_accuracy
 		sum_w += len(tdc)
+		counter += 1
+		print "Evaluating chunk %d" % counter
 	pred.close()
 	acc = sum_acc/sum_w
 	print "\n\ntotal test docs %d: test accuracy %g\n\n" % (sum_w, acc)
@@ -161,13 +160,11 @@ def train(offset, num_iter):
 		acc_train += train_accuracy
 
 		if it > 0 and it % 1000 == 0:
-			acc_test = evaluate(os.path.join(resDir, "test-pos-predictions.txt"), testDocsChunks, testLabelsChunks)
+			acc_test = evaluate(testFile, testDocsChunks, testLabelsChunks)
 			print "accuracy:\t\ttrain: %g\t\ttest: %g" % (acc_train/it, acc_test)
-			evaluate(os.path.join(resDir, "predictions-on-ir-res.txt"), resultDocsChunks, resultDummyLabelsChunks)
-#			evaluate(class_res_dir + "predictions-on-qrels.txt", qrel_docs_chunks, qrel_labels_dummy_chunks)
-		if it > 0 and it % 1000 == 0:
-			saver.save(sess, os.path.join(resDir, "nn" + str(it) + category + ".save")
+			#evaluate(resFile, resultDocsChunks, resultDummyLabelsChunks)
 
-train(0, 5000)
-evaluate(os.path.join(resDir, "predictions-on-ir-res.txt"), resultDocsChunks, resultDummyLabelsChunks)
-#evaluate(class_res_dir + "predictions-on-qrels.txt", qrel_docs_chunks, qrel_labels_dummy_chunks)
+train(0, 5001)
+print "Saving checkpoint"
+saver.save(sess, os.path.join(resDir, "nn5000.save"))
+evaluate(resFile, resultDocsChunks, resultDummyLabelsChunks)
