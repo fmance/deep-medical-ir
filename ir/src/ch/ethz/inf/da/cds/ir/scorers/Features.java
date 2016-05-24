@@ -52,12 +52,16 @@ public class Features {
     }
 
     public List<Double> toList() {
-        List<Double> features = Lists.newArrayList(overlap, coord, length, idf);
+        List<Double> features = Lists.newArrayList();
+        features.add(bm25);
+        features.add(tfidf);
+        features.add(overlap);
+        features.add(coord);
+        features.add(length);
+        features.add(idf);
         features.addAll(tfStats.toList());
         features.addAll(normTfStats.toList());
         features.addAll(tfidfStats.toList());
-        features.add(bm25);
-        features.add(tfidf);
         return features;
     }
 
