@@ -4,7 +4,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class FilePaths {
-    public static final Path DATA_DIR = Paths.get("../data/");
+    public static final Path ROOT_DIR = Paths.get("..");
+    public static final Path DATA_DIR = ROOT_DIR.resolve("data");
 
     public static final Path PMC_00_DIR = DATA_DIR.resolve("pmc-text-00");
     public static final Path PMC_01_DIR = DATA_DIR.resolve("pmc-text-01");
