@@ -1,6 +1,7 @@
 #!/bin/python
 
 import os, time
+import codecs
 
 THIS_DIR = os.path.dirname(__file__)
 
@@ -14,7 +15,7 @@ def writeVocabularyMap():
                 count += 1
                 if count % 10000 == 0:
                     print "%d files #words: %d (%s) in %.2f minutes" % (count, len(vocab), ssdir, (time.time() - start)/60.0)
-                words = open(fname, "r", encoding="utf-8").read().split()
+                words = codecs.open(fname, "r", encoding="utf-8").read().split()
                 vocab.update(words)
     print "Vocabulary size: %d" % len(vocab)
     out = codecs.open(os.path.join(THIS_DIR, "vocmap.txt"), "w", "utf-8")
