@@ -8,7 +8,7 @@ import ch.ethz.inf.da.cds.ir.util.LuceneUtils;
 import ch.ethz.inf.da.cds.ir.util.XmlUtils;
 
 public class QueryRunner {
-    private static final int NUM_SEARCH_RESULTS = 100;
+    public static final int NUM_SEARCH_RESULTS = 1000;
 
     public static void main(String[] args) throws Exception {
         FilePaths.RESULTS_DIR.toFile().mkdir();
