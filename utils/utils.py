@@ -6,10 +6,23 @@ from collections import defaultdict
 
 DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data"))
 IR_RESULTS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../ir/results/"))
+RESULTS_2014 = os.path.join(IR_RESULTS_DIR, "results-2014.txt")
+RESULTS_2015_A = os.path.join(IR_RESULTS_DIR, "results-2015-A.txt")
+RESULTS_2015_B = os.path.join(IR_RESULTS_DIR, "results-2015-B.txt")
+BM25_SCORES_2014 = os.path.join(IR_RESULTS_DIR, "bm25-scores-2014.txt")
+BM25_SCORES_2015 = os.path.join(IR_RESULTS_DIR, "bm25-scores-2015.txt")
+TFIDF_SCORES_2014 = os.path.join(IR_RESULTS_DIR, "tfidf-scores-2014.txt")
+TFIDF_SCORES_2015 = os.path.join(IR_RESULTS_DIR, "tfidf-scores-2015.txt")
+
+CLASSIFICATION_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../classification"))
 
 QRELS_DIR = os.path.join(DATA_DIR, "qrels")
+QRELS_2014 = os.path.join(QRELS_DIR, "qrels-treceval-2014.txt")
+QRELS_2015 = os.path.join(QRELS_DIR, "qrels-treceval-2015.txt")
+
 QUERIES_DIR = os.path.join(DATA_DIR, "queries")
 PLAINTEXT_DIR = os.path.join(DATA_DIR, "plaintext")
+RES_AND_QRELS_DIR = os.path.join(CLASSIFICATION_DIR, "data", "res-and-qrels")
 
 def readDocIds(idsFile):
 	return map(int, open(idsFile).read().split())
@@ -28,10 +41,10 @@ def readQrels(qrelFile):
 	return qrels
 
 def readQrels2014():
-	return readQrels(os.path.join(QRELS_DIR, "qrels-treceval-2014.txt"))
+	return readQrels(QRELS_2014)
 
 def readQrels2015():
-	return readQrels(os.path.join(QRELS_DIR, "qrels-treceval-2015.txt"))
+	return readQrels(QRELS_2015)
 
 def getQrelsDocIds(qrels):
 	return [did for (_, docRelPairList) in qrels.items() for (did, _) in docRelPairList]
@@ -49,13 +62,13 @@ def readResults(resultsFile):
 	return results
 
 def readResults2014():
-	return readResults(os.path.join(IR_RESULTS_DIR, "results-2014.txt"))
+	return readResults(RESULTS_2014)
 
 def readResults2015A():
-	return readResults(os.path.join(IR_RESULTS_DIR, "results-2015-A.txt"))
+	return readResults(RESULTS_2015_A)
 
 def readResults2015B():
-	return readResults(os.path.join(IR_RESULTS_DIR, "results-2015-B.txt"))
+	return readResults(RESULTS_2015_B)
 
 def getResultsDocIds(results):
 	return [did for (_, docResList) in results.items() for (did, _, _) in docResList]
@@ -84,3 +97,11 @@ def getAndCopyFiles(filenames, srcRootDir, destDir):
 	pathsDict = getFilePaths(filenames, srcRootDir)
 	copyFiles(pathsDict.values(), destDir)
 
+def readClassPredictions(classifier, classId):
+	docIds = readDocIds(os.path.join(RES_AND_QRELS_DIR, "ids.txt"))
+	results = map(float, open(os.path.join(RES_AND_QRELS_DIR, "results", classId, "results.txt." + classifier)).read().split())
+	
+	if classifier != "NN":
+		results = map(lambda x : 2*x-1, results) # transform 1 to 1 and 0 to -1
+	
+	return dict(zip(docIds, results))
