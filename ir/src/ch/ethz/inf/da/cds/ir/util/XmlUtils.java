@@ -7,9 +7,15 @@ import java.util.List;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.transform.OutputKeys;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.io.FilenameUtils;
 import org.w3c.dom.Document;
+import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
@@ -100,40 +106,40 @@ public class XmlUtils {
             String description = children.item(1).getTextContent().trim();
             String summary = children.item(3).getTextContent().trim();
 
-            summary = summary.replaceAll("\\d+", " ");
-            summary = summary.replaceAll("\\byear\\b", " ");
-            summary = summary.replaceAll("\\bold\\b", " ");
-            summary = summary.replaceAll("\\byo\\b", " ");
-            summary = summary.replaceAll("\\bwho\\b", " ");
-            summary = summary.replaceAll("\\bwith\\b", " ");
-            summary = summary.replaceAll("\\bfrom\\b", " ");
-            summary = summary.replaceAll("\\bmale\\b", " ");
-            summary = summary.replaceAll("\\bfemale\\b", " ");
-            summary = summary.replaceAll("\\badult\\b", " ");
-            summary = summary.replaceAll("\\bleft\\b", " ");
-            summary = summary.replaceAll("\\bright\\b", " ");
-            summary = summary.replaceAll("\\bhe\\b", " ");
-            summary = summary.replaceAll("\\bshe\\b", " ");
-            summary = summary.replaceAll("\\bher\\b", " ");
-            summary = summary.replaceAll("\\bwhile\\b", " ");
-            summary = summary.replaceAll("\\bnormal\\b", " ");
-            summary = summary.replaceAll("\\bday\\w*\\b", " ");
-            summary = summary.replaceAll("\\bweek\\w*\\b", " ");
-            summary = summary.replaceAll("\\bmonth\\w*\\b", " ");
-            summary = summary.replaceAll("\\bboth\\b", " ");
-            summary = summary.replaceAll("\\bnow\\b", " ");
-
-            System.out.println(summary);
-
-            if (id <= 10) {
-                summary += " diagnosis diagnose";
-            }
-            if (id > 10 && id <= 20) {
-                summary += " routine test";
-            }
-            if (id > 20) {
-                summary += " therapy treat treatment";
-            }
+            // summary = summary.replaceAll("\\d+", " ");
+            // summary = summary.replaceAll("\\byear\\b", " ");
+            // summary = summary.replaceAll("\\bold\\b", " ");
+            // summary = summary.replaceAll("\\byo\\b", " ");
+            // summary = summary.replaceAll("\\bwho\\b", " ");
+            // summary = summary.replaceAll("\\bwith\\b", " ");
+            // summary = summary.replaceAll("\\bfrom\\b", " ");
+            // summary = summary.replaceAll("\\bmale\\b", " ");
+            // summary = summary.replaceAll("\\bfemale\\b", " ");
+            // summary = summary.replaceAll("\\badult\\b", " ");
+            // summary = summary.replaceAll("\\bleft\\b", " ");
+            // summary = summary.replaceAll("\\bright\\b", " ");
+            // summary = summary.replaceAll("\\bhe\\b", " ");
+            // summary = summary.replaceAll("\\bshe\\b", " ");
+            // summary = summary.replaceAll("\\bher\\b", " ");
+            // summary = summary.replaceAll("\\bwhile\\b", " ");
+            // summary = summary.replaceAll("\\bnormal\\b", " ");
+            // summary = summary.replaceAll("\\bday\\w*\\b", " ");
+            // summary = summary.replaceAll("\\bweek\\w*\\b", " ");
+            // summary = summary.replaceAll("\\bmonth\\w*\\b", " ");
+            // summary = summary.replaceAll("\\bboth\\b", " ");
+            // summary = summary.replaceAll("\\bnow\\b", " ");
+            //
+            // System.out.println(summary);
+            //
+            // if (id <= 10) {
+            // summary += " diagnosis diagnose";
+            // }
+            // if (id > 10 && id <= 20) {
+            // summary += " routine test";
+            // }
+            // if (id > 20) {
+            // summary += " therapy treat treatment";
+            // }
 
             Optional<String> diagnosis = Optional.absent();
             if (children.getLength() > 5) {
@@ -143,14 +149,55 @@ public class XmlUtils {
             queries.add(new TrecQuery(id,
                                       type,
                                       description,
-                                      summary,
+                                      description,
                                       diagnosis));
         }
 
         return queries;
     }
 
+    private static void writeQueriesTerrierFormat(List<TrecQuery> queries, File outFile) throws Exception {
+        DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder docBuilder = docFactory.newDocumentBuilder();
+
+        Document doc = docBuilder.newDocument();
+        Element rootElement = doc.createElement("topics");
+        doc.appendChild(rootElement);
+
+        for (TrecQuery query : queries) {
+            Element queryElement = doc.createElement("topic");
+            rootElement.appendChild(queryElement);
+
+            Element numberElement = doc.createElement("number");
+            numberElement.setTextContent(Integer.toString(query.getId()));
+            queryElement.appendChild(numberElement);
+
+            Element summaryElement = doc.createElement("summary");
+            summaryElement.setTextContent(query.getSummary());
+            queryElement.appendChild(summaryElement);
+        }
+
+        TransformerFactory transformerFactory = TransformerFactory.newInstance();
+        Transformer transformer = transformerFactory.newTransformer();
+        transformer.setOutputProperty(OutputKeys.INDENT, "yes");
+        transformer.setOutputProperty("{http://xml.apache.org/xslt}indent-amount", "4");
+
+        DOMSource source = new DOMSource(doc);
+        StreamResult result = new StreamResult(outFile);
+
+        transformer.transform(source, result);
+    }
+
     public static void main(String[] args) throws Exception {
-        System.out.println(parseArticle(new File(FilePaths.PMC_00_DIR.toString() + "/00/2637234.nxml")));
+        // System.out.println(parseArticle(new
+        // File(FilePaths.PMC_00_DIR.toString() + "/00/2637234.nxml")));
+
+        List<TrecQuery> queries2014 = parseQueries(FilePaths.QUERIES_2014_FILE.toFile());
+        writeQueriesTerrierFormat(queries2014, FilePaths.QUERIES_DIR.resolve("topics-2014-terrier.xml")
+                                                                    .toFile());
+
+        List<TrecQuery> queries2015 = parseQueries(FilePaths.QUERIES_2015_A_FILE.toFile());
+        writeQueriesTerrierFormat(queries2015, FilePaths.QUERIES_DIR.resolve("topics-2015-terrier.xml")
+                                                                    .toFile());
     }
 }

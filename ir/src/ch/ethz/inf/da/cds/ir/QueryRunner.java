@@ -14,8 +14,9 @@ public class QueryRunner {
         FilePaths.RESULTS_DIR.toFile().mkdir();
         String field = LuceneUtils.TEXT_FIELD;
         runQueries(FilePaths.QUERIES_2014_FILE.toFile(), field, FilePaths.RESULTS_2014_FILE.toFile());
-        runQueries(FilePaths.QUERIES_2015_A_FILE.toFile(), field, FilePaths.RESULTS_2015_A_FILE.toFile());
-        runQueries(FilePaths.QUERIES_2015_B_FILE.toFile(), field, FilePaths.RESULTS_2015_B_FILE.toFile());
+        runQueries(FilePaths.QUERIES_2015_A_FILE.toFile(), field, FilePaths.RESULTS_2015_FILE.toFile());
+        // runQueries(FilePaths.QUERIES_2015_B_FILE.toFile(), field,
+        // FilePaths.RESULTS_2015_B_FILE.toFile());
     }
 
     private static void runQueries(File queriesFile, String field, File resultsFile) throws Exception {

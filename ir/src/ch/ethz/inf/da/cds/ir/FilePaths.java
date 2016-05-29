@@ -34,7 +34,7 @@ public class FilePaths {
 
     public static final Path RESULTS_DIR = Paths.get("results");
     public static final Path RESULTS_2014_FILE = FilePaths.RESULTS_DIR.resolve("results-2014.txt");
-    public static final Path RESULTS_2015_A_FILE = FilePaths.RESULTS_DIR.resolve("results-2015-A.txt");
+    public static final Path RESULTS_2015_FILE = FilePaths.RESULTS_DIR.resolve("results-2015.txt");
     public static final Path RESULTS_2015_B_FILE = FilePaths.RESULTS_DIR.resolve("results-2015-B.txt");
 
     public static final Path BM25_SCORES_2014_FILE = RESULTS_DIR.resolve("bm25-scores-2014.txt");
