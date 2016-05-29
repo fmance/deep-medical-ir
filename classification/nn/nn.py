@@ -11,7 +11,7 @@ NUM_CLASSES = 2
 VOCAB_SIZE = 3712634 + 1 #1726928
 EMBED_SIZE = 100
 NUM_FILTERS = 50
-MAX_DOC_LEN = 1000
+MAX_DOC_LEN = 3000 # !!! #
 
 FC1_SIZE = 25
 
@@ -81,9 +81,7 @@ def max_pool(x, filter_size, n):
 	return tf.nn.max_pool(x, ksize=[1, MAX_DOC_LEN - filter_size + 1, 1, 1],
 						strides=[1, 1, 1, 1], padding='VALID', name=n)
 
-filter_sizes = [5]
-
-#convolution filter
+filter_sizes = [3,4,5]
 
 poolings = []
 
@@ -98,14 +96,24 @@ NUM_FILTERS_TOTAL = NUM_FILTERS * len(filter_sizes)
 h_pool = tf.reshape(tf.concat(3, poolings), [-1, NUM_FILTERS_TOTAL], name="h_pool")
 h_drop = tf.nn.dropout(h_pool, keep_prob, name="h_drop")
 
-W_fc1 = weight_variable([NUM_FILTERS_TOTAL, NUM_CLASSES], "W_fc1")
-b_fc1 = bias_variable([NUM_CLASSES], "b_fc1")
+# Without FC layer
+#W_fc1 = weight_variable([NUM_FILTERS_TOTAL, NUM_CLASSES], "W_fc1")
+#b_fc1 = bias_variable([NUM_CLASSES], "b_fc1")
+
+#scores = tf.nn.bias_add(tf.matmul(h_drop, W_fc1), b_fc1, name="h_fc1")
+# End W/O FC layer
+
+# With FC layer
+W_fc1 = weight_variable([NUM_FILTERS_TOTAL, FC1_SIZE], "W_fc1")
+b_fc1 = bias_variable([FC1_SIZE], "b_fc1")
 h_fc1 = tf.nn.bias_add(tf.matmul(h_drop, W_fc1), b_fc1, name="h_fc1")
 
-#W_fc2 = weight_variable([FC1_SIZE, NUM_CLASSES], "W_fc2")
-#b_fc2 = bias_variable([NUM_CLASSES], "b_fc2")
+W_fc2 = weight_variable([FC1_SIZE, NUM_CLASSES], "W_fc2")
+b_fc2 = bias_variable([NUM_CLASSES], "b_fc2")
 
-scores = h_fc1#tf.nn.bias_add(tf.matmul(h_fc1, W_fc1), b_fc1, name="scores")
+scores = tf.nn.bias_add(tf.matmul(h_fc1, W_fc2), b_fc2, name="scores")
+# End With FC layer
+
 predictions =  tf.argmax(scores, 1, name="predictions")
 
 loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(scores, y_), name="loss")

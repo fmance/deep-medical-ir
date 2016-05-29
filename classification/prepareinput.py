@@ -9,6 +9,10 @@ import gensim
 sys.path.insert(0, "../utils/")
 import utils
 
+MIN_DOC_LEN = 20
+MAX_DOC_LEN = 3000
+EMBED_SIZE = 100
+
 CLASSIFICATION_DATA_DIR = "data/"
 SENTENCES_DIR = os.path.join(CLASSIFICATION_DATA_DIR, "sentences")
 
@@ -56,7 +60,7 @@ def getTrainingAndTestIdsForCategory(category):
 	print "Total pos %d, total neg %d" % (len(positiveDocIds), len(negativeDocIds))
 	random.shuffle(positiveDocIds)
 	random.shuffle(negativeDocIds)
-	numIds = min(25000, len(positiveDocIds), len(negativeDocIds))
+	numIds = min(30000, len(positiveDocIds), len(negativeDocIds))
 	positiveDocIds = positiveDocIds[:numIds]
 	negativeDocIds = negativeDocIds[:numIds]
 	return positiveDocIds, negativeDocIds
@@ -75,10 +79,6 @@ def readVocabMap():
 		parts = line.split()
 		vocabMap[parts[0]] = int(parts[1])
 	return vocabMap
-
-MIN_DOC_LEN = 200
-MAX_DOC_LEN = 1000
-EMBED_SIZE = 100
 
 # !! also account for <PAD>
 # the w2v floats are truncated to 6 digits
@@ -203,6 +203,7 @@ def writeDatasets(category):
 
 VOCAB_MAP = readVocabMap()
 #writeEmbeddings()
-#writeIrResAndQrelsDataset()
 #writeRelevantQrelDocsDataset()
-#writeDatasets(CATEGORY)
+
+#writeIrResAndQrelsDataset()
+writeDatasets(CATEGORY)
