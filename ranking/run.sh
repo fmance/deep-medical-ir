@@ -6,7 +6,7 @@ set -u
 
 rm -f lambdas.txt rerank-results-201*
 
-terrierResultsDir="../terrier/terrier-core-4.1/var/results/"
+terrierResultsDir="../ir-terrier/terrier-core-4.1/var/results/"
 irResultsDir="../ir/results/"
 
 declare -a models=(

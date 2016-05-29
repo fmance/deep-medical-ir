@@ -13,7 +13,7 @@ CLASS_ID = sys.argv[2]
 QUERY_OFFSETS = {"diag": 1, "test": 11, "treat": 21}
 QUERY_OFFSET = QUERY_OFFSETS[CLASS_ID]
 
-TERRIER_RES_DIR = "../terrier/terrier-core-4.1/var/results/"
+TERRIER_RES_DIR = "../ir-terrier/terrier-core-4.1/var/results/"
 
 MODELS = [\
 "BB2",\
