@@ -1,10 +1,15 @@
 package ch.ethz.inf.da.cds.ir.util;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 
+import org.apache.lucene.analysis.Analyzer;
+import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
+import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
@@ -172,5 +177,26 @@ public class LuceneUtils {
         IndexSearcher searcher = new IndexSearcher(reader);
         CollectionStatistics stats = searcher.collectionStatistics(field);
         return ((float) stats.sumTotalTermFreq()) / stats.docCount();
+    }
+
+    public static List<String> tokenizeString(Analyzer analyzer, String string) {
+        List<String> result = new ArrayList<String>();
+        try {
+            TokenStream stream = analyzer.tokenStream(null, new StringReader(string));
+            stream.reset();
+            while (stream.incrementToken()) {
+                result.add(stream.getAttribute(CharTermAttribute.class).toString());
+            }
+            stream.end();
+            stream.close();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+        return result;
+    }
+
+    public static void main(String[] args) {
+        Analyzer analyzer = new EnglishAnalyzer();
+        System.out.println(tokenizeString(analyzer, "hello there how are you doing, mate?"));
     }
 }
