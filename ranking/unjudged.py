@@ -13,6 +13,7 @@ def unjudged(qrelsFile, resultsFile):
 		unjudged[qid] = len(resIds - qrelIds)
 		print "%d -> %d" % (qid, unjudged[qid])
 	print "--------------------"
-	return (100 * sum(unjudged.values()))/(len(results.keys()) * 10)
+	totalUnjudged = sum(unjudged.values())
+	return float(totalUnjudged)/(len(results.keys()) * 10)
 
-print "unjudged=%d" % unjudged(sys.argv[1], sys.argv[2])
+print "unjudged=%.2f" % unjudged(sys.argv[1], sys.argv[2])

@@ -1,31 +1,30 @@
 #!/bin/bash
 
 set -e
-set -o xtrace
 set -u
 
-rm -f lambdas.txt rerank-results-201*
+rm -f lambdas*.txt rerank-results-201*
 
-terrierResultsDir="../ir-terrier/terrier-core-4.1/var/results/"
+classifier=$1
+
 irResultsDir="../ir/results/"
 
 declare -a models=(
-"BB2"
-"BM25"
-"DFR_BM25"
-"DLH"
-"DLH13"
-"DPH"
-"DFRee"
-"Hiemstra_LM"
-"IFB2"
-"In_expB2"
-"In_expC2"
-"InL2"
-"LemurTF_IDF"
-"LGD"
-"PL2"
-"TF_IDF"
+#"BB2"
+#"BM25"
+#"DFR_BM25"
+#"DLH"
+#"DLH13"
+#"DPH"
+#"DFRee"
+#"Hiemstra_LM"
+#"In_expB2"
+#"In_expC2"
+#"InL2"
+#"LemurTF_IDF"
+#"LGD"
+#"PL2"
+#"TF_IDF"
 "BM25_Lucene"
 
 #"PL2F"
@@ -37,53 +36,42 @@ declare -a models=(
 evalProg=../eval/trec_eval.9.0/trec_eval
 
 function rerank() {
-	cp $terrierResultsDir/results-2014-$1.txt $irResultsDir/results-2014.txt
-	cp $terrierResultsDir/results-2015-$1.txt $irResultsDir/results-2015.txt
-	cd $irResultsDir; ./split.sh; cd -
-	lambdaDiag=`	python simplererank.py NN diag 	| grep -Po "BestWeight=\K(0|1).\d+"`
-	lambdaTest=`	python simplererank.py NN test	| grep -Po "BestWeight=\K(0|1).\d+"`
-	lambdaTreat=`	python simplererank.py NN treat	| grep -Po "BestWeight=\K(0|1).\d+"`
-	cd $irResultsDir; ./cat.sh NN; cd -
-	echo $lambdaDiag $lambdaTest $lambdaTreat >> lambdas.txt
+	model=$1
+	year=$2
+	cp $irResultsDir/models/results-$year-$model.txt $irResultsDir/results-$year.txt
+	cd $irResultsDir; ./split.sh $year; cd -
+	lambdaDiag=`	python simplererank.py $classifier $year diag 	| grep -Po "Weights=\K.*"`
+	lambdaTest=`	python simplererank.py $classifier $year test	| grep -Po "Weights=\K.*"`
+	lambdaTreat=`	python simplererank.py $classifier $year treat	| grep -Po "Weights=\K.*"`
+	cd $irResultsDir; ./cat.sh $year $classifier; cd -
+	echo $lambdaDiag $lambdaTest $lambdaTreat | tee -a lambdas-$year.txt
 }
 
 function evalReranked() {
 	year=$1
 	qrels=../data/qrels/qrels-treceval-$year.txt
 	baselineResults=$irResultsDir/results-$year.txt 
-	rerankedResults=$irResultsDir/results-$year.txt.reranked.NN
+	rerankedResults=$irResultsDir/results-$year.txt.reranked.$classifier
 	
 	precBaseline=`		$evalProg $qrels $baselineResults	| grep -Po "\b(P_10\s+all\s+)\K0.\d+\b"`
 	precReranked=`		$evalProg $qrels $rerankedResults 	| grep -Po "\b(P_10\s+all\s+)\K0.\d+\b"`
-	unjudgedBaseline=`	python unjudged.py $qrels $baselineResults	| grep -Po "unjudged=\K\d+"`
-	unjudgedReranked=`	python unjudged.py $qrels $rerankedResults	| grep -Po "unjudged=\K\d+"`
+	unjudgedBaseline=`	python unjudged.py $qrels $baselineResults	| grep -Po "unjudged=\K0.\d+"`
+	unjudgedReranked=`	python unjudged.py $qrels $rerankedResults	| grep -Po "unjudged=\K0.\d+"`
 	
-	echo $precBaseline $precReranked $unjudgedBaseline $unjudgedReranked >> rerank-results-$year.txt
+	improvement=`echo $precReranked-$precBaseline|bc -l`
+	
+	echo $precBaseline $precReranked $improvement $unjudgedBaseline $unjudgedReranked | tee -a rerank-results-$year.txt
 }
 
 function rerankAndEvaluate() {
+	year=$1
 	for model in "${models[@]}"
 	do
-		rerank $model
-		evalReranked 2014
-		evalReranked 2015
+		echo "Model" $model
+		rerank $model $year
+		evalReranked $year
 	done
 }
 
-function evaluateBestAvgWeight() {
-	for model in "${models[@]}"
-	do
-		cp $terrierResultsDir/results-2014-$model.txt $irResultsDir/results-2014.txt
-		cp $terrierResultsDir/results-2015-$model.txt $irResultsDir/results-2015.txt
-		cd $irResultsDir; ./split.sh; cd -
-		python simplererank.py NN diag
-		python simplererank.py NN test
-		python simplererank.py NN treat
-		cd $irResultsDir; ./cat.sh NN; cd -
-		evalReranked 2014
-		evalReranked 2015
-	done
-}
-
-rerankAndEvaluate
-#evaluateBestAvgWeight
+rerankAndEvaluate 2014
+rerankAndEvaluate 2015
