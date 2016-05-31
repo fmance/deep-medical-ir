@@ -9,7 +9,6 @@ declare -a models=(
 "DPH"
 "DFRee"
 "Hiemstra_LM"
-"IFB2"
 "In_expB2"
 "In_expC2"
 "InL2"
@@ -33,7 +32,7 @@ evalProg=../eval/trec_eval.9.0/trec_eval
 qrelFile=../data/qrels/qrels-treceval-$year.txt
 
 terrier=terrier-core-4.1/bin/trec_terrier.sh
-terrierResultsDir=terrier-core-4.1/var/results/
+resultsDir=../ir/results/models/
 
 function run() {
 	for model in "${models[@]}"
@@ -55,11 +54,11 @@ function run() {
 function evaluate() {
 	for model in "${models[@]}"
 	do
-	    prec=`				$evalProg 	$qrelFile $terrierResultsDir/results-$year-$model.txt 				| grep -Po "\b(P_10\s+all\s+)\K0.\d+\b"`
-#	   	precQE=`			$evalProg	$qrelFile $terrierResultsDir/results-$year-$model-qe.txt 			| grep -Po "\b(P_10\s+all\s+)\K0.\d+\b"`
+	    prec=`				$evalProg 	$qrelFile $resultsDir/results-$year-$model.txt 				| grep -Po "\b(P_10\s+all\s+)\K0.\d+\b"`
+#	   	precQE=`			$evalProg	$qrelFile $resultsDir/results-$year-$model-qe.txt 			| grep -Po "\b(P_10\s+all\s+)\K0.\d+\b"`
 #	   	
-#	    precProcessed=`		$evalProg 	$qrelFile $terrierResultsDir/results-$year-$model-processed.txt 	| grep -Po "\b(P_10\s+all\s+)\K0.\d+\b"`
-#	    precProcessedQE=`	$evalProg 	$qrelFile $terrierResultsDir/results-$year-$model-processed-qe.txt 	| grep -Po "\b(P_10\s+all\s+)\K0.\d+\b"`
+#	    precProcessed=`		$evalProg 	$qrelFile $resultsDir/results-$year-$model-processed.txt 	| grep -Po "\b(P_10\s+all\s+)\K0.\d+\b"`
+#	    precProcessedQE=`	$evalProg 	$qrelFile $resultsDir/results-$year-$model-processed-qe.txt | grep -Po "\b(P_10\s+all\s+)\K0.\d+\b"`
 	    
 	    echo $prec #$precQE $precProcessed $precProcessedQE
 	done

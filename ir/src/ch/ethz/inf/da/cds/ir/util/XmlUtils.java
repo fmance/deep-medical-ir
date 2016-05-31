@@ -149,7 +149,7 @@ public class XmlUtils {
             queries.add(new TrecQuery(id,
                                       type,
                                       description,
-                                      description,
+                                      summary,
                                       diagnosis));
         }
 
