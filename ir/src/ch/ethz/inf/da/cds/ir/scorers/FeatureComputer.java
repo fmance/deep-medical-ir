@@ -22,6 +22,7 @@ import org.xml.sax.SAXException;
 import ch.ethz.inf.da.cds.ir.FilePaths;
 import ch.ethz.inf.da.cds.ir.QueryRunner;
 import ch.ethz.inf.da.cds.ir.TrecQuery;
+import ch.ethz.inf.da.cds.ir.TrecQuery.TYPE;
 import ch.ethz.inf.da.cds.ir.scorers.Scorer.Measure;
 import ch.ethz.inf.da.cds.ir.util.DocUtils;
 import ch.ethz.inf.da.cds.ir.util.LuceneUtils;
@@ -29,46 +30,48 @@ import ch.ethz.inf.da.cds.ir.util.QrelUtils;
 import ch.ethz.inf.da.cds.ir.util.XmlUtils;
 
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.google.common.primitives.Doubles;
 
 public class FeatureComputer {
-    private static final String CLASSIFIER = "NN";// "SGDClassifier";
+    private static final String CLASSIFIER = "SGDClassifier";
+    private static final TYPE CLASS_ID = TrecQuery.TYPE.DIAGNOSIS;
 
     public static void main(String[] args) throws Exception {
         IndexReader reader = DirectoryReader.open(NIOFSDirectory.open(FilePaths.BM25_INDEX_DIR));
         int[] docIdMapping = LuceneUtils.getLuceneToPmcIdMapping(reader);
         String field = LuceneUtils.TEXT_FIELD;
 
-        // writeQrels2014Features(reader, docIdMapping, field);
-        // writeResults2015Features(reader, docIdMapping, field);
+        writeQrels2014Features(reader, docIdMapping, field);
+        writeResults2015Features(reader, docIdMapping, field);
 
-        writeScores(reader,
-                    docIdMapping,
-                    field,
-                    FilePaths.QUERIES_2014_FILE.toFile(),
-                    FilePaths.BM25_SCORES_2014_FILE.toFile(),
-                    Measure.BM25);
-
-        writeScores(reader,
-                    docIdMapping,
-                    field,
-                    FilePaths.QUERIES_2015_A_FILE.toFile(),
-                    FilePaths.BM25_SCORES_2015_FILE.toFile(),
-                    Measure.BM25);
-
-        writeScores(reader,
-                    docIdMapping,
-                    field,
-                    FilePaths.QUERIES_2014_FILE.toFile(),
-                    FilePaths.TFIDF_SCORES_2014_FILE.toFile(),
-                    Measure.TFIDF);
-
-        writeScores(reader,
-                    docIdMapping,
-                    field,
-                    FilePaths.QUERIES_2015_A_FILE.toFile(),
-                    FilePaths.TFIDF_SCORES_2015_FILE.toFile(),
-                    Measure.TFIDF);
+        // writeScores(reader,
+        // docIdMapping,
+        // field,
+        // FilePaths.QUERIES_2014_FILE.toFile(),
+        // FilePaths.BM25_SCORES_2014_FILE.toFile(),
+        // Measure.BM25);
+        //
+        // writeScores(reader,
+        // docIdMapping,
+        // field,
+        // FilePaths.QUERIES_2015_A_FILE.toFile(),
+        // FilePaths.BM25_SCORES_2015_FILE.toFile(),
+        // Measure.BM25);
+        //
+        // writeScores(reader,
+        // docIdMapping,
+        // field,
+        // FilePaths.QUERIES_2014_FILE.toFile(),
+        // FilePaths.TFIDF_SCORES_2014_FILE.toFile(),
+        // Measure.TFIDF);
+        //
+        // writeScores(reader,
+        // docIdMapping,
+        // field,
+        // FilePaths.QUERIES_2015_A_FILE.toFile(),
+        // FilePaths.TFIDF_SCORES_2015_FILE.toFile(),
+        // Measure.TFIDF);
 
         reader.close();
     }
@@ -111,10 +114,14 @@ public class FeatureComputer {
 
         long begin = System.currentTimeMillis();
         for (TrecQuery trecQuery : trecQueries2015) {
+            if (trecQuery.getType() != CLASS_ID) {
+                continue;
+            }
+
             int queryId = trecQuery.getId();
             System.out.println("Scoring query " + queryId);
             Features[] features = Scorer.getFeatures(field, trecQuery, reader);
-            Set<Integer> topDocs = Scorer.getTopDocs(features, 1000, Measure.BM25).keySet();
+            Set<Integer> topDocs = Scorer.getTopDocs(features, 100, Measure.BM25).keySet();
 
             for (int docId = 0; docId < features.length; docId++) {
                 int pmcid = docIdMapping[docId];
@@ -167,8 +174,16 @@ public class FeatureComputer {
 
         long begin = System.currentTimeMillis();
         for (TrecQuery trecQuery : trecQueries2014) {
+            if (trecQuery.getType() != CLASS_ID) {
+                continue;
+            }
+            if (Sets.newHashSet(24, 25).contains(trecQuery.getId())) {
+                continue;
+            }
+
             System.out.println("Scoring query " + trecQuery.getId());
             Features[] features = Scorer.getFeatures(field, trecQuery, reader);
+            int positive = 0;
             for (Map.Entry<Pair<Integer, Integer>, Integer> relevanceEntry : relevances2014.entrySet()) {
                 int queryId = relevanceEntry.getKey().getLeft();
                 int pmcid = relevanceEntry.getKey().getRight();
@@ -176,18 +191,39 @@ public class FeatureComputer {
                 if (queryId != trecQuery.getId() || !validDocIds.contains(pmcid)) {
                     continue;
                 }
+                if (relevance > 0) {
+                    positive++;
+                }
+            }
+            System.out.println("positives : " + positive);
+
+            for (Map.Entry<Pair<Integer, Integer>, Integer> relevanceEntry : relevances2014.entrySet()) {
+                int queryId = relevanceEntry.getKey().getLeft();
+                int pmcid = relevanceEntry.getKey().getRight();
+                int relevance = relevanceEntry.getValue();
+                if (queryId != trecQuery.getId() || !validDocIds.contains(pmcid)) {
+                    continue;
+                }
+
                 Integer docId = reverseDocIdMapping.get(pmcid);
 
-                writeFeaturesForQueryDocPair(classificationScoresDiag,
-                                             classificationScoresTest,
-                                             classificationScoresTreat,
-                                             pw,
-                                             docIdPw,
-                                             features,
-                                             queryId,
-                                             pmcid,
-                                             relevance,
-                                             docId);
+                if (relevance == 0 && positive == 0) {
+                    continue;
+                }
+
+                boolean negativeWritten = writeFeaturesForQueryDocPair(classificationScoresDiag,
+                                                                       classificationScoresTest,
+                                                                       classificationScoresTreat,
+                                                                       pw,
+                                                                       docIdPw,
+                                                                       features,
+                                                                       queryId,
+                                                                       pmcid,
+                                                                       relevance,
+                                                                       docId);
+                if (negativeWritten) {
+                    positive--;
+                }
             }
 
         }
@@ -199,21 +235,34 @@ public class FeatureComputer {
         docIdPw.close();
     }
 
-    private static void writeFeaturesForQueryDocPair(Map<Integer, Double> classificationScoresDiag,
+    private static boolean writeFeaturesForQueryDocPair(Map<Integer, Double> classificationScoresDiag,
             Map<Integer, Double> classificationScoresTest, Map<Integer, Double> classificationScoresTreat,
             PrintWriter pw, PrintWriter docIdPw, Features[] features, int queryId, int pmcid, int relevance,
             Integer docId) {
-        pw.printf("%d qid:%d ", relevance, queryId);
-
-        int featureId = 1;
-        double classificationScore = 0;
+        Double classificationScore = null;
         if (queryId <= 10) {
             classificationScore = classificationScoresDiag.get(pmcid);
         } else if (queryId <= 20) {
-            classificationScore = classificationScoresTest.get(pmcid);
+            classificationScore = 0.0;// classificationScoresTest.get(pmcid);
         } else {
             classificationScore = classificationScoresTreat.get(pmcid);
         }
+        if (classificationScore == null) {
+            if (relevance > 0) {
+                System.out.println(pmcid);
+                System.exit(0);
+            } else {
+                return false;
+            }
+        }
+
+        if (relevance == 2) {
+            relevance = 1;
+        }
+
+        pw.printf("%d qid:%d ", relevance, queryId);
+
+        int featureId = 1;
         pw.printf("%d:%f ", featureId++, classificationScore);
 
         for (double feature : features[docId].toList()) {
@@ -223,6 +272,12 @@ public class FeatureComputer {
         pw.printf("# %d\n", pmcid);
 
         docIdPw.println(pmcid);
+
+        if (relevance == 0) {
+            return true; // negative written
+        } else {
+            return false;
+        }
     }
 
     private static Map<Integer, Integer> getReverseMapping(int[] docIdMapping) {
