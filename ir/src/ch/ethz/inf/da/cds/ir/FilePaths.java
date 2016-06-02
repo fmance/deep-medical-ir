@@ -31,11 +31,15 @@ public class FilePaths {
     public static final Path QUERIES_2014_PLAINTEXT_FILE = QUERIES_DIR.resolve("topics-2014.txt");
     public static final Path QUERIES_2015_A_PLAINTEXT_FILE = QUERIES_DIR.resolve("topics-2015-A.txt");
     public static final Path QUERIES_2015_B_PLAINTEXT_FILE = QUERIES_DIR.resolve("topics-2015-B.txt");
+    public static final Path QUERIES_EXPANDED_2014_FILE = QUERIES_DIR.resolve("topics-2014-exp.txt");
 
-    public static final Path RESULTS_DIR = Paths.get("results").resolve("models");
-    public static final Path RESULTS_2014_FILE = FilePaths.RESULTS_DIR.resolve("results-2014-BM25_Lucene.txt");
-    public static final Path RESULTS_2015_FILE = FilePaths.RESULTS_DIR.resolve("results-2015-BM25_Lucene.txt");
-    public static final Path RESULTS_2015_B_FILE = FilePaths.RESULTS_DIR.resolve("results-2015-B-BM25_Lucene.txt");
+    public static final Path RESULTS_DIR = Paths.get("results");
+    public static final Path RESULTS_2014_FILE = FilePaths.RESULTS_DIR.resolve("models")
+                                                                      .resolve("results-2014-BM25_Lucene.txt");
+    public static final Path RESULTS_2015_FILE = FilePaths.RESULTS_DIR.resolve("models")
+                                                                      .resolve("results-2015-BM25_Lucene.txt");
+    public static final Path RESULTS_2015_B_FILE = FilePaths.RESULTS_DIR.resolve("models")
+                                                                        .resolve("results-2015-B-BM25_Lucene.txt");
 
     public static final Path BM25_SCORES_2014_FILE = RESULTS_DIR.resolve("bm25-scores-2014.txt");
     public static final Path BM25_SCORES_2015_FILE = RESULTS_DIR.resolve("bm25-scores-2015.txt");
