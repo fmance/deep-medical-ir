@@ -12,6 +12,8 @@ def writeVocabularyMap():
     for sdir in [os.path.join("../../classification/data/sentences", d) for d in ["00", "01", "02", "03"]]:
         for ssdir in [os.path.join(sdir, ssdir) for ssdir in sorted(os.listdir(sdir))]:
             for fname in [os.path.join(ssdir, fname) for fname in sorted(os.listdir(ssdir))]:
+				if not fname.endswith(".txt.sent.analyzed"):
+					continue
                 count += 1
                 if count % 10000 == 0:
                     print "%d files #words: %d (%s) in %.2f minutes" % (count, len(vocab), ssdir, (time.time() - start)/60.0)
@@ -23,5 +25,5 @@ def writeVocabularyMap():
     for index, word in enumerate(vocab, 1):
     	out.write("%s %d\n" % (word, index))
     out.close()
-    
+
 writeVocabularyMap()
