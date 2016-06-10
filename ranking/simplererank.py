@@ -13,8 +13,8 @@ sys.path.insert(0, "../utils/")
 import utils
 
 classifier = sys.argv[1]
-year = sys.argv[2]
-class_id = sys.argv[3]
+class_id = sys.argv[2]
+year = sys.argv[3]
 
 qrelsSampleEval = "../data/qrels/qrels-sampleval-" + year + ".txt"
 qrelsTrecEval = "../data/qrels/qrels-treceval-" + year + ".txt"
@@ -106,5 +106,5 @@ def rerankWithWeights():
 	print "Weights=%.2f %.2f" % (weight, weight)
 	simple_rerank(weight, baselineNormScores, rerankedFile)
 	
-#lambdaRerank("P10")
-rerankWithWeights()
+lambdaRerank("P10")
+#rerankWithWeights()
