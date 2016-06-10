@@ -54,6 +54,25 @@ def readQrels2015():
 def getQrelsDocIds(qrels):
 	return [did for (_, docRelPairList) in qrels.items() for (did, _) in docRelPairList]
 
+def getRelevantQrelDocIdsForCategory(qrels, category):
+	dids = []
+	for qid, docRels in qrels.items():
+		for did, rel in docRels:
+			if rel > 0:
+				if (category == "diag" and qid <= 10) or \
+				   (category == "test" and qid > 10 and qid <= 20) or \
+				   (category == "treat" and qid > 20):
+					dids.append(did)
+	return set(dids)
+
+def getRelevantQrelDocIdsAllCategories(qrels):
+	dids = []
+	for qid, docRels in qrels.items():
+		for did, rel in docRels:
+			if rel > 0:
+				dids.append(did)
+	return set(dids)
+
 def readResults(resultsFile):
 	results = defaultdict(list)
 	for line in open(resultsFile):
@@ -138,7 +157,10 @@ def readClassPredictions(classifier, classId):
 	docIds = readDocIds(os.path.join(RES_AND_QRELS_DIR, "ids.txt"))
 	results = map(float, open(os.path.join(RES_AND_QRELS_DIR, "results", classId, "results.txt." + classifier)).read().split())
 	
-	#results = numpy.random.randint(2, size=len(docIds))
+#	results = numpy.random.randint(2, size=len(docIds))
+	
+#	if classifier == "NN":
+#		results = map(numpy.sign, results)
 	
 	if classifier != "NN":
 		results = map(lambda x : 2*x-1, results) # transform 1 to 1 and 0 to -1
