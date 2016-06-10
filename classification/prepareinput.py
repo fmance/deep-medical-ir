@@ -10,8 +10,10 @@ sys.path.insert(0, "../utils/")
 import utils
 
 MIN_DOC_LEN = 1000
-MAX_DOC_LEN = 3000
+MAX_DOC_LEN = 5000
 EMBED_SIZE = 100
+
+CATEGORY = sys.argv[1]
 
 CLASSIFICATION_DATA_DIR = "data/"
 SENTENCES_DIR = os.path.join(CLASSIFICATION_DATA_DIR, "sentences")
@@ -20,15 +22,16 @@ qrels2014 = utils.readQrels2014()
 qrels2015 = utils.readQrels2015()
 qrelsDocIds = set(utils.getQrelsDocIds(qrels2014)) | set(utils.getQrelsDocIds(qrels2015))
 
+#positiveQrelsDocIds = utils.getRelevantQrelDocIdsForCategory(qrels2014, CATEGORY) |\
+#					  utils.getRelevantQrelDocIdsForCategory(qrels2015, CATEGORY)
+
 results2014AllModels = utils.readResultsAllModels(2014)
 results2015AllModels = utils.readResultsAllModels(2015)
 
 resultsDocIds = map(utils.getResultsDocIds, results2014AllModels) + map(utils.getResultsDocIds, results2015AllModels)
 resultsDocIds = set.union(*map(set, resultsDocIds))
 
-nonQrelsOrResultsDids = utils.VALID_DOC_IDS - resultsDocIds #- qrelsDocIds
-
-CATEGORY = sys.argv[1]
+#nonQrelsOrResultsDids = utils.VALID_DOC_IDS - resultsDocIds -positiveQrelsDocIds #- qrelsDocIds
 
 def readPmcIds(pmcIdsFile):
 	return set(map(lambda pmcid: int(pmcid[3:]), open(pmcIdsFile).read().split()))
@@ -37,6 +40,7 @@ def readPmcIds(pmcIdsFile):
 def getPositivePmcIds(category):
 	catDir = os.path.join(CLASSIFICATION_DATA_DIR, category, "positive-ids")
 	posIds = readPmcIds(os.path.join(catDir, "positive-pmc-ids.txt"))
+
 #	if category == "diag":
 #		posIds |= readPmcIds(os.path.join(catDir, "diag-services.txt"))
 #
@@ -54,12 +58,18 @@ def getPositivePmcIds(category):
 
 def getPositiveRelaxedPmcIds(category):
 	catDir = os.path.join(CLASSIFICATION_DATA_DIR, category, "positive-ids")
-	return readPmcIds(os.path.join(catDir, "positive-pmc-ids-relaxed.txt"))
+	
+	# for diag: open access[filter] AND diagnosis[MeSH major topic]
+	# for treat: open access[filter] AND therapeutics[MeSH]
+	return readPmcIds(os.path.join(catDir, "positive-pmc-ids-relaxed-more.txt"))
+
+def getNegativePmcIds(category):
+	catDir = os.path.join(CLASSIFICATION_DATA_DIR, category, "positive-ids")
+	return readPmcIds(os.path.join(catDir, "negative-pmc-ids.txt"))
 
 def getTrainingAndTestIdsForCategory(category):
-	positiveDocIds = getPositivePmcIds(category)
-	positiveDocIds &= nonQrelsOrResultsDids
-	negativeDocIds = nonQrelsOrResultsDids - getPositiveRelaxedPmcIds(category)
+	positiveDocIds = getPositivePmcIds(category) & utils.VALID_DOC_IDS # nonQrelsOrResultsDids
+	negativeDocIds = utils.VALID_DOC_IDS - getPositiveRelaxedPmcIds(category)   #nonQrelsOrResultsDids - getPositiveRelaxedPmcIds(category)
 	positiveDocIds = list(positiveDocIds)
 	negativeDocIds = list(negativeDocIds)
 	print "Total pos %d, total neg %d" % (len(positiveDocIds), len(negativeDocIds))
@@ -123,20 +133,24 @@ def writeDocsData(docIds, labels, wordsFile, mappingsFile, labelsFile, nnLabelsF
 		if len(words) < MIN_DOC_LEN and ignoreShortDocs:
 			continue
 
-#		words = words[:MAX_DOC_LEN]
-#		mappings = [VOCAB_MAP[word] for word in words]
-#		mappings += [0] * (MAX_DOC_LEN - len(mappings))
-#		mappingsOut.write("%s\n" % " ".join(map(str, mappings)))
+		######################## NN
+		words = words[:MAX_DOC_LEN]
+		mappings = [VOCAB_MAP[word] for word in words]
+		mappings += [0] * (MAX_DOC_LEN - len(mappings))
+		mappingsOut.write("%s\n" % " ".join(map(str, mappings)))
+		if label == 1:
+			nnLabelsOut.write("1 0\n")
+		else: #label == 0 or -1
+			nnLabelsOut.write("0 1\n")
+		#######################
+
 		wordsOut.write("%s\n" % " ".join(words))
+		
 		labelsOut.write("%d\n" % label)
 		if label == 1:
 			counterPos+=1
 		else:
 			counterNeg+=1
-#		if label == 1:
-#			nnLabelsOut.write("1 0\n")
-#		else: #label == 0 or -1
-#			nnLabelsOut.write("0 1\n")
 
 		idsOut.write("%d\n" % did)
 
@@ -152,16 +166,6 @@ def writeDocsData(docIds, labels, wordsFile, mappingsFile, labelsFile, nnLabelsF
 	idsOut.close()
 
 
-def getRelevantQrelDocIds(qrels):
-	dids = []
-	for qid, docRels in qrels.items():
-		for did, rel in docRels:
-			if rel > 0:
-				if (CATEGORY == "diag" and qid <= 10) or \
-				   (CATEGORY == "test" and qid > 10 and qid <= 20) or \
-				   (CATEGORY == "treat" and qid > 20):
-					dids.append(did)
-	return set(dids)
 
 
 def getLabels(pos, neg):
@@ -180,7 +184,15 @@ def getLabels(pos, neg):
 def writeIrResAndQrelsDataset():
 	print "Writing ir res and qrels dataset"
 	resDir = os.path.join(CLASSIFICATION_DATA_DIR, "res-and-qrels")
-	resAndQrelsDocIds = resultsDocIds #| qrelsDocIds
+
+	positiveQrelsAllDocs = utils.getRelevantQrelDocIdsAllCategories(qrels2014) | utils.getRelevantQrelDocIdsAllCategories(qrels2015)
+	negativeQrelsDocIds = set(list(qrelsDocIds - positiveQrelsAllDocs)[:len(positiveQrelsAllDocs)])
+
+	print "Lengths (resultsDocIds: %d, positiveQrelsDocIds: %d, negativeQrelsDocIds: %d)" % (\
+		len(resultsDocIds), len(positiveQrelsAllDocs), len(negativeQrelsDocIds)
+	)
+
+	resAndQrelsDocIds = resultsDocIds | positiveQrelsAllDocs | negativeQrelsDocIds
 	writeDocsData(resAndQrelsDocIds, [-1] * len(resAndQrelsDocIds),	os.path.join(resDir, "words.txt"), \
 													  				os.path.join(resDir, "mappings.txt"), \
 													  				os.path.join(resDir, "labels.txt"), \
@@ -214,7 +226,7 @@ def writeDatasets(category):
 												os.path.join(testDir, "ids.txt"), \
 												ignoreShortDocs=True)
 
-#VOCAB_MAP = readVocabMap()
+VOCAB_MAP = readVocabMap()
 #writeEmbeddings()
 #writeRelevantQrelDocsDataset()
 
