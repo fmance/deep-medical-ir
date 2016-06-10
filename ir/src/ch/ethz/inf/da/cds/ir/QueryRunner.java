@@ -25,9 +25,9 @@ public class QueryRunner {
         runQueriesFromXml(FilePaths.QUERIES_2014_FILE.toFile(), field, FilePaths.RESULTS_2014_FILE.toFile());
         runQueriesFromXml(FilePaths.QUERIES_2015_A_FILE.toFile(), field, FilePaths.RESULTS_2015_FILE.toFile());
 
-        // runQueriesFromPlaintext(FilePaths.QUERIES_EXPANDED_2014_FILE.toFile(),
+        // runQueriesFromPlaintext(FilePaths.QUERIES_2014_EXPANDED_FILE.toFile(),
         // field,
-        // FilePaths.RESULTS_2014_FILE.toFile());
+        // FilePaths.RESULTS_2014_EXPANDED_FILE.toFile());
 
         // runQueries(FilePaths.QUERIES_2015_B_FILE.toFile(), field,
         // FilePaths.RESULTS_2015_B_FILE.toFile());

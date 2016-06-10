@@ -75,7 +75,17 @@ public class Indexer {
                 }
                 try {
                     String pmcid = FilenameUtils.getBaseName(articleFile.getName());
-                    List<String> lines = FileUtils.readLines(articleFile);
+
+                    File fileToIndex = articleFile;
+                    File fullTextFile = new File(articleFile.getAbsolutePath().toString() + ".full");
+                    if (fullTextFile.exists()) {
+                        // System.out.println("Replacing " +
+                        // articleFile.getName() + " with "
+                        // + fullTextFile.getName());
+                        fileToIndex = fullTextFile;
+                    }
+
+                    List<String> lines = FileUtils.readLines(fileToIndex);
                     String title = lines.get(0);
                     String text = Joiner.on("").join(lines.subList(1, lines.size()));
                     LuceneUtils.index(indexWriter, new Article(pmcid,
