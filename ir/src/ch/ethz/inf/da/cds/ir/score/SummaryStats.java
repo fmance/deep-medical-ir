@@ -1,4 +1,4 @@
-package ch.ethz.inf.da.cds.ir.scorers;
+package ch.ethz.inf.da.cds.ir.score;
 
 import java.util.List;
 

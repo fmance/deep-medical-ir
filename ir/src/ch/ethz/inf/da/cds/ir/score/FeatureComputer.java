@@ -1,4 +1,4 @@
-package ch.ethz.inf.da.cds.ir.scorers;
+package ch.ethz.inf.da.cds.ir.score;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -23,7 +23,7 @@ import ch.ethz.inf.da.cds.ir.FilePaths;
 import ch.ethz.inf.da.cds.ir.QueryRunner;
 import ch.ethz.inf.da.cds.ir.TrecQuery;
 import ch.ethz.inf.da.cds.ir.TrecQuery.TYPE;
-import ch.ethz.inf.da.cds.ir.scorers.Scorer.Measure;
+import ch.ethz.inf.da.cds.ir.score.Scorer.Measure;
 import ch.ethz.inf.da.cds.ir.util.DocUtils;
 import ch.ethz.inf.da.cds.ir.util.LuceneUtils;
 import ch.ethz.inf.da.cds.ir.util.QrelUtils;
