@@ -24,4 +24,5 @@ def getPrecsPerQuery(precNum):
 	
 precs = getPrecsPerQuery("P_10")
 for qid, prec in precs.items():
-	print "%.2f" % (prec)
+	#if qid <= 10 or qid > 20:
+		print "%.2f" % (prec)

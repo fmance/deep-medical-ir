@@ -77,7 +77,7 @@ def replaceFiles():
 	
 	for did, path in pathMap.items():
 		originalLocation = pathsDict[str(did) + ".txt"]
-		originalTextLines = codecs.open(originalLocation, "r", "utf-8").readlines()
+#		originalTextLines = codecs.open(originalLocation, "r", "utf-8").readlines()
 		fullTextLines = codecs.open(pathMap[did], "r", "utf-8").readlines()
 		fullTextLinesNoRefs = []
 		for line in fullTextLines:
@@ -86,7 +86,7 @@ def replaceFiles():
 			fullTextLinesNoRefs.append(line)
 
 		fullOut = codecs.open(originalLocation + ".full", "w", "utf-8")
-		for line in originalTextLines + fullTextLinesNoRefs:
+		for line in fullTextLinesNoRefs:
 			fullOut.write(line)
 		fullOut.close()
 		
@@ -98,33 +98,12 @@ def replaceFiles():
 
 replaceFiles()
 	
+#pathMap = getFilePathMap(getPdfOnlyIds())
+#ids = set(pathMap.keys())
+#qrel2014Ids = utils.getRelevantQrelDocIdsAllCategories(utils.readQrels2014())
+#qrel2015Ids = utils.getRelevantQrelDocIdsAllCategories(utils.readQrels2015())
+#qrelIds = set(qrel2014Ids) | set(qrel2015Ids)
 
-
-			
-#def downloadFtpUrlMap(urlMap):
-#	print "Downloading", len(urlMap), "docs"
-
-#	ftp = ftplib.FTP('ftp.ncbi.nlm.nih.gov')
-#	ftp.login()
-#	ftp.cwd('/pub/pmc')
-#	
-#	start = time.time()
-#	
-#	counter = 0
-#    
-#	for pmcid, url in urlMap.items():
-#		print pmcid
-#		ftp.retrbinary("RETR " + url ,open(os.path.join(utils.DATA_DIR, "pdfs", str(pmcid) + ".pdf"), 'wb').write)
-#		counter += 1
-#		if counter > 0 and counter % 10 == 0:
-#			print "\n", counter, "\n"
-#			time.sleep(5)
-
-#	end = time.time()
-#	
-#	print (end-start), "seconds"
-
-#	ftp.quit()
-	
+#print ids & qrelIds
 
 

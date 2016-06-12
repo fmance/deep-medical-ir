@@ -8,73 +8,60 @@ sys.path.insert(0, "../utils/")
 import utils
 
 CLASSIFIER = sys.argv[1]
-CLASS_ID = sys.argv[2]
+MODEL=sys.argv[2]
+CLASS_ID = sys.argv[3]
 
 QUERY_OFFSETS = {"diag": 1, "test": 11, "treat": 21}
 QUERY_OFFSET = QUERY_OFFSETS[CLASS_ID]
 
-TERRIER_RES_DIR = "../ir-terrier/terrier-core-4.1/var/results/"
-
-MODELS = [\
-"BB2",\
-"BM25",\
-"DFR_BM25",\
-"DLH",\
-"DLH13",\
-"DPH",\
-"DFRee",\
-"Hiemstra_LM",\
-"IFB2",\
-"In_expB2",\
-"In_expC2",\
-"InL2",\
-"LemurTF_IDF",\
-"LGD",\
-"PL2",\
-"TF_IDF",\
-"BM25_Lucene"\
-]
-
 def getRankMap(results):
 	docs, ranks, _ = zip(*results)
 	return dict(zip(docs, ranks))
+	
+#	rankMax=max(ranks)
+#	return dict(zip(docs, [rankMax-r for r in ranks]))
 
 def getClassificationRankMap(classificationScores):
 	docs, scores = classificationScores.keys(), classificationScores.values()
 	ranks = scipy.stats.rankdata(scores, method="min")
 	ranks = 1 + max(ranks) - ranks
 	return dict(zip(docs, ranks))
+	
+def getClassificationBordaCounts(classificationScores, filterDocs):
+	classificationScores = {doc: classificationScores[doc] for doc in filterDocs}
+	docs, scores = classificationScores.keys(), classificationScores.values()
+	ranks = scipy.stats.rankdata(scores, method="min")
+	return dict(zip(docs, ranks))
 
 def rrf(xs):
 	return sum(map(lambda x:1.0/(60+x),xs))
+	
+def getTerrierScoresModel(year):
+	scoreFile = os.path.join(utils.IR_RESULTS_DIR, "results-" + str(year) + "-" + MODEL + ".txt")
+	return utils.readResults(scoreFile)
 
-def getTerrierScores(year):
-	scores = []
-	for model in MODELS:
-		scoreFile = os.path.join(TERRIER_RES_DIR, "results-" + str(year) + "-" + model + ".txt")
-		scores.append(utils.readResults(scoreFile))
-	return scores
+CLASSIFICATION_SCORES = utils.readClassPredictions(CLASSIFIER, CLASS_ID)
+CLASSIFICATION_RANKS = getClassificationRankMap(CLASSIFICATION_SCORES)
 
 def computeRRFScores(year, outputFile):
-	terrierScores = getTerrierScores(year)
-	classificationRanks = getClassificationRankMap(utils.readClassPredictions(CLASSIFIER, CLASS_ID))
+	terrierScoresModel = getTerrierScoresModel(year)
 	output = open(outputFile, "w")
 	for qid in range(QUERY_OFFSET, QUERY_OFFSET + 10):
-		rankMaps = map(lambda scores : getRankMap(scores[qid]), terrierScores)
-		docs = set.intersection(*map(lambda rankMap : set(rankMap.keys()), rankMaps)) & set(classificationRanks.keys())
-
-		rrfs = [(doc, rrf([rankMap[doc] for rankMap in rankMaps] \
-					+ [classificationRanks[doc]] \
-					)) for doc in docs]
+		rankMap = getRankMap(terrierScoresModel[qid])
+		docs = rankMap.keys() #set.intersection(*map(lambda rankMap : set(rankMap.keys()), rankMaps))# & set(classificationRanks.keys())
+	
+		classificationBordaCounts = getClassificationBordaCounts(CLASSIFICATION_SCORES, docs)
+		
+		#rrfs = [(doc, rankMap[doc] + classificationBordaCounts[doc]) for doc in docs]
+		rrfs = [(doc, rrf([rankMap[doc], CLASSIFICATION_RANKS[doc]])) for doc in docs]
 
 		rrfs = sorted(rrfs, key=lambda x:x[1], reverse=True)
-
 		rank = 1
 		for doc, score in rrfs:
 			output.write("%d Q0 %s %d %f STANDARD\n" % (qid, doc, rank, score))
 			rank += 1
 	output.close()
 
-computeRRFScores(2014, os.path.join(utils.IR_RESULTS_DIR, "results-2014-" + CLASS_ID + ".txt.reranked.RRF"))
-computeRRFScores(2015, os.path.join(utils.IR_RESULTS_DIR, "results-2015-" + CLASS_ID + ".txt.reranked.RRF"))
+computeRRFScores(2014, os.path.join(utils.IR_RESULTS_DIR, "../results-2014-" + CLASS_ID + ".txt.reranked.RRF"))
+computeRRFScores(2015, os.path.join(utils.IR_RESULTS_DIR, "../results-2015-" + CLASS_ID + ".txt.reranked.RRF"))
 

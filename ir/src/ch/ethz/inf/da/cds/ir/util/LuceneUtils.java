@@ -197,6 +197,6 @@ public class LuceneUtils {
 
     public static void main(String[] args) {
         Analyzer analyzer = new EnglishAnalyzer();
-        System.out.println(tokenizeString(analyzer, "hello there how are you doing, mate?"));
+        System.out.println(tokenizeString(analyzer, "hello there how are you doing, mate? I am 16 years old."));
     }
 }

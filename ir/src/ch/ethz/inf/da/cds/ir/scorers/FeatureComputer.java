@@ -34,8 +34,8 @@ import com.google.common.collect.Sets;
 import com.google.common.primitives.Doubles;
 
 public class FeatureComputer {
-    private static final String CLASSIFIER = "SGDClassifier";
-    private static final TYPE CLASS_ID = TrecQuery.TYPE.DIAGNOSIS;
+    private static final String CLASSIFIER = "SGDClassifier.epsilon_insensitive.l2";
+    private static final TYPE CLASS_ID = TrecQuery.TYPE.TREATMENT;
 
     public static void main(String[] args) throws Exception {
         IndexReader reader = DirectoryReader.open(NIOFSDirectory.open(FilePaths.BM25_INDEX_DIR));
@@ -106,7 +106,8 @@ public class FeatureComputer {
         List<TrecQuery> trecQueries2015 = XmlUtils.parseQueries(FilePaths.QUERIES_2015_A_FILE.toFile());
         Map<Pair<Integer, Integer>, Integer> relevances2015 = QrelUtils.getRelevance(FilePaths.QRELS_2015);
         Map<Integer, Double> classificationScoresDiag = getClassificationScores(CLASSIFIER, "diag");
-        Map<Integer, Double> classificationScoresTest = getClassificationScores(CLASSIFIER, "test");
+        Map<Integer, Double> classificationScoresTest = null;// getClassificationScores(CLASSIFIER,
+                                                             // "test");
         Map<Integer, Double> classificationScoresTreat = getClassificationScores(CLASSIFIER, "treat");
 
         PrintWriter pw = new PrintWriter(FilePaths.FEATURES_2015.toFile());
@@ -166,7 +167,8 @@ public class FeatureComputer {
         Map<Integer, Integer> reverseDocIdMapping = getReverseMapping(docIdMapping);
 
         Map<Integer, Double> classificationScoresDiag = getClassificationScores(CLASSIFIER, "diag");
-        Map<Integer, Double> classificationScoresTest = getClassificationScores(CLASSIFIER, "test");
+        Map<Integer, Double> classificationScoresTest = null;// getClassificationScores(CLASSIFIER,
+                                                             // "test");
         Map<Integer, Double> classificationScoresTreat = getClassificationScores(CLASSIFIER, "treat");
 
         PrintWriter pw = new PrintWriter(FilePaths.FEATURES_2014.toFile());
@@ -177,7 +179,7 @@ public class FeatureComputer {
             if (trecQuery.getType() != CLASS_ID) {
                 continue;
             }
-            if (Sets.newHashSet(24, 25).contains(trecQuery.getId())) {
+            if (Sets.newHashSet(12, 13, 16, 17, 24, 25).contains(trecQuery.getId())) {
                 continue;
             }
 
@@ -243,7 +245,7 @@ public class FeatureComputer {
         if (queryId <= 10) {
             classificationScore = classificationScoresDiag.get(pmcid);
         } else if (queryId <= 20) {
-            classificationScore = 0.0;// classificationScoresTest.get(pmcid);
+            classificationScore = classificationScoresTest.get(pmcid);
         } else {
             classificationScore = classificationScoresTreat.get(pmcid);
         }
@@ -255,6 +257,12 @@ public class FeatureComputer {
                 return false;
             }
         }
+
+        // if (classificationScore > 0) {
+        // classificationScore = 1.0;
+        // } else {
+        // classificationScore = -1.0;
+        // }
 
         if (relevance == 2) {
             relevance = 1;
