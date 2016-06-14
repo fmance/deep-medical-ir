@@ -17,13 +17,14 @@ def getPdfOnlyIds():
 	return set(map(lambda pmcid: int(pmcid[3:]), pmcids)) & utils.VALID_DOC_IDS
 	
 def getFilePathMap(pmcids):
-	fileList = open(os.path.join(DOC_IDS_DIR, "file_list.pdf.csv"))
+	fileList = open(os.path.join(DOC_IDS_DIR, "file_list.csv"))
 	pathMap = {}
 	
 	reader = csv.reader(fileList)
 	next(reader)
 	
 	good = 0
+	notfound = 0
 	bad = 0
 	
 	for row in reader:
@@ -32,12 +33,12 @@ def getFilePathMap(pmcids):
 			continue
 	
 		citation = row[1]
-		m=re.search("([\w \(\)\[\]\.]+)\. ?(\d+)? ?([\w-]+)? ?(\d+)? ?([\w-]+)?; ?([\w\(\) \,\.-]+)?:(.+)", citation)
+		m=re.search("([\w,/ \(\)\[\]\.-]+)\. ?(\d+)? ?([\w-]+)? ?(\d+)? ?([\w-]+)?; ?([\w\(\) \,\.-]+)?:(.+)", citation)
 		
 		if not m:
 			print citation
 		
-		journal = m.group(1).replace(" ", "_").replace(".", "_")
+		journal = m.group(1).replace(" ", "_").replace(".", "_").replace("__", "_")
 		year = m.group(2)
 		month = m.group(3)
 		day = m.group(4)
@@ -45,24 +46,39 @@ def getFilePathMap(pmcids):
 		vol = m.group(6)
 		if vol:
 			vol = vol.replace(" ", "_").replace(",", "").replace(".", "")
-		issue = m.group(7).replace(".", "_").replace("/", "_")
+		issue = m.group(7).replace(".", "_").replace("/", "_").replace(" ", "_")
 		
-		filename = "_".join([comp for comp in [journal, year, month, day, month2, vol, issue] if comp is not None]) + ".txt"
+		filename = "_".join([comp for comp in [journal.replace(",", "").replace("/", "_"),
+												year, month, day, month2, vol, issue] if comp is not None]) + ".txt"
+		filename = filename.replace(":", "_").replace("__", "_")
+		
+		if journal == "Ecography_(Cop_)":
+			journal = "Ecography_(Cop"
 		
 		path = os.path.join(utils.DATA_DIR, "plaintext-from-pmc", journal, filename)
 
 		if os.path.isfile(path):
 			pathMap[pmcid] = path
 			good += 1
+		elif "Anc_Sci_Life" in path \
+				or "J_Korean_Med_Sci" in path \
+				or "Genet_Sel_Evol" in path \
+				or "Sarcoma" in path \
+				or "Springerplus" in path \
+				or "Agric_For_Entomol" in path \
+				or "Br_J_Cancer" in path \
+				or "COMSIG_Rev" in path \
+				or "Australas_Chiropr_Osteopathy" in path:
+			notfound += 1
 		else:
 			bad += 1
-#			print "\n------------------------"
-#			print "ERRROR", path
-#			print row
-#			print "---------------------------"		
+			print "\n------------------------"
+			print "ERRROR", path
+			print row
+			print "---------------------------"		
 		
 			
-	print "\n", good, bad, "\n"
+	print "\n", good, notfound, bad, "\n"
 	
 	return pathMap
 	
@@ -96,14 +112,14 @@ def replaceFiles():
 			
 	print "Done", counter, "files"
 
-replaceFiles()
-	
-#pathMap = getFilePathMap(getPdfOnlyIds())
-#ids = set(pathMap.keys())
-#qrel2014Ids = utils.getRelevantQrelDocIdsAllCategories(utils.readQrels2014())
-#qrel2015Ids = utils.getRelevantQrelDocIdsAllCategories(utils.readQrels2015())
-#qrelIds = set(qrel2014Ids) | set(qrel2015Ids)
+#replaceFiles()
 
-#print ids & qrelIds
+def writePathMap():
+	pathMap = getFilePathMap(utils.VALID_DOC_IDS)
+	out = open("../data/doc-ids/plaintext-path-map.txt", "w")
+	for pmcid, path in pathMap.items():
+		out.write("%d %s\n" % (pmcid, path))
+	out.close()
 
+writePathMap()
 

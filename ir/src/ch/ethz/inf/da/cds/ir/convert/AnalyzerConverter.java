@@ -16,7 +16,7 @@ public class AnalyzerConverter {
     private static final Analyzer ENGLISH_ANALYZER = new EnglishAnalyzer();
 
     public static void main(String[] args) throws Exception {
-        Path destRootDir = FilePaths.ROOT_DIR.resolve("classification").resolve("data").resolve("analyzed");
+        Path destRootDir = FilePaths.DATA_DIR.resolve("analyzed");
         destRootDir.toFile().mkdir();
         ConverterUtils.convert(FilePaths.PLAINTEXT_DIR, destRootDir, AnalyzerConverter::analyzeFile);
     }

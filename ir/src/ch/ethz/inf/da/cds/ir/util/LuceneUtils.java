@@ -32,7 +32,6 @@ import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.similarities.BM25Similarity;
-import org.apache.lucene.search.similarities.ClassicSimilarity;
 import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
@@ -55,34 +54,31 @@ public class LuceneUtils {
         IndexWriterConfig config = new IndexWriterConfig(new EnglishAnalyzer());
         config.setRAMBufferSizeMB(4 * 1024);
         config.setSimilarity(similarity);
-        return new IndexWriter(directory,
-                               config);
+        return new IndexWriter(directory, config);
     }
 
     public static IndexWriter getBM25IndexWriter() throws IOException {
         return getIndexWriter(FilePaths.BM25_INDEX_DIR, new BM25Similarity());
     }
 
-    public static IndexWriter getTFIDFIndexWriter() throws IOException {
-        return getIndexWriter(FilePaths.TFIDF_INDEX_DIR, new ClassicSimilarity());
-    }
+    // public static IndexWriter getTFIDFIndexWriter() throws IOException {
+    // return getIndexWriter(FilePaths.TFIDF_INDEX_DIR, new
+    // ClassicSimilarity());
+    // }
 
     public static void index(IndexWriter indexWriter, Article article) throws IOException {
         Document doc = new Document();
-        doc.add(new StringField(PMCID_FIELD,
-                                article.getPmcid(),
-                                Field.Store.YES));
-        doc.add(new TextField(TITLE_FIELD,
-                              article.getTitle(),
-                              Field.Store.NO));
-        doc.add(new TextField(TEXT_FIELD,
-                              article.getTitle() + article.getText(),
-                              Field.Store.NO));
+        doc.add(new StringField(PMCID_FIELD, article.getPmcid(), Field.Store.YES));
+        doc.add(new TextField(TITLE_FIELD, article.getTitle(), Field.Store.NO));
+        doc.add(new TextField(TEXT_FIELD, article.getText(), Field.Store.NO));
         indexWriter.addDocument(doc);
     }
 
-    public static List<SearchResult> searchIndex(Path indexPath, Similarity similarity, TrecQuery trecQuery,
-            String field, int numResults) throws IOException, ParseException {
+    public static List<SearchResult> searchIndex(Path indexPath,
+                                                 Similarity similarity,
+                                                 TrecQuery trecQuery,
+                                                 String field,
+                                                 int numResults) throws IOException, ParseException {
         DirectoryReader ireader = DirectoryReader.open(NIOFSDirectory.open(indexPath));
         IndexSearcher isearcher = new IndexSearcher(ireader);
         isearcher.setSimilarity(similarity);
@@ -94,9 +90,7 @@ public class LuceneUtils {
         int rank = 1;
         for (ScoreDoc hit : hits) {
             Document doc = isearcher.doc(hit.doc);
-            results.add(new SearchResult(doc.getField(PMCID_FIELD).stringValue(),
-                                         rank++,
-                                         hit.score));
+            results.add(new SearchResult(doc.getField(PMCID_FIELD).stringValue(), rank++, hit.score));
         }
         ireader.close();
 
@@ -108,14 +102,15 @@ public class LuceneUtils {
         return searchIndex(FilePaths.BM25_INDEX_DIR, new BM25Similarity(), trecQuery, field, numResults);
     }
 
-    public static List<SearchResult> searchTFIDFIndex(TrecQuery trecQuery, String field, int numResults)
-            throws IOException, ParseException {
-        return searchIndex(FilePaths.TFIDF_INDEX_DIR, new ClassicSimilarity(), trecQuery, field, numResults);
-    }
+    // public static List<SearchResult> searchTFIDFIndex(TrecQuery trecQuery,
+    // String field, int numResults)
+    // throws IOException, ParseException {
+    // return searchIndex(FilePaths.TFIDF_INDEX_DIR, new ClassicSimilarity(),
+    // trecQuery, field, numResults);
+    // }
 
     private static Query constructLuceneQuery(TrecQuery trecQuery, String field) throws ParseException {
-        QueryParser parser = new QueryParser(field,
-                                             new EnglishAnalyzer());
+        QueryParser parser = new QueryParser(field, new EnglishAnalyzer());
         Query summaryQuery = parser.parse(QueryParser.escape(trecQuery.getSummary()));
         if (trecQuery.getDiagnosis().isPresent()) {
             Query diagnosisQuery = parser.parse(QueryParser.escape(trecQuery.getDiagnosis().get()));

@@ -361,14 +361,14 @@ def benchmark(clf):
 results = []
 
 # LinearSVC
-#results.append(benchmark(LinearSVC(loss="squared_hinge", penalty="l2", dual=False, tol=1e-3)))
+results.append(benchmark(LinearSVC(loss="squared_hinge", penalty="l2", dual=False, tol=1e-3)))
 
 # SGDClassifier
-#for loss in ["hinge", "squared_loss",  "epsilon_insensitive"]:
-#	for penalty in ["l2", "elasticnet"]:
-#		results.append(benchmark(SGDClassifier(loss=loss, alpha=.0001, n_iter=500, penalty=penalty, n_jobs=-1)))
+for loss in ["hinge", "squared_loss",  "epsilon_insensitive"]:
+	for penalty in ["l2", "elasticnet"]:
+		results.append(benchmark(SGDClassifier(loss=loss, alpha=.0001, n_iter=500, penalty=penalty, n_jobs=-1)))
 
-results.append(benchmark(SGDClassifier(loss="epsilon_insensitive", alpha=.0001, n_iter=500, penalty="l2", n_jobs=-1)))
+#results.append(benchmark(SGDClassifier(loss="hinge", alpha=.0001, n_iter=500, penalty="l2", n_jobs=-1)))
 
 #print('=' * 80)
 #print("LinearSVC with L1-based feature selection")
@@ -379,7 +379,7 @@ results.append(benchmark(SGDClassifier(loss="epsilon_insensitive", alpha=.0001, 
 #  ('classification', LinearSVC())
 #])))
 
-#results.append(benchmark(Pipeline([
-#  ('feature_selection', SelectFromModel(SGDClassifier(loss="epsilon_insensitive", n_iter=500, penalty="l2", n_jobs=-1))),
-#  ('classification', SGDClassifier(loss="epsilon_insensitive", n_iter=500, penalty="l2", n_jobs=-1))
-#])))
+results.append(benchmark(Pipeline([
+	('feature_selection', SelectFromModel(SGDClassifier(loss="epsilon_insensitive", n_iter=500, penalty="l2", n_jobs=-1))),
+	('classification', SGDClassifier(loss="epsilon_insensitive", n_iter=500, penalty="l2", n_jobs=-1))
+])))

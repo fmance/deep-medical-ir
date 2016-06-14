@@ -24,7 +24,7 @@ public class XmlToPlaintextConverter {
 
     public static void main(String[] args) throws Exception {
         FilePaths.PLAINTEXT_DIR.toFile().mkdir();
-        ConverterUtils.convert(FilePaths.TREC_XML_DIR, FilePaths.PLAINTEXT_DIR, XmlToPlaintextConverter::getTextContent);
+        ConverterUtils.convert(FilePaths.XML_DIR, FilePaths.PLAINTEXT_DIR, XmlToPlaintextConverter::getTextContent);
     }
 
     private static Optional<String> getTextContent(File xmlFile) {
@@ -39,7 +39,7 @@ public class XmlToPlaintextConverter {
 
         try {
             Article article = XmlUtils.parseArticle(xmlFile);
-            return Optional.of(article.getTitle() + "\n\n" + article.getText());
+            return Optional.of(article.getTitle() + ".\n\n" + article.getText());
         } catch (Throwable e) {
             e.printStackTrace();
             return Optional.empty();

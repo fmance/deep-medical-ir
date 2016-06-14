@@ -4,7 +4,7 @@ import sys
 import os
 import random
 import codecs
-import gensim
+#import gensim
 
 sys.path.insert(0, "../utils/")
 import utils
@@ -16,7 +16,7 @@ EMBED_SIZE = 100
 CATEGORY = sys.argv[1]
 
 CLASSIFICATION_DATA_DIR = "data/"
-SENTENCES_DIR = os.path.join(CLASSIFICATION_DATA_DIR, "sentences")
+SENTENCES_DIR = os.path.join(utils.DATA_DIR, "analyzed") #os.path.join(CLASSIFICATION_DATA_DIR, "sentences")
 
 qrels2014 = utils.readQrels2014()
 qrels2015 = utils.readQrels2015()
@@ -120,7 +120,7 @@ def writeDocsData(docIds, labels, wordsFile, mappingsFile, labelsFile, nnLabelsF
 	nnLabelsOut = open(nnLabelsFile, "w")
 	idsOut = open(idsFile, "w")
 
-	fnames = map(lambda did: str(did) + ".txt.sent.analyzed", docIds)
+	fnames = map(lambda did: str(did) + ".txt", docIds)
 	pathsDict = utils.getFilePaths(fnames, SENTENCES_DIR)
 
 	print "%d docs to %s" % (len(docIds), mappingsFile)
@@ -128,20 +128,20 @@ def writeDocsData(docIds, labels, wordsFile, mappingsFile, labelsFile, nnLabelsF
 	counterPos = 0
 	counterNeg = 0
 	for did, label in zip(docIds, labels):
-		path = pathsDict[str(did) + ".txt.sent.analyzed"]
+		path = pathsDict[str(did) + ".txt"]
 		words = getWords(path)
 		if len(words) < MIN_DOC_LEN and ignoreShortDocs:
 			continue
 
 		######################## NN
 		words = words[:MAX_DOC_LEN]
-		mappings = [VOCAB_MAP[word] for word in words]
-		mappings += [0] * (MAX_DOC_LEN - len(mappings))
-		mappingsOut.write("%s\n" % " ".join(map(str, mappings)))
-		if label == 1:
-			nnLabelsOut.write("1 0\n")
-		else: #label == 0 or -1
-			nnLabelsOut.write("0 1\n")
+#		mappings = [VOCAB_MAP[word] for word in words]
+#		mappings += [0] * (MAX_DOC_LEN - len(mappings))
+#		mappingsOut.write("%s\n" % " ".join(map(str, mappings)))
+#		if label == 1:
+#			nnLabelsOut.write("1 0\n")
+#		else: #label == 0 or -1
+#			nnLabelsOut.write("0 1\n")
 		#######################
 
 		wordsOut.write("%s\n" % " ".join(words))
@@ -226,7 +226,7 @@ def writeDatasets(category):
 												os.path.join(testDir, "ids.txt"), \
 												ignoreShortDocs=True)
 
-VOCAB_MAP = readVocabMap()
+#VOCAB_MAP = readVocabMap()
 #writeEmbeddings()
 #writeRelevantQrelDocsDataset()
 

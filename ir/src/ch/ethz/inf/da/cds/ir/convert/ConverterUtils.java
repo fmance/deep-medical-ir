@@ -2,13 +2,13 @@ package ch.ethz.inf.da.cds.ir.convert;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 
 import com.google.common.collect.Lists;
@@ -33,7 +33,7 @@ public class ConverterUtils {
     }
 
     private static void convertDirectory(Path srcDir, Path destDir, Function<File, Optional<String>> fileCallable) {
-        System.out.println("Converting " + srcDir.normalize() + "\n");
+        System.out.println("\nConverting " + srcDir.normalize() + "\n");
         long begin = System.currentTimeMillis();
 
         File[] srcSubdirs = srcDir.toFile().listFiles();
@@ -57,7 +57,9 @@ public class ConverterUtils {
                 String pmcid = FilenameUtils.getBaseName(file.getName());
                 File outFile = destSubdir.resolve(pmcid + ".txt").toFile();
                 try {
-                    FileUtils.write(outFile, result.get());
+                    PrintWriter pw = new PrintWriter(outFile);
+                    pw.println(result.get());
+                    pw.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
@@ -65,15 +67,15 @@ public class ConverterUtils {
 
                 if (filesWritten % 500 == 0) {
                     double took = (System.currentTimeMillis() - start) / 1e3;
-                    System.out.println("Dir " + srcSubdirPath + ": done " + filesWritten + " files in " + took + " s.");
+                    System.out.println("Dir " + srcSubdirPath + ": " + filesWritten + " files in " + took + " sec.");
                 }
             }
 
             double took = (System.currentTimeMillis() - start) / (1e3 * 60);
-            System.out.println("\nFinished " + srcSubdirPath + " " + filesWritten + " files in " + took + " m.\n");
+            System.out.println("Finished " + srcSubdirPath + " " + filesWritten + " files in " + took + " min.");
         }
 
         double took = (System.currentTimeMillis() - begin) / (1e3 * 60);
-        System.out.println("Converted " + srcDir.normalize() + ", took " + took + " m\n\n");
+        System.out.println("\nConverted " + srcDir.normalize() + ", took " + took + " min.\n");
     }
 }

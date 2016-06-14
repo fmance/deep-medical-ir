@@ -33,8 +33,7 @@ public class QueryRunner {
         // FilePaths.RESULTS_2015_B_FILE.toFile());
     }
 
-    private static void runQueriesFromXml(File queriesXmlFile, String field, File resultsFile)
-            throws Exception {
+    private static void runQueriesFromXml(File queriesXmlFile, String field, File resultsFile) throws Exception {
         System.out.println("Running queries from " + queriesXmlFile);
         List<TrecQuery> queries = XmlUtils.parseQueries(queriesXmlFile);
         runTrecQueries(queries, field, resultsFile);
@@ -56,11 +55,7 @@ public class QueryRunner {
                 type = TYPE.TREATMENT;
             }
 
-            TrecQuery query = new TrecQuery(qid,
-                                            type,
-                                            " ",
-                                            lines.get(qid - 1),
-                                            Optional.absent());
+            TrecQuery query = new TrecQuery(qid, type, " ", lines.get(qid - 1), Optional.absent());
             queries.add(query);
         }
 
@@ -75,7 +70,7 @@ public class QueryRunner {
             List<SearchResult> results = LuceneUtils.searchBM25Index(query, field, NUM_SEARCH_RESULTS);
             for (SearchResult result : results) {
                 pw.println(query.getId() + " Q0 " + result.getPmcid() + " " + result.getRank() + " "
-                        + result.getScore() + " STANDARD");
+                           + result.getScore() + " STANDARD");
             }
         }
 

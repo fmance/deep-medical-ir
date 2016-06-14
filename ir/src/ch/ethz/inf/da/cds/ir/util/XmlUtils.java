@@ -27,6 +27,8 @@ import ch.ethz.inf.da.cds.ir.TrecQuery;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
+import com.sun.org.apache.xerces.internal.dom.NodeImpl;
+import com.sun.org.apache.xerces.internal.dom.TextImpl;
 
 public class XmlUtils {
     public static Article parseArticle(File file) throws Exception {
@@ -39,8 +41,7 @@ public class XmlUtils {
         try {
             doc = dBuilder.parse(file);
         } catch (SAXException | IOException e) {
-            throw new IOException("Error parsing document " + file.getAbsolutePath() + " : " + e.getMessage(),
-                                  e);
+            throw new IOException("Error parsing document " + file.getAbsolutePath() + " : " + e.getMessage(), e);
         }
         doc.getDocumentElement().normalize();
 
@@ -50,22 +51,34 @@ public class XmlUtils {
             title = titleNodeList.item(0).getTextContent();
         }
 
-        StringBuilder body = new StringBuilder();
-        NodeList abstractNodeList = doc.getElementsByTagName("abstract");
-        if (abstractNodeList.getLength() > 0) {
-            getTextContentRecursive(body, abstractNodeList.item(0));
+        StringBuilder text = new StringBuilder();
+        NodeList nodes = doc.getElementsByTagName("p");
+        for (int i = 0; i < nodes.getLength(); i++) {
+            text.append(nodes.item(i).getTextContent());
+            text.append("\n\n");
         }
 
-        body.append("\n\n");
+        return new Article(pmcid, title, text.toString());
+    }
 
-        NodeList bodyNodeList = doc.getElementsByTagName("body");
-        if (bodyNodeList.getLength() > 0) {
-            getTextContentRecursive(body, bodyNodeList.item(0));
+    private static void getTextContent(StringBuilder sb, Node node) {
+        Node child = node.getFirstChild();
+        if (child != null) {
+            Node next = child.getNextSibling();
+            if (next == null) {
+                if (hasTextContent(child)) {
+                    sb.append(((NodeImpl) child).getTextContent());
+                    return;
+                }
+            }
+            getTextContentRecursive(sb, node);
         }
+    }
 
-        return new Article(pmcid,
-                           title,
-                           body.toString());
+    // internal method returning whether to take the given node's text content
+    final static boolean hasTextContent(Node child) {
+        return child.getNodeType() != Node.COMMENT_NODE && child.getNodeType() != Node.PROCESSING_INSTRUCTION_NODE
+               && (child.getNodeType() != Node.TEXT_NODE || ((TextImpl) child).isIgnorableWhitespace() == false);
     }
 
     private static void getTextContentRecursive(StringBuilder sb, Node node) {
@@ -98,13 +111,16 @@ public class XmlUtils {
             Node node = nodes.item(i);
             NamedNodeMap attributes = node.getAttributes();
             int id = Integer.parseInt(attributes.getNamedItem("number").getTextContent());
-            TrecQuery.TYPE type = TrecQuery.TYPE.valueOf(attributes.getNamedItem("type")
-                                                                   .getTextContent()
-                                                                   .toUpperCase());
+            TrecQuery.TYPE type = TrecQuery.TYPE.valueOf(attributes.getNamedItem("type").getTextContent().toUpperCase());
 
             NodeList children = node.getChildNodes();
             String description = children.item(1).getTextContent().trim();
             String summary = children.item(3).getTextContent().trim();
+
+            Optional<String> diagnosis = Optional.absent();
+            if (children.getLength() > 5) {
+                diagnosis = Optional.of(children.item(5).getTextContent().trim());
+            }
 
             // summary = summary.replaceAll("\\d+", " ");
             // summary = summary.replaceAll("\\byear\\b", " ");
@@ -141,16 +157,7 @@ public class XmlUtils {
             // summary += " therapy treat treatment";
             // }
 
-            Optional<String> diagnosis = Optional.absent();
-            if (children.getLength() > 5) {
-                diagnosis = Optional.of(children.item(5).getTextContent().trim());
-            }
-
-            queries.add(new TrecQuery(id,
-                                      type,
-                                      description,
-                                      summary,
-                                      diagnosis));
+            queries.add(new TrecQuery(id, type, description, summary, diagnosis));
         }
 
         return queries;
@@ -189,15 +196,16 @@ public class XmlUtils {
     }
 
     public static void main(String[] args) throws Exception {
-        // System.out.println(parseArticle(new
-        // File(FilePaths.PMC_00_DIR.toString() + "/00/2637234.nxml")));
+        System.out.println(parseArticle(FilePaths.XML_DIR.resolve("00/00/2637234.nxml").toFile()));
 
-        List<TrecQuery> queries2014 = parseQueries(FilePaths.QUERIES_2014_FILE.toFile());
-        writeQueriesTerrierFormat(queries2014, FilePaths.QUERIES_DIR.resolve("topics-2014-terrier.xml")
-                                                                    .toFile());
-
-        List<TrecQuery> queries2015 = parseQueries(FilePaths.QUERIES_2015_A_FILE.toFile());
-        writeQueriesTerrierFormat(queries2015, FilePaths.QUERIES_DIR.resolve("topics-2015-terrier.xml")
-                                                                    .toFile());
+        // List<TrecQuery> queries2014 =
+        // parseQueries(FilePaths.QUERIES_2014_FILE.toFile());
+        // writeQueriesTerrierFormat(queries2014,
+        // FilePaths.QUERIES_DIR.resolve("topics-2014-terrier.xml").toFile());
+        //
+        // List<TrecQuery> queries2015 =
+        // parseQueries(FilePaths.QUERIES_2015_A_FILE.toFile());
+        // writeQueriesTerrierFormat(queries2015,
+        // FilePaths.QUERIES_DIR.resolve("topics-2015-terrier.xml").toFile());
     }
 }

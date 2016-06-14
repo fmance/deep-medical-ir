@@ -25,10 +25,10 @@ public class Indexer {
     private static final int INDEXER_THREAD_POOL_SIZE = 6;
 
     public static void main(String[] args) throws Exception {
-        indexDirectory(FilePaths.PLAINTEXT_DIR_00.toFile());
-        indexDirectory(FilePaths.PLAINTEXT_DIR_01.toFile());
-        indexDirectory(FilePaths.PLAINTEXT_DIR_02.toFile());
-        indexDirectory(FilePaths.PLAINTEXT_DIR_03.toFile());
+        indexDirectory(FilePaths.PLAINTEXT_DIR.resolve("00").toFile());
+        indexDirectory(FilePaths.PLAINTEXT_DIR.resolve("01").toFile());
+        indexDirectory(FilePaths.PLAINTEXT_DIR.resolve("02").toFile());
+        indexDirectory(FilePaths.PLAINTEXT_DIR.resolve("03").toFile());
     }
 
     private static void indexDirectory(File directory) throws Exception {
@@ -42,8 +42,7 @@ public class Indexer {
 
         ExecutorService executor = Executors.newFixedThreadPool(INDEXER_THREAD_POOL_SIZE);
         for (File subdir : subdirs) {
-            executor.submit(new IndexerThread(subdir,
-                                              indexWriter));
+            executor.submit(new IndexerThread(subdir, indexWriter));
         }
         ThreadUtils.shutdownExecutor(executor);
 
@@ -51,8 +50,8 @@ public class Indexer {
         indexWriter.close();
 
         long end = System.currentTimeMillis();
-        System.out.println("\nIndexed " + directory.toPath().normalize() + ", took " + (end - begin)
-                / (1e3 * 60) + " minutes\n\n");
+        System.out.println("\nIndexed " + directory.toPath().normalize() + ", took " + (end - begin) / (1e3 * 60)
+                           + " minutes\n\n");
     }
 
     static class IndexerThread implements Runnable {
@@ -77,28 +76,27 @@ public class Indexer {
                     String pmcid = FilenameUtils.getBaseName(articleFile.getName());
 
                     File fileToIndex = articleFile;
-                    File fullTextFile = new File(articleFile.getAbsolutePath().toString() + ".full");
-                    if (fullTextFile.exists()) {
-                        // System.out.println("Replacing " +
-                        // articleFile.getName() + " with "
-                        // + fullTextFile.getName());
-                        fileToIndex = fullTextFile;
-                    }
+                    // File fullTextFile = new
+                    // File(articleFile.getAbsolutePath().toString() + ".full");
+                    // if (fullTextFile.exists()) {
+                    // // System.out.println("Replacing " +
+                    // // articleFile.getName() + " with "
+                    // // + fullTextFile.getName());
+                    // fileToIndex = fullTextFile;
+                    // }
 
                     List<String> lines = FileUtils.readLines(fileToIndex);
                     String title = lines.get(0);
-                    String text = Joiner.on("").join(lines.subList(1, lines.size()));
-                    LuceneUtils.index(indexWriter, new Article(pmcid,
-                                                               title,
-                                                               text));
+                    String text = Joiner.on(" ").join(lines.subList(1, lines.size()));
+                    LuceneUtils.index(indexWriter, new Article(pmcid, title, text));
                 } catch (Throwable e) {
                     e.printStackTrace();
                 }
             }
 
             long end = System.currentTimeMillis();
-            System.out.println("\nFinished indexing " + directory.toPath().normalize() + " took "
-                    + (end - start) / (1e3 * 60) + " minutes.\n");
+            System.out.println("\nFinished indexing " + directory.toPath().normalize() + " took " + (end - start)
+                               / (1e3 * 60) + " minutes.\n");
         }
     }
 }

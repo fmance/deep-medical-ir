@@ -95,21 +95,21 @@ def readResults2015B():
 	return readResults(RESULTS_2015_B)
 
 MODELS = [\
-"BB2",\
-"BM25",\
-"DFR_BM25",\
-"DLH",\
-"DLH13",\
-"DPH",\
-"DFRee",\
-"Hiemstra_LM",\
-"In_expB2",\
-"In_expC2",\
-"InL2",\
-"LemurTF_IDF",\
-"LGD",\
-"PL2",\
-"TF_IDF",\
+#"BB2",\
+#"BM25",\
+#"DFR_BM25",\
+#"DLH",\
+#"DLH13",\
+#"DPH",\
+#"DFRee",\
+#"Hiemstra_LM",\
+#"In_expB2",\
+#"In_expC2",\
+#"InL2",\
+#"LemurTF_IDF",\
+#"LGD",\
+#"PL2",\
+#"TF_IDF",\
 "BM25_Lucene"\
 ]
 
