@@ -88,17 +88,18 @@ def getBestWeights(measure, qrelsTrecEval, qrelsSampleEval, baselineNormScores, 
 			currVal = get_precision_at(precNum, qrelsTrecEval, rerankedResultsFile)
 		maxVal = max(maxVal, currVal)
 		weightMap.append((weight, currVal))
-		print "%f" % (currVal)
+		print "%f" % (currVal),
 	
-	return maxVal, [weight for (weight, val) in weightMap if val == maxVal]
+	return maxVal, [weight for (weight, val) in weightMap if val == maxVal], weightMap
 
 
 def lambdaRerank(measure):
-	maxVal, weights = getBestWeights(measure, qrelsTrecEval, qrelsSampleEval, baselineNormScores, rerankedFile)
-	print "\nMax%s=%f" % (measure, maxVal)
-	print "Weights=%.2f %.2f" % (min(weights), max(weights))
-	#pprint.pprint(weights)
+	maxVal, weights, weightMap = getBestWeights(measure, qrelsTrecEval, qrelsSampleEval, baselineNormScores, rerankedFile)
+	print "Max%s=%f" % (measure, maxVal),
+	print "Weights=%.2f-%.2f" % (min(weights), max(weights)),
+#	pprint.pprint(weights)
 	simple_rerank(weights[0], baselineNormScores, rerankedFile)
+	return weightMap
 
 def rerankWithWeights():
 	bestAvgWeight = {"diag":0.64, "test":1.0, "treat":0.64}

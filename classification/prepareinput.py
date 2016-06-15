@@ -16,7 +16,7 @@ EMBED_SIZE = 100
 CATEGORY = sys.argv[1]
 
 CLASSIFICATION_DATA_DIR = "data/"
-SENTENCES_DIR = os.path.join(utils.DATA_DIR, "analyzed") #os.path.join(CLASSIFICATION_DATA_DIR, "sentences")
+ANALYEZ_DIR = os.path.join(utils.DATA_DIR, "analyzed") #os.path.join(CLASSIFICATION_DATA_DIR, "sentences")
 
 qrels2014 = utils.readQrels2014()
 qrels2015 = utils.readQrels2015()
@@ -121,7 +121,7 @@ def writeDocsData(docIds, labels, wordsFile, mappingsFile, labelsFile, nnLabelsF
 	idsOut = open(idsFile, "w")
 
 	fnames = map(lambda did: str(did) + ".txt", docIds)
-	pathsDict = utils.getFilePaths(fnames, SENTENCES_DIR)
+	pathsDict = utils.getFilePaths(fnames, ANALYEZ_DIR)
 
 	print "%d docs to %s" % (len(docIds), mappingsFile)
 	counter = 0

@@ -23,7 +23,13 @@ public class AnalyzerConverter {
 
     private static Optional<String> analyzeFile(File file) {
         try {
-            List<String> lines = FileUtils.readLines(file);
+            File fileToAnalyze = file;
+            // File fullTextFile = new File(file.getAbsolutePath().toString() +
+            // ".full");
+            // if (fullTextFile.exists()) {
+            // fileToAnalyze = fullTextFile;
+            // }
+            List<String> lines = FileUtils.readLines(fileToAnalyze);
             StringBuilder analyzedText = new StringBuilder();
             for (String line : lines) {
                 // remove non-latin characters

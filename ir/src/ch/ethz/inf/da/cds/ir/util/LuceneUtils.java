@@ -5,6 +5,7 @@ import java.io.StringReader;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
@@ -22,6 +23,7 @@ import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.index.Term;
+import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
 import org.apache.lucene.search.BooleanClause;
@@ -43,6 +45,7 @@ import ch.ethz.inf.da.cds.ir.SearchResult;
 import ch.ethz.inf.da.cds.ir.TrecQuery;
 
 import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 
 public class LuceneUtils {
     public static final String PMCID_FIELD = "pmcid";
@@ -110,7 +113,13 @@ public class LuceneUtils {
     // }
 
     private static Query constructLuceneQuery(TrecQuery trecQuery, String field) throws ParseException {
-        QueryParser parser = new QueryParser(field, new EnglishAnalyzer());
+        Map<String, Float> boosts = Maps.newHashMap();
+        boosts.put(TEXT_FIELD, 3f);
+        boosts.put(TITLE_FIELD, 1f);
+
+        QueryParser parser = new MultiFieldQueryParser(new String[] { TEXT_FIELD, TITLE_FIELD },
+                                                       new EnglishAnalyzer(),
+                                                       boosts);
         Query summaryQuery = parser.parse(QueryParser.escape(trecQuery.getSummary()));
         if (trecQuery.getDiagnosis().isPresent()) {
             Query diagnosisQuery = parser.parse(QueryParser.escape(trecQuery.getDiagnosis().get()));

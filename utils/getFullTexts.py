@@ -93,11 +93,13 @@ def replaceFiles():
 	
 	for did, path in pathMap.items():
 		originalLocation = pathsDict[str(did) + ".txt"]
-#		originalTextLines = codecs.open(originalLocation, "r", "utf-8").readlines()
+		originalTextLines = codecs.open(originalLocation, "r", "utf-8").readlines()
 		fullTextLines = codecs.open(pathMap[did], "r", "utf-8").readlines()
 		fullTextLinesNoRefs = []
 		for line in fullTextLines:
-			if len(line.split()) == 1 and bool(re.match("ref", line, re.I)):
+			if "==== Refs" in line:
+				break
+			if line == "References\n" or line == "REFERENCES\n":
 				break
 			fullTextLinesNoRefs.append(line)
 
@@ -112,14 +114,14 @@ def replaceFiles():
 			
 	print "Done", counter, "files"
 
-#replaceFiles()
+replaceFiles()
 
-def writePathMap():
-	pathMap = getFilePathMap(utils.VALID_DOC_IDS)
-	out = open("../data/doc-ids/plaintext-path-map.txt", "w")
-	for pmcid, path in pathMap.items():
-		out.write("%d %s\n" % (pmcid, path))
-	out.close()
+#def writePathMap():
+#	pathMap = getFilePathMap(getPdfOnlyIds())
+#	out = open("../data/doc-ids/pdf-only-path-map.txt", "w")
+#	for pmcid, path in pathMap.items():
+#		out.write("%d %s\n" % (pmcid, path))
+#	out.close()
 
-writePathMap()
+#writePathMap()
 
