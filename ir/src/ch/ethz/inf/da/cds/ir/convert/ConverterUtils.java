@@ -5,30 +5,23 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Function;
 
 import org.apache.commons.io.FilenameUtils;
 
-import com.google.common.collect.Lists;
+import ch.ethz.inf.da.cds.ir.util.ThreadUtils;
 
 public class ConverterUtils {
     public static void convert(Path srcRootDir, Path destRootDir, Function<File, Optional<String>> fileCallable)
             throws InterruptedException {
-        List<Thread> threads = Lists.newArrayList();
         for (String dir : new String[] { "00", "01", "02", "03" }) {
             Path srcDir = srcRootDir.resolve(dir);
             Path destDir = destRootDir.resolve(dir);
             destDir.toFile().mkdir();
-            threads.add(new Thread(() -> convertDirectory(srcDir, destDir, fileCallable)));
-        }
-
-        for (Thread thread : threads) {
-            thread.start();
-        }
-        for (Thread thread : threads) {
-            thread.join();
+            convertDirectory(srcDir, destDir, fileCallable);
         }
     }
 
@@ -39,10 +32,33 @@ public class ConverterUtils {
         File[] srcSubdirs = srcDir.toFile().listFiles();
         Arrays.sort(srcSubdirs);
 
+        ExecutorService executor = Executors.newFixedThreadPool(4);
+
         for (File srcSubdir : srcSubdirs) {
             Path destSubdir = destDir.resolve(srcSubdir.getName());
             destSubdir.toFile().mkdir();
+            executor.submit(new ConverterThread(srcSubdir, destSubdir, fileCallable));
 
+        }
+        ThreadUtils.shutdownExecutor(executor);
+
+        double took = (System.currentTimeMillis() - begin) / (1e3 * 60);
+        System.out.println("\nConverted " + srcDir.normalize() + ", took " + took + " min.\n");
+    }
+
+    static class ConverterThread implements Runnable {
+        private final File srcSubdir;
+        private final Path destSubdir;
+        private final Function<File, Optional<String>> fileCallable;
+
+        public ConverterThread(File srcSubdir, Path destSubdir, Function<File, Optional<String>> fileCallable) {
+            this.srcSubdir = srcSubdir;
+            this.destSubdir = destSubdir;
+            this.fileCallable = fileCallable;
+        }
+
+        @Override
+        public void run() {
             Path srcSubdirPath = srcSubdir.toPath().normalize();
             System.out.println("Converting " + srcSubdirPath + " to " + destSubdir.toAbsolutePath());
             long start = System.currentTimeMillis();
@@ -75,7 +91,6 @@ public class ConverterUtils {
             System.out.println("Finished " + srcSubdirPath + " " + filesWritten + " files in " + took + " min.");
         }
 
-        double took = (System.currentTimeMillis() - begin) / (1e3 * 60);
-        System.out.println("\nConverted " + srcDir.normalize() + ", took " + took + " min.\n");
     }
+
 }
