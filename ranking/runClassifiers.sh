@@ -19,12 +19,13 @@ declare -a classifiers=(
 "SGDClassifier.epsilon_insensitive.l2"
 "SGDClassifier.epsilon_insensitive.elasticnet"
 "Pipeline.epsilon_insensitive.l2"
+"all"
 )
 
 function max {
 	for classifier in ${classifiers[@]}
 	do
-		p10=`python simplererank.py $classifier $classId $year | grep -Po "MaxP10=\K(0.\d+)"`
+		p10=`python simplererank.py $classId $year $classifier | grep -Po "MaxP10=\K(0.\d+)"`
 		echo -e "$p10"
 	done
 }
@@ -33,8 +34,8 @@ function all {
 	results=()
 	for classifier in ${classifiers[@]}
 	do
-		python simplererank.py $classifier $classId $year
+		python simplererank.py $classId $year $classifier
 	done
 }
 
-max
+all

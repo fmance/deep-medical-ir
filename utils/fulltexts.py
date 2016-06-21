@@ -82,7 +82,7 @@ def getFilePathMap(pmcids):
 	
 	return pathMap
 	
-def replaceFiles():
+def writeFullFiles():
 	pathMap = getFilePathMap(getPdfOnlyIds())
 	
 	docIds = pathMap.keys()
@@ -90,38 +90,33 @@ def replaceFiles():
 	pathsDict = utils.getFilePaths(fnames, utils.PLAINTEXT_DIR)
 	
 	counter = 0
-	
 	for did, path in pathMap.items():
 		originalLocation = pathsDict[str(did) + ".txt"]
 		originalTextLines = codecs.open(originalLocation, "r", "utf-8").readlines()
 		fullTextLines = codecs.open(pathMap[did], "r", "utf-8").readlines()
-		fullTextLinesNoRefs = []
+		outputLines = [originalTextLines[0]] + ["\n\n"]
 		for line in fullTextLines:
-			if "==== Refs" in line:
+			if "==== Refs" in line or line == "References\n" or line == "REFERENCES\n":
 				break
-			if line == "References\n" or line == "REFERENCES\n":
-				break
-			fullTextLinesNoRefs.append(line)
+			outputLines.append(line)
 
-		fullOut = codecs.open(originalLocation + ".full", "w", "utf-8")
-		for line in fullTextLinesNoRefs:
-			fullOut.write(line)
-		fullOut.close()
+		out = codecs.open(originalLocation + ".full", "w", "utf-8")
+		for line in outputLines:
+			out.write(line)
+		out.close()
 		
-		counter+=1
+		counter += 1
 		if counter % 1000 == 0:
-			print counter
-			
+			print "Done", counter, "files"
 	print "Done", counter, "files"
 
-replaceFiles()
+def writePathMap():
+	pathMap = getFilePathMap(getPdfOnlyIds())
+	out = open("../data/doc-ids/pdf-only-path-map.txt", "w")
+	for pmcid, path in pathMap.items():
+		out.write("%d %s\n" % (pmcid, path))
+	out.close()
 
-#def writePathMap():
-#	pathMap = getFilePathMap(getPdfOnlyIds())
-#	out = open("../data/doc-ids/pdf-only-path-map.txt", "w")
-#	for pmcid, path in pathMap.items():
-#		out.write("%d %s\n" % (pmcid, path))
-#	out.close()
-
+writeFullFiles()
 #writePathMap()
 

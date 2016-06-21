@@ -6,10 +6,10 @@ from collections import defaultdict
 import numpy
 
 DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data"))
-IR_RESULTS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../ir/results/models/"))
+IR_RESULTS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../ir/results/"))
 
-RESULTS_2014 = os.path.join(IR_RESULTS_DIR, "results-2014-BM25_Lucene.txt")
-RESULTS_2015_A = os.path.join(IR_RESULTS_DIR, "results-2015-BM25_Lucene.txt")
+RESULTS_2014 = os.path.join(IR_RESULTS_DIR, "results-2014.txt")
+RESULTS_2015_A = os.path.join(IR_RESULTS_DIR, "results-2015.txt")
 RESULTS_2015_B = os.path.join(IR_RESULTS_DIR, "results-2015-B-BM25_Lucene.txt")
 #BM25_SCORES_2014 = os.path.join(IR_RESULTS_DIR, "bm25-scores-2014.txt")
 #BM25_SCORES_2015 = os.path.join(IR_RESULTS_DIR, "bm25-scores-2015.txt")
@@ -26,13 +26,13 @@ QUERIES_DIR = os.path.join(DATA_DIR, "queries")
 PLAINTEXT_DIR = os.path.join(DATA_DIR, "plaintext")
 RES_AND_QRELS_DIR = os.path.join(CLASSIFICATION_DIR, "data", "res-and-qrels")
 
-def readDocIds(idsFile):
-	return map(int, open(idsFile).read().split())
+def readInts(intsFile):
+	return map(int, open(intsFile).read().split())
 
-VALID_DOC_IDS = set(readDocIds(os.path.join(DATA_DIR, "doc-ids/valid-doc-ids.txt")))
+VALID_DOC_IDS = set(readInts(os.path.join(DATA_DIR, "doc-ids/valid-doc-ids.txt")))
 
 LONG_DOC_IDS_PATH = os.path.join(DATA_DIR, "doc-ids/long-doc-ids.txt")
-LONG_DOC_IDS = set(readDocIds(LONG_DOC_IDS_PATH))
+LONG_DOC_IDS = set(readInts(LONG_DOC_IDS_PATH))
 
 def readQrels(qrelFile):
 	qrels = defaultdict(list)
@@ -94,29 +94,13 @@ def readResults2015A():
 def readResults2015B():
 	return readResults(RESULTS_2015_B)
 
-MODELS = [\
-#"BB2",\
-#"BM25",\
-#"DFR_BM25",\
-#"DLH",\
-#"DLH13",\
-#"DPH",\
-#"DFRee",\
-#"Hiemstra_LM",\
-#"In_expB2",\
-#"In_expC2",\
-#"InL2",\
-#"LemurTF_IDF",\
-#"LGD",\
-#"PL2",\
-#"TF_IDF",\
-"BM25_Lucene"\
-]
-
 def readResultsAllModels(year):
 	scores = []
-	for model in MODELS:
-		scoreFile = os.path.join(IR_RESULTS_DIR, "results-" + str(year) + "-" + model + ".txt")
+	models = ["", "-sep"]
+	if year == 2014:
+		models += ["-expanded", "-expanded-sep"]
+	for model in models:
+		scoreFile = os.path.join(IR_RESULTS_DIR, "results-" + str(year) + model + ".txt")
 		scores.append(readResults(scoreFile))
 	return scores
 
@@ -154,10 +138,8 @@ def maxNormalize(ls):
 def readClassPredictions(classifier, classId):
 	if classId == "test":
 		classId = "diag"
-	docIds = readDocIds(os.path.join(RES_AND_QRELS_DIR, "ids.txt"))
+	docIds = readInts(os.path.join(RES_AND_QRELS_DIR, "ids.txt"))
 	results = map(float, open(os.path.join(RES_AND_QRELS_DIR, "results", classId, "results.txt." + classifier)).read().split())
-	
-#	results = numpy.random.randint(2, size=len(docIds))
 	
 #	if classifier == "NN":
 #		results = map(numpy.sign, results)
