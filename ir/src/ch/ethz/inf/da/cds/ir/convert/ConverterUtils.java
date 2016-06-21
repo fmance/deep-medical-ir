@@ -32,7 +32,7 @@ public class ConverterUtils {
         File[] srcSubdirs = srcDir.toFile().listFiles();
         Arrays.sort(srcSubdirs);
 
-        ExecutorService executor = Executors.newFixedThreadPool(4);
+        ExecutorService executor = Executors.newFixedThreadPool(6);
 
         for (File srcSubdir : srcSubdirs) {
             Path destSubdir = destDir.resolve(srcSubdir.getName());

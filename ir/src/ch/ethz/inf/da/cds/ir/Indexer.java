@@ -1,19 +1,14 @@
 package ch.ethz.inf.da.cds.ir;
 
-import java.io.BufferedReader;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.lucene.index.IndexWriter;
 
@@ -22,7 +17,6 @@ import ch.ethz.inf.da.cds.ir.util.LuceneUtils;
 import ch.ethz.inf.da.cds.ir.util.ThreadUtils;
 
 import com.google.common.base.Joiner;
-import com.google.common.collect.Maps;
 
 /**
  * Index the articles in the plaintext files to Lucene.
@@ -33,27 +27,9 @@ import com.google.common.collect.Maps;
 public class Indexer {
     private static final int INDEXER_THREAD_POOL_SIZE = 4;
     private static final List<String> VALID_DOC_IDS = DocUtils.getValidDocIds();
-
-    private static final Map<String, Path> PLAINTEXT_PATH_MAP = Maps.newHashMap();
-    static {
-        try {
-            List<String> lines = FileUtils.readLines(FilePaths.DATA_DIR.resolve("doc-ids")
-                                                                       .resolve("pdf-only-path-map.txt")
-                                                                       .toFile());
-            for (String line : lines) {
-                String[] parts = line.split("\\s+");
-                PLAINTEXT_PATH_MAP.put(parts[0], Paths.get(parts[1]));
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+    private static AtomicInteger plaintext = new AtomicInteger();
 
     public static void main(String[] args) throws Exception {
-        // String parsePlaintextFile =
-        // IndexerThread.parsePlaintextFile("2113833");
-        // System.out.println(parsePlaintextFile);
-
         for (String dir : new String[] { "00", "01", "02", "03" }) {
             indexDirectory(FilePaths.PLAINTEXT_DIR.resolve(dir));
         }
@@ -78,7 +54,7 @@ public class Indexer {
         indexWriter.close();
 
         double took = (System.currentTimeMillis() - begin) / (1e3 * 60);
-        System.out.println("\nIndexed " + directory.normalize() + ", took " + took + " min.\n");
+        System.out.println("\nIndexed " + directory.normalize() + ", took " + took + " min, plaintext = " + plaintext);
     }
 
     static class IndexerThread implements Runnable {
@@ -104,41 +80,22 @@ public class Indexer {
                     if (!VALID_DOC_IDS.contains(pmcid)) {
                         continue;
                     }
-                    List<String> lines = FileUtils.readLines(articleFile);
-                    String title = lines.get(0);
-                    String text;
-                    if (PLAINTEXT_PATH_MAP.containsKey(pmcid)) {
-                        text = parsePlaintextFile(pmcid);
-                    } else {
-                        text = Joiner.on("\n").join(lines.subList(1, lines.size()));
+                    Path fileToIndex = DocUtils.getFullTextPath(articleFile.toPath());
+                    if (!fileToIndex.equals(articleFile.toPath())) {
+                        plaintext.incrementAndGet();
                     }
+                    List<String> lines = Files.readAllLines(fileToIndex);
+                    String title = lines.get(0);
+                    String text = Joiner.on("\n").join(lines);
                     LuceneUtils.index(indexWriter, new Article(pmcid, title, text));
-
                 } catch (Throwable e) {
                     e.printStackTrace();
                 }
             }
 
             double took = (System.currentTimeMillis() - start) / 1e3;
-            System.out.println("\nFinished indexing " + directory.toPath().normalize() + " took " + took + " sec.");
-        }
-
-        private static String parsePlaintextFile(String pmcid) throws IOException, FileNotFoundException {
-            // Pattern pattern = Pattern.compile("==== Refs",
-            // Pattern.CASE_INSENSITIVE);
-
-            StringBuilder text = new StringBuilder();
-            try (BufferedReader reader = new BufferedReader(new FileReader(PLAINTEXT_PATH_MAP.get(pmcid).toFile()))) {
-                String line;
-                while ((line = reader.readLine()) != null) {
-                    if (line.matches("==== Refs") || line.equals("References") || line.equals("REFERENCES")) {
-                        break;
-                    }
-                    text.append(line);
-                    text.append('\n');
-                }
-            }
-            return text.toString();
+            System.out.println("\nFinished indexing " + directory.toPath().normalize() + " took " + took
+                               + " sec, plaintext = " + plaintext);
         }
     }
 }

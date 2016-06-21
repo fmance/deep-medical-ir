@@ -34,7 +34,7 @@ import com.google.common.collect.Sets;
 import com.google.common.primitives.Doubles;
 
 public class FeatureComputer {
-    private static final String CLASSIFIER = "SGDClassifier.epsilon_insensitive.l2";
+    private static final String CLASSIFIER = "Pipeline.epsilon_insensitive.l2";
     private static final TYPE CLASS_ID = TrecQuery.TYPE.TREATMENT;
 
     public static void main(String[] args) throws Exception {
@@ -76,8 +76,12 @@ public class FeatureComputer {
         reader.close();
     }
 
-    private static void writeScores(IndexReader reader, int[] docIdMapping, String field, File queriesFile,
-            File resultsFile, Measure measure) throws Exception {
+    private static void writeScores(IndexReader reader,
+                                    int[] docIdMapping,
+                                    String field,
+                                    File queriesFile,
+                                    File resultsFile,
+                                    Measure measure) throws Exception {
         List<TrecQuery> trecQueries = XmlUtils.parseQueries(queriesFile);
         PrintWriter pw = new PrintWriter(resultsFile);
 
@@ -86,12 +90,7 @@ public class FeatureComputer {
             int queryId = trecQuery.getId();
             System.out.println("Scoring query " + queryId);
             Features[] features = Scorer.getFeatures(field, trecQuery, reader);
-            Scorer.writeTopScores(features,
-                                  queryId,
-                                  QueryRunner.NUM_SEARCH_RESULTS,
-                                  pw,
-                                  docIdMapping,
-                                  measure);
+            Scorer.writeTopScores(features, queryId, QueryRunner.NUM_SEARCH_RESULTS, pw, docIdMapping, measure);
 
         }
 
@@ -106,8 +105,7 @@ public class FeatureComputer {
         List<TrecQuery> trecQueries2015 = XmlUtils.parseQueries(FilePaths.QUERIES_2015_A_FILE.toFile());
         Map<Pair<Integer, Integer>, Integer> relevances2015 = QrelUtils.getRelevance(FilePaths.QRELS_2015);
         Map<Integer, Double> classificationScoresDiag = getClassificationScores(CLASSIFIER, "diag");
-        Map<Integer, Double> classificationScoresTest = null;// getClassificationScores(CLASSIFIER,
-                                                             // "test");
+        Map<Integer, Double> classificationScoresTest = getClassificationScores(CLASSIFIER, "diag");
         Map<Integer, Double> classificationScoresTreat = getClassificationScores(CLASSIFIER, "treat");
 
         PrintWriter pw = new PrintWriter(FilePaths.FEATURES_2015.toFile());
@@ -167,8 +165,7 @@ public class FeatureComputer {
         Map<Integer, Integer> reverseDocIdMapping = getReverseMapping(docIdMapping);
 
         Map<Integer, Double> classificationScoresDiag = getClassificationScores(CLASSIFIER, "diag");
-        Map<Integer, Double> classificationScoresTest = null;// getClassificationScores(CLASSIFIER,
-                                                             // "test");
+        Map<Integer, Double> classificationScoresTest = getClassificationScores(CLASSIFIER, "diag");
         Map<Integer, Double> classificationScoresTreat = getClassificationScores(CLASSIFIER, "treat");
 
         PrintWriter pw = new PrintWriter(FilePaths.FEATURES_2014.toFile());
@@ -179,7 +176,7 @@ public class FeatureComputer {
             if (trecQuery.getType() != CLASS_ID) {
                 continue;
             }
-            if (Sets.newHashSet(12, 13, 16, 17, 24, 25).contains(trecQuery.getId())) {
+            if (Sets.newHashSet(3, 17, 25).contains(trecQuery.getId())) {
                 continue;
             }
 
@@ -238,9 +235,15 @@ public class FeatureComputer {
     }
 
     private static boolean writeFeaturesForQueryDocPair(Map<Integer, Double> classificationScoresDiag,
-            Map<Integer, Double> classificationScoresTest, Map<Integer, Double> classificationScoresTreat,
-            PrintWriter pw, PrintWriter docIdPw, Features[] features, int queryId, int pmcid, int relevance,
-            Integer docId) {
+                                                        Map<Integer, Double> classificationScoresTest,
+                                                        Map<Integer, Double> classificationScoresTreat,
+                                                        PrintWriter pw,
+                                                        PrintWriter docIdPw,
+                                                        Features[] features,
+                                                        int queryId,
+                                                        int pmcid,
+                                                        int relevance,
+                                                        Integer docId) {
         Double classificationScore = null;
         if (queryId <= 10) {
             classificationScore = classificationScoresDiag.get(pmcid);
@@ -301,8 +304,7 @@ public class FeatureComputer {
         Path root = FilePaths.ROOT_DIR.resolve("classification/data/res-and-qrels");
         List<String> ids = FileUtils.readLines(root.resolve("ids.txt").toFile());
         Path resultsDir = root.resolve("results").resolve(category);
-        List<String> scoreLines = FileUtils.readLines(resultsDir.resolve("results.txt." + classifierExt)
-                                                                .toFile());
+        List<String> scoreLines = FileUtils.readLines(resultsDir.resolve("results.txt." + classifierExt).toFile());
         Map<Integer, Double> scores = Maps.newHashMap();
         for (int i = 0; i < ids.size(); i++) {
             int pmcid = Integer.parseInt(ids.get(i));
@@ -328,5 +330,4 @@ public class FeatureComputer {
         }
         return result;
     }
-
 }

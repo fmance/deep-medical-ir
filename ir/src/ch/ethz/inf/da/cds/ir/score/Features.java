@@ -59,9 +59,9 @@ public class Features {
         features.add(coord);
         features.add(length);
         features.add(idf);
-        features.addAll(tfStats.toList());
-        features.addAll(normTfStats.toList());
-        features.addAll(tfidfStats.toList());
+        // features.addAll(tfStats.toList());
+        // features.addAll(normTfStats.toList());
+        // features.addAll(tfidfStats.toList());
         return features;
     }
 

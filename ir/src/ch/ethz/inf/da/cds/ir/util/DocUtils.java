@@ -2,16 +2,36 @@ package ch.ethz.inf.da.cds.ir.util;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 
 import ch.ethz.inf.da.cds.ir.FilePaths;
 
+import com.google.common.collect.Maps;
+
 public class DocUtils {
     private static final Path DOC_IDS_PATH = FilePaths.DATA_DIR.resolve("doc-ids");
+
+    private static final Map<String, Path> PLAINTEXT_PATH_MAP = Maps.newHashMap();
+    static {
+        try {
+            List<String> lines = FileUtils.readLines(FilePaths.DATA_DIR.resolve("doc-ids")
+                                                                       .resolve("pdf-only-path-map.txt")
+                                                                       .toFile());
+            for (String line : lines) {
+                String[] parts = line.split("\\s+");
+                PLAINTEXT_PATH_MAP.put(parts[0], Paths.get(parts[1]));
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
     public static List<String> getValidDocIds() {
         try {
@@ -34,7 +54,11 @@ public class DocUtils {
             e.printStackTrace();
             return null;
         }
+    }
 
+    public static Path getFullTextPath(Path original) {
+        Path full = Paths.get(original.toAbsolutePath().toString() + ".full");
+        return Files.exists(full) ? full : original;
     }
 
     public static void main(String[] args) throws IOException {

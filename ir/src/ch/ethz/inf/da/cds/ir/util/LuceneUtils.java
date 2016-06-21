@@ -22,7 +22,6 @@ import org.apache.lucene.index.IndexWriterConfig;
 import org.apache.lucene.index.LeafReader;
 import org.apache.lucene.index.LeafReaderContext;
 import org.apache.lucene.index.NumericDocValues;
-import org.apache.lucene.index.Term;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
@@ -32,7 +31,6 @@ import org.apache.lucene.search.CollectionStatistics;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
-import org.apache.lucene.search.TermQuery;
 import org.apache.lucene.search.similarities.BM25Similarity;
 import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.store.Directory;
@@ -115,7 +113,7 @@ public class LuceneUtils {
     private static Query constructLuceneQuery(TrecQuery trecQuery, String field) throws ParseException {
         Map<String, Float> boosts = Maps.newHashMap();
         boosts.put(TEXT_FIELD, 3f);
-        boosts.put(TITLE_FIELD, 1f);
+        boosts.put(TITLE_FIELD, 0f);
 
         QueryParser parser = new MultiFieldQueryParser(new String[] { TEXT_FIELD, TITLE_FIELD },
                                                        new EnglishAnalyzer(),
@@ -130,18 +128,6 @@ public class LuceneUtils {
         } else {
             return summaryQuery;
         }
-    }
-
-    public static List<Term> getQueryTerms(IndexReader reader, TrecQuery trecQuery, String field)
-            throws ParseException, IOException {
-        BooleanQuery luceneQuery = (BooleanQuery) constructLuceneQuery(trecQuery, field);
-        luceneQuery.rewrite(reader);
-        List<Term> queryTerms = Lists.newArrayList();
-        for (BooleanClause clause : luceneQuery.clauses()) {
-            Term term = ((TermQuery) clause.getQuery()).getTerm();
-            queryTerms.add(term);
-        }
-        return queryTerms;
     }
 
     public static int[] getLuceneToPmcIdMapping(IndexReader reader) throws IOException {
@@ -201,6 +187,6 @@ public class LuceneUtils {
 
     public static void main(String[] args) {
         Analyzer analyzer = new EnglishAnalyzer();
-        System.out.println(tokenizeString(analyzer, "hello there how are you doing, mate? I am 16 years old."));
+        System.out.println(tokenizeString(analyzer, "hello there how are you doing, mate? I'm (16)!?, years old."));
     }
 }
