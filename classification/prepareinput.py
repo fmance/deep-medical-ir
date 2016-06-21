@@ -22,16 +22,11 @@ qrels2014 = utils.readQrels2014()
 qrels2015 = utils.readQrels2015()
 qrelsDocIds = set(utils.getQrelsDocIds(qrels2014)) | set(utils.getQrelsDocIds(qrels2015))
 
-#positiveQrelsDocIds = utils.getRelevantQrelDocIdsForCategory(qrels2014, CATEGORY) |\
-#					  utils.getRelevantQrelDocIdsForCategory(qrels2015, CATEGORY)
-
 results2014AllModels = utils.readResultsAllModels(2014)
 results2015AllModels = utils.readResultsAllModels(2015)
 
 resultsDocIds = map(utils.getResultsDocIds, results2014AllModels) + map(utils.getResultsDocIds, results2015AllModels)
 resultsDocIds = set.union(*map(set, resultsDocIds))
-
-#nonQrelsOrResultsDids = utils.VALID_DOC_IDS - resultsDocIds -positiveQrelsDocIds #- qrelsDocIds
 
 def readPmcIds(pmcIdsFile):
 	return set(map(lambda pmcid: int(pmcid[3:]), open(pmcIdsFile).read().split()))
@@ -171,16 +166,6 @@ def writeDocsData(docIds, labels, wordsFile, mappingsFile, labelsFile, nnLabelsF
 def getLabels(pos, neg):
 	return [1] * len(pos) + [0] * len(neg)
 
-#def writeRelevantQrelDocsDataset():
-#	print "Writing relevant qrel docs dataset"
-#	resDir = os.path.join(CLASSIFICATION_DATA_DIR, "relevant-qrel-docs")
-#	docIds = getRelevantQrelDocIds(qrels2014) | getRelevantQrelDocIds(qrels2015)
-#	writeDocsData(docIds, [1] * len(docIds),	os.path.join(resDir, "words.txt"), \
-#								  				os.path.join(resDir, "mappings.txt"), \
-#								  				os.path.join(resDir, "labels.txt"), \
-#										  		os.path.join(resDir, "labels-nn.txt"), \
-#										  		os.path.join(resDir, "ids.txt"))
-
 def writeIrResAndQrelsDataset():
 	print "Writing ir res and qrels dataset"
 	resDir = os.path.join(CLASSIFICATION_DATA_DIR, "res-and-qrels")
@@ -203,32 +188,38 @@ def writeDatasets(category):
 	posIds, negIds = getTrainingAndTestIdsForCategory(category)
 	trainPos, testPos = splitTrainTest(posIds)
 	trainNeg, testNeg = splitTrainTest(negIds)
+	trainIds = trainPos + trainNeg
+	testIds = testPos + testNeg
 	trainLabels = getLabels(trainPos, trainNeg)
 	testLabels = getLabels(testPos, testNeg)
 
 	categoryDir = os.path.join(CLASSIFICATION_DATA_DIR, category)
 	trainDir = os.path.join(categoryDir, "train")
 	testDir = os.path.join(categoryDir, "test")
+	
+#	trainIds = utils.readInts(os.path.join(trainDir, "ids.txt"))
+#	testIds = utils.readInts(os.path.join(testDir, "ids.txt"))
+#	trainLabels = utils.readInts(os.path.join(trainDir, "labels.txt"))
+#	testLabels = utils.readInts(os.path.join(testDir, "labels.txt"))
 
 	print "Writing train mappings"
-	writeDocsData(trainPos + trainNeg, trainLabels, os.path.join(trainDir, "words.txt"), \
-													os.path.join(trainDir, "mappings.txt"), \
-													os.path.join(trainDir, "labels.txt"), \
-													os.path.join(trainDir, "labels-nn.txt"), \
-													os.path.join(trainDir, "ids.txt"), \
-													ignoreShortDocs=True)
+	writeDocsData(trainIds, trainLabels, os.path.join(trainDir, "words.txt"), \
+										os.path.join(trainDir, "mappings.txt"), \
+										os.path.join(trainDir, "labels.txt"), \
+										os.path.join(trainDir, "labels-nn.txt"), \
+										os.path.join(trainDir, "ids.txt"), \
+										ignoreShortDocs=True)
 
 	print "Writing test mappings"
-	writeDocsData(testPos + testNeg, testLabels, os.path.join(testDir, "words.txt"), \
-												os.path.join(testDir, "mappings.txt"), \
-												os.path.join(testDir, "labels.txt"), \
-												os.path.join(testDir, "labels-nn.txt"), \
-												os.path.join(testDir, "ids.txt"), \
-												ignoreShortDocs=True)
+	writeDocsData(testIds, testLabels, os.path.join(testDir, "words.txt"), \
+										os.path.join(testDir, "mappings.txt"), \
+										os.path.join(testDir, "labels.txt"), \
+										os.path.join(testDir, "labels-nn.txt"), \
+										os.path.join(testDir, "ids.txt"), \
+										ignoreShortDocs=True)
 
 #VOCAB_MAP = readVocabMap()
 #writeEmbeddings()
-#writeRelevantQrelDocsDataset()
 
 #writeIrResAndQrelsDataset()
 writeDatasets(CATEGORY)
