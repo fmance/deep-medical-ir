@@ -1,11 +1,5 @@
-classifier=$1
+target=$1
 
-function catYear {
-	year=$1
-	cat results-$year-diag.txt.reranked.$classifier \
-		results-$year-test.txt.reranked.$classifier \
-		results-$year-treat.txt.reranked.$classifier >  results-$year.txt.reranked.$classifier
-}
-
-catYear 2014
-catYear 2015
+cat results-$target.txt.reranked.diag \
+	results-$target.txt.reranked.test \
+	results-$target.txt.reranked.treat >  results-$target.txt.reranked
