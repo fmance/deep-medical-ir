@@ -1,7 +1,10 @@
 package ch.ethz.inf.da.cds.ir.util;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.nio.file.Path;
 import java.util.List;
 
 import javax.xml.parsers.DocumentBuilder;
@@ -14,6 +17,7 @@ import javax.xml.transform.dom.DOMSource;
 import javax.xml.transform.stream.StreamResult;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NamedNodeMap;
@@ -27,7 +31,6 @@ import ch.ethz.inf.da.cds.ir.TrecQuery;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
-import com.sun.org.apache.xerces.internal.dom.NodeImpl;
 import com.sun.org.apache.xerces.internal.dom.TextImpl;
 
 public class XmlUtils {
@@ -51,14 +54,20 @@ public class XmlUtils {
             title = titleNodeList.item(0).getTextContent();
         }
 
-        StringBuilder text = new StringBuilder();
-        NodeList nodes = doc.getElementsByTagName("p");
-        for (int i = 0; i < nodes.getLength(); i++) {
-            text.append(nodes.item(i).getTextContent());
-            text.append("\n\n");
+        StringBuilder body = new StringBuilder();
+        NodeList abstractNodeList = doc.getElementsByTagName("abstract");
+        if (abstractNodeList.getLength() > 0) {
+            getTextContent(body, abstractNodeList.item(0));
         }
 
-        return new Article(pmcid, title, text.toString());
+        body.append("\n\n");
+
+        NodeList bodyNodeList = doc.getElementsByTagName("body");
+        if (bodyNodeList.getLength() > 0) {
+            getTextContent(body, bodyNodeList.item(0));
+        }
+
+        return new Article(pmcid, title, body.toString());
     }
 
     private static void getTextContent(StringBuilder sb, Node node) {
@@ -67,18 +76,12 @@ public class XmlUtils {
             Node next = child.getNextSibling();
             if (next == null) {
                 if (hasTextContent(child)) {
-                    sb.append(((NodeImpl) child).getTextContent());
-                    return;
+                    sb.append(' ');
+                    sb.append((child).getTextContent());
                 }
             }
             getTextContentRecursive(sb, node);
         }
-    }
-
-    // internal method returning whether to take the given node's text content
-    final static boolean hasTextContent(Node child) {
-        return child.getNodeType() != Node.COMMENT_NODE && child.getNodeType() != Node.PROCESSING_INSTRUCTION_NODE
-               && (child.getNodeType() != Node.TEXT_NODE || ((TextImpl) child).isIgnorableWhitespace() == false);
     }
 
     private static void getTextContentRecursive(StringBuilder sb, Node node) {
@@ -95,6 +98,11 @@ public class XmlUtils {
             }
             child = child.getNextSibling();
         }
+    }
+
+    private static boolean hasTextContent(Node child) {
+        return child.getNodeType() != Node.COMMENT_NODE && child.getNodeType() != Node.PROCESSING_INSTRUCTION_NODE
+               && (child.getNodeType() != Node.TEXT_NODE || ((TextImpl) child).isIgnorableWhitespace() == false);
     }
 
     public static List<TrecQuery> parseQueries(File file) throws ParserConfigurationException, SAXException,
@@ -195,9 +203,70 @@ public class XmlUtils {
         transformer.transform(source, result);
     }
 
-    public static void main(String[] args) throws Exception {
-        System.out.println(parseArticle(FilePaths.XML_DIR.resolve("00/00/2637234.nxml").toFile()));
+    private static void convertPubmedXmlToArticleLines() throws FileNotFoundException, Exception {
+        Path hedgesDataDir = FilePaths.ROOT_DIR.resolve("classification/data/hedges");
+        PrintWriter pw = new PrintWriter(hedgesDataDir.resolve("results-analyzed.txt").toFile());
+        PrintWriter idpw = new PrintWriter(hedgesDataDir.resolve("results-analyzed-ids.txt").toFile());
 
+        parsePubmedXml(hedgesDataDir.resolve("results00.xml").toFile(), pw, idpw);
+        parsePubmedXml(hedgesDataDir.resolve("results01.xml").toFile(), pw, idpw);
+        parsePubmedXml(hedgesDataDir.resolve("results02.xml").toFile(), pw, idpw);
+        parsePubmedXml(hedgesDataDir.resolve("results03.xml").toFile(), pw, idpw);
+
+        pw.close();
+        idpw.close();
+    }
+
+    private static void parsePubmedXml(File file, PrintWriter out, PrintWriter idout) throws Exception {
+        DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+        DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+
+        Document doc = dBuilder.parse(file);
+        doc.getDocumentElement().normalize();
+
+        List<String> pmids = Lists.newArrayList();
+        NodeList pubmedNodes = doc.getElementsByTagName("PubmedArticle");
+        for (int i = 0; i < pubmedNodes.getLength(); i++) {
+            pmids.add(pubmedNodes.item(i).getChildNodes().item(1).getChildNodes().item(1).getTextContent());
+        }
+
+        List<String> titles = Lists.newArrayList();
+        NodeList titleNodes = doc.getElementsByTagName("ArticleTitle");
+        for (int i = 0; i < titleNodes.getLength(); i++) {
+            titles.add(titleNodes.item(i).getTextContent());
+        }
+
+        List<String> texts = Lists.newArrayList();
+        NodeList articleNodes = doc.getElementsByTagName("Article");
+        for (int i = 0; i < articleNodes.getLength(); i++) {
+            Element article = (Element) articleNodes.item(i);
+            NodeList textNode = article.getElementsByTagName("Abstract");
+            if (textNode.getLength() > 0) {
+                texts.add(textNode.item(0).getTextContent());
+            } else {
+                texts.add("EMPTY");
+            }
+        }
+
+        assert pmids.size() == titles.size();
+        assert pmids.size() == texts.size();
+
+        for (int i = 0; i < pmids.size(); i++) {
+            String pmid = pmids.get(i);
+            idout.println(pmid);
+
+            String text = titles.get(i) + texts.get(i);
+            text = text.replaceAll("\\P{L}", " ");
+            List<String> tokens = LuceneUtils.tokenizeString(new EnglishAnalyzer(), text);
+            text = String.join(" ", tokens);
+            out.println(text);
+        }
+    }
+
+    public static void main(String[] args) throws Exception {
+        convertPubmedXmlToArticleLines();
+
+        // System.out.println(parseArticle(FilePaths.XML_DIR.resolve("01/00/3123283.nxml").toFile()));
         // List<TrecQuery> queries2014 =
         // parseQueries(FilePaths.QUERIES_2014_FILE.toFile());
         // writeQueriesTerrierFormat(queries2014,
@@ -208,4 +277,5 @@ public class XmlUtils {
         // writeQueriesTerrierFormat(queries2015,
         // FilePaths.QUERIES_DIR.resolve("topics-2015-terrier.xml").toFile());
     }
+
 }
