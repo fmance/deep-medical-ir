@@ -65,6 +65,7 @@ def getNegativePmcIds(category):
 def getTrainingAndTestIdsForCategory(category):
 	positiveDocIds = getPositivePmcIds(category) & utils.VALID_DOC_IDS # nonQrelsOrResultsDids
 	negativeDocIds = utils.VALID_DOC_IDS - getPositiveRelaxedPmcIds(category)   #nonQrelsOrResultsDids - getPositiveRelaxedPmcIds(category)
+#	negativeDocIds &= readPmcIds(os.path.join(CLASSIFICATION_DATA_DIR, "negative-pmcids.txt"))
 	positiveDocIds = list(positiveDocIds)
 	negativeDocIds = list(negativeDocIds)
 	print "Total pos %d, total neg %d" % (len(positiveDocIds), len(negativeDocIds))
@@ -107,6 +108,12 @@ def writeEmbeddings():
             print "Wrote up to word %d" % index
 
     out.close()
+
+def writeIrResultsIds():
+	out = open("data/hedges/results-pmcids.txt", "w")
+	for did in resultsDocIds:
+		out.write("%d\n" % did)
+	out.close()
 
 def writeDocsData(docIds, labels, wordsFile, mappingsFile, labelsFile, nnLabelsFile, idsFile, ignoreShortDocs=False):
 	wordsOut = codecs.open(wordsFile, "w", "utf-8")
@@ -218,8 +225,12 @@ def writeDatasets(category):
 										os.path.join(testDir, "ids.txt"), \
 										ignoreShortDocs=True)
 
+#writeIrResultsIds()
 #VOCAB_MAP = readVocabMap()
 #writeEmbeddings()
 
 #writeIrResAndQrelsDataset()
 writeDatasets(CATEGORY)
+
+
+	

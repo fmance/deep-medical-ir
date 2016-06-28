@@ -5,6 +5,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -34,8 +35,9 @@ import com.google.common.collect.Sets;
 import com.google.common.primitives.Doubles;
 
 public class FeatureComputer {
-    private static final String CLASSIFIER = "Pipeline.epsilon_insensitive.l2";
-    private static final TYPE CLASS_ID = TrecQuery.TYPE.TREATMENT;
+    private static final String CLASSIFIER = "SGDClassifier.epsilon_insensitive.l2";
+    private static final TYPE CLASS_ID = TrecQuery.TYPE.DIAGNOSIS;
+    private static final String HEDGES = "-hedges"; // "-hedges" or ""
 
     public static void main(String[] args) throws Exception {
         IndexReader reader = DirectoryReader.open(NIOFSDirectory.open(FilePaths.BM25_INDEX_DIR));
@@ -176,7 +178,7 @@ public class FeatureComputer {
             if (trecQuery.getType() != CLASS_ID) {
                 continue;
             }
-            if (Sets.newHashSet(3, 17, 25).contains(trecQuery.getId())) {
+            if (Sets.newHashSet(17, 25).contains(trecQuery.getId())) {
                 continue;
             }
 
@@ -255,7 +257,8 @@ public class FeatureComputer {
         if (classificationScore == null) {
             if (relevance > 0) {
                 System.out.println(pmcid);
-                System.exit(0);
+                classificationScore = new Double(0);
+                // System.exit(0);
             } else {
                 return false;
             }
@@ -303,7 +306,7 @@ public class FeatureComputer {
             throws IOException {
         Path root = FilePaths.ROOT_DIR.resolve("classification/data/res-and-qrels");
         List<String> ids = FileUtils.readLines(root.resolve("ids.txt").toFile());
-        Path resultsDir = root.resolve("results").resolve(category);
+        Path resultsDir = Paths.get(root.toString() + HEDGES).resolve("results").resolve(category);
         List<String> scoreLines = FileUtils.readLines(resultsDir.resolve("results.txt." + classifierExt).toFile());
         Map<Integer, Double> scores = Maps.newHashMap();
         for (int i = 0; i < ids.size(); i++) {

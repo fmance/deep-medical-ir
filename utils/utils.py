@@ -135,11 +135,12 @@ def maxNormalize(ls):
 	m = max(ls)
 	return [float(x)/m for x in ls]
 
-def readClassPredictions(classifier, classId):
+def readClassPredictions(classifier, classId, hedges=False):
 	if classId == "test":
 		classId = "diag"
 	docIds = readInts(os.path.join(RES_AND_QRELS_DIR, "ids.txt"))
-	results = map(float, open(os.path.join(RES_AND_QRELS_DIR, "results", classId, "results.txt." + classifier)).read().split())
+	hedgesPart = "-hedges" if hedges else ""
+	results = map(float, open(os.path.join(RES_AND_QRELS_DIR + hedgesPart, "results", classId, "results.txt." + classifier)).read().split())
 	
 #	if classifier == "NN":
 #		results = map(numpy.sign, results)

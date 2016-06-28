@@ -30,14 +30,8 @@ def getIdMapping(pmcids):
 			mapping[pmcid] = int(pmid)
 	return mapping
 
-def getMeshTerms():
-	relevant = getRelevantBothYears(classId)
-	mappings = getIdMapping(relevant)
-	print len(mappings)
-
-	pmids = ",".join(map(str, mappings.values()))
-
-	meshCommand = "efetch -db pubmed -id " + pmids + " -format xml | xtract -pattern PubmedArticle -PMID MedlineCitation/PMID " + \
+def getMeshCommand(pmids):
+	return  "efetch -db pubmed -id " + pmids + " -format xml | xtract -pattern PubmedArticle -PMID MedlineCitation/PMID " + \
 					"-group MeshHeading " + \
 					  "-block MeshHeading -match QualifierName " + \
 						"-subset DescriptorName -TERM \"DescriptorName\" -MAJR \"@MajorTopicYN\" " + \
@@ -46,8 +40,14 @@ def getMeshTerms():
 					  "-block MeshHeading -avoid QualifierName " + \
 						"-subset DescriptorName -tab \"\n\" " + \
 						  "-element \"&PMID\",DescriptorName,\"@MajorTopicYN\""
+
+def getMeshTerms():
+	relevant = getRelevantBothYears(classId)
+	mappings = getIdMapping(relevant)
+	print len(mappings)
+	pmids = ",".join(map(str, mappings.values()))
 	print "Calling efetch"			  
-	output = subprocess.Popen([meshCommand], stdout=subprocess.PIPE, shell=True).communicate()[0]
+	output = subprocess.Popen([getMeshCommand(pmids)], stdout=subprocess.PIPE, shell=True).communicate()[0]
 	print "done"
 	out = open("mesh-" + classId + ".txt", "w")
 	out.write(output)
@@ -59,10 +59,10 @@ def readMeshTerms():
 	for line in open("mesh-" + classId + ".txt"):
 		parts = line.strip().split("\t")
 		#if parts[2] == "Y" or (len(parts) == 5 and parts[4] == "Y"):
-		meshTerms.append(parts[1])
-#		if len(parts) == 5:
+#		meshTerms.append(parts[1])
+		if len(parts) == 5:
 #			if parts[4] == "Y":
-#				meshTerms.append(parts[3])
+				meshTerms.append(parts[3])
 		foundIds.append(int(parts[0]))
 	return set(foundIds), Counter(meshTerms)
 
@@ -70,3 +70,29 @@ def readMeshTerms():
 foundIds, meshTerms = readMeshTerms()
 pprint.pprint(meshTerms.most_common(20))
 print len(foundIds)
+
+#def chunks(l, n):
+#	n = max(1, n)
+#	return [l[i:i + n] for i in range(0, len(l), n)]
+
+#def getDocsWithMeshTerms():
+#	mappings = getIdMapping(utils.VALID_DOC_IDS)
+#	print len(mappings)
+#	pmids = mappings.values()
+#	meshPmids = set([])
+#	for pmidsChunk in chunks(pmids, 10000):
+#		print "Calling efetch"
+#		argStr = ",".join(map(str, pmidsChunk))
+#		output = subprocess.Popen([meshCommand], stdout=subprocess.PIPE, shell=True).communicate()[0]
+#		print "done"
+#		for line in output.splitlines():
+#			parts = line.split()
+#			meshPmids.add(int(parts[0]))
+
+#	revMap = {v:k for k,v in mappings.items()}
+#	out = open("docs-with-mesh.txt", "w")
+#	for pmid in meshPmids:
+#		out.write("%d\n" % revMap[pmid])
+#	out.close()
+#	
+#getDocsWithMeshTerms()	
