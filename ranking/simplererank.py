@@ -17,7 +17,7 @@ CLASS_ID = sys.argv[1]
 TARGET = sys.argv[2]
 YEAR = TARGET[:4]
 
-USE_HEDGES = True
+USE_HEDGES = False
 
 QUERY_OFFSETS = {"diag": 1, "test": 11, "treat": 21}
 QUERY_OFFSET = QUERY_OFFSETS[CLASS_ID]
@@ -30,7 +30,7 @@ EVAL_PROGNAME = "../eval/trec_eval.9.0/trec_eval"
 QRELS = utils.readQrels(QRELS_FILE)
 
 CLASSIFIERS = [
-#	"Basic",
+	"Basic",
 #	"LinearSVC.squared_hinge.l2", 
 #	"SGDClassifier.hinge.l2",
 #	"SGDClassifier.hinge.elasticnet",
@@ -51,8 +51,7 @@ def interpolate(x, y, w):
 		return w * x + (1 - w) * y
 
 def zscoreDictValues(d):
-#	return dict(zip(d.keys(), stats.zscore(d.values())))
-	return d
+	return dict(zip(d.keys(), stats.zscore(d.values())))
 
 def getBaselineScores(baselineResultsFile):
 	baselineResults = utils.readResults(baselineResultsFile)
@@ -67,7 +66,8 @@ def getClassifierScores():
 	for classifier in CLASSIFIERS:
 		for did, score in utils.readClassPredictions(classifier, CLASS_ID, USE_HEDGES).items():
 			scores[did] += score
-	return zscoreDictValues(scores)
+	return {did: score/len(CLASSIFIERS) for did, score in scores.items()}
+#	return zscoreDictValues(scores)
 
 def getP10(qrelsFile, resultsFile):
 	output = subprocess.Popen([EVAL_PROGNAME, qrelsFile, resultsFile], stdout=subprocess.PIPE).communicate()[0]
@@ -102,10 +102,10 @@ def lambdaRerank(qrelsFile, baselineScores, classifierScores, rerankedFile):
 		p10 = getP10(qrelsFile, rerankedFile)
 		maxP10 = max(p10, maxP10)
 		allP10.append((weight, p10))
-		print "%f" % p10,
+		print "%f %f" % (weight, p10)
 	
 	bestWeights = [weight for (weight, p10) in allP10 if p10 == maxP10]
-	print "MaxP10=%f" % maxP10,
+	print "MaxP10=%f/lambda=%f" % (maxP10, bestWeights[0]),
 
 	rerankScores(bestWeights[0], baselineScores, classifierScores, rerankedFile)
 	return maxP10, allP10

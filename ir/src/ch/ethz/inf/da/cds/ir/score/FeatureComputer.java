@@ -1,7 +1,6 @@
 package ch.ethz.inf.da.cds.ir.score;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Path;
@@ -11,14 +10,11 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import javax.xml.parsers.ParserConfigurationException;
-
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.lucene.index.DirectoryReader;
 import org.apache.lucene.index.IndexReader;
 import org.apache.lucene.store.NIOFSDirectory;
-import org.xml.sax.SAXException;
 
 import ch.ethz.inf.da.cds.ir.FilePaths;
 import ch.ethz.inf.da.cds.ir.QueryRunner;
@@ -35,17 +31,19 @@ import com.google.common.collect.Sets;
 import com.google.common.primitives.Doubles;
 
 public class FeatureComputer {
-    private static final String CLASSIFIER = "SGDClassifier.epsilon_insensitive.l2";
-    private static final TYPE CLASS_ID = TrecQuery.TYPE.DIAGNOSIS;
-    private static final String HEDGES = "-hedges"; // "-hedges" or ""
+    // private static final String CLASSIFIER = "Basic";
+    private static final String CLASSIFIER = "SGDClassifier.epsilon_insensitive.elasticnet";
+    // private static final String CLASSIFIER = "Combined";
+
+    private static final TYPE CLASS_ID = TrecQuery.TYPE.TEST;
+    private static final String HEDGES = "";// "-hedges" or ""
 
     public static void main(String[] args) throws Exception {
         IndexReader reader = DirectoryReader.open(NIOFSDirectory.open(FilePaths.BM25_INDEX_DIR));
         int[] docIdMapping = LuceneUtils.getLuceneToPmcIdMapping(reader);
         String field = LuceneUtils.TEXT_FIELD;
 
-        writeQrels2014Features(reader, docIdMapping, field);
-        writeResults2015Features(reader, docIdMapping, field);
+        writeTrain2014(reader, docIdMapping, field);
 
         // writeScores(reader,
         // docIdMapping,
@@ -78,6 +76,38 @@ public class FeatureComputer {
         reader.close();
     }
 
+    private static void writeTrain2014(IndexReader reader, int[] docIdMapping, String field) throws Exception {
+        writeQrelsFeatures(reader,
+                           docIdMapping,
+                           field,
+                           FilePaths.QUERIES_2014_FILE,
+                           FilePaths.QRELS_2014,
+                           FilePaths.FEATURES_2014,
+                           Sets.newHashSet(17, 23, 25));
+        writeResultsFeatures(reader,
+                             docIdMapping,
+                             field,
+                             FilePaths.QUERIES_2015_A_FILE,
+                             FilePaths.QRELS_2015,
+                             FilePaths.FEATURES_2015);
+    }
+
+    private static void writeTrain2015(IndexReader reader, int[] docIdMapping, String field) throws Exception {
+        writeQrelsFeatures(reader,
+                           docIdMapping,
+                           field,
+                           FilePaths.QUERIES_2015_A_FILE,
+                           FilePaths.QRELS_2015,
+                           FilePaths.FEATURES_2015,
+                           Sets.newHashSet(5, 20, 25));
+        writeResultsFeatures(reader,
+                             docIdMapping,
+                             field,
+                             FilePaths.QUERIES_2014_FILE,
+                             FilePaths.QRELS_2014,
+                             FilePaths.FEATURES_2014);
+    }
+
     private static void writeScores(IndexReader reader,
                                     int[] docIdMapping,
                                     String field,
@@ -102,19 +132,23 @@ public class FeatureComputer {
         pw.close();
     }
 
-    private static void writeResults2015Features(IndexReader reader, int[] docIdMapping, String field)
-            throws ParserConfigurationException, SAXException, IOException, FileNotFoundException, Exception {
-        List<TrecQuery> trecQueries2015 = XmlUtils.parseQueries(FilePaths.QUERIES_2015_A_FILE.toFile());
-        Map<Pair<Integer, Integer>, Integer> relevances2015 = QrelUtils.getRelevance(FilePaths.QRELS_2015);
+    private static void writeResultsFeatures(IndexReader reader,
+                                             int[] docIdMapping,
+                                             String field,
+                                             Path queriesFile,
+                                             Path qrelsFile,
+                                             Path featuresFile) throws Exception {
+        List<TrecQuery> trecQueries = XmlUtils.parseQueries(queriesFile.toFile());
+        Map<Pair<Integer, Integer>, Integer> relevances = QrelUtils.getRelevance(qrelsFile);
         Map<Integer, Double> classificationScoresDiag = getClassificationScores(CLASSIFIER, "diag");
         Map<Integer, Double> classificationScoresTest = getClassificationScores(CLASSIFIER, "diag");
         Map<Integer, Double> classificationScoresTreat = getClassificationScores(CLASSIFIER, "treat");
 
-        PrintWriter pw = new PrintWriter(FilePaths.FEATURES_2015.toFile());
-        PrintWriter docIdPw = new PrintWriter(FilePaths.FEATURES_2015.toString() + ".doc-ids.txt");
+        PrintWriter pw = new PrintWriter(featuresFile.toFile());
+        PrintWriter docIdPw = new PrintWriter(featuresFile.toString() + ".doc-ids.txt");
 
         long begin = System.currentTimeMillis();
-        for (TrecQuery trecQuery : trecQueries2015) {
+        for (TrecQuery trecQuery : trecQueries) {
             if (trecQuery.getType() != CLASS_ID) {
                 continue;
             }
@@ -126,7 +160,7 @@ public class FeatureComputer {
 
             for (int docId = 0; docId < features.length; docId++) {
                 int pmcid = docIdMapping[docId];
-                Integer relevance = relevances2015.get(Pair.of(queryId, pmcid));
+                Integer relevance = relevances.get(Pair.of(queryId, pmcid));
                 if (!topDocs.contains(docId)) {
                     continue;
                 }
@@ -155,37 +189,42 @@ public class FeatureComputer {
         docIdPw.close();
     }
 
-    private static void writeQrels2014Features(IndexReader reader, int[] docIdMapping, String field)
-            throws ParserConfigurationException, SAXException, IOException, FileNotFoundException, Exception {
-        List<TrecQuery> trecQueries2014 = XmlUtils.parseQueries(FilePaths.QUERIES_2014_FILE.toFile());
+    private static void writeQrelsFeatures(IndexReader reader,
+                                           int[] docIdMapping,
+                                           String field,
+                                           Path queriesFile,
+                                           Path qrelsFile,
+                                           Path featuresFile,
+                                           Set<Integer> queryIdBlacklist) throws Exception {
+        List<TrecQuery> trecQueries = XmlUtils.parseQueries(queriesFile.toFile());
         List<Integer> validDocIds = DocUtils.getValidDocIds()
                                             .stream()
                                             .map(s -> Integer.parseInt(s))
                                             .collect(Collectors.toList());
 
-        Map<Pair<Integer, Integer>, Integer> relevances2014 = QrelUtils.getRelevance(FilePaths.QRELS_2014);
+        Map<Pair<Integer, Integer>, Integer> relevances = QrelUtils.getRelevance(qrelsFile);
         Map<Integer, Integer> reverseDocIdMapping = getReverseMapping(docIdMapping);
 
         Map<Integer, Double> classificationScoresDiag = getClassificationScores(CLASSIFIER, "diag");
         Map<Integer, Double> classificationScoresTest = getClassificationScores(CLASSIFIER, "diag");
         Map<Integer, Double> classificationScoresTreat = getClassificationScores(CLASSIFIER, "treat");
 
-        PrintWriter pw = new PrintWriter(FilePaths.FEATURES_2014.toFile());
-        PrintWriter docIdPw = new PrintWriter(FilePaths.FEATURES_2014.toString() + ".doc-ids.txt");
+        PrintWriter pw = new PrintWriter(featuresFile.toFile());
+        PrintWriter docIdPw = new PrintWriter(featuresFile.toString() + ".doc-ids.txt");
 
         long begin = System.currentTimeMillis();
-        for (TrecQuery trecQuery : trecQueries2014) {
+        for (TrecQuery trecQuery : trecQueries) {
             if (trecQuery.getType() != CLASS_ID) {
                 continue;
             }
-            if (Sets.newHashSet(17, 25).contains(trecQuery.getId())) {
+            if (queryIdBlacklist.contains(trecQuery.getId())) {
                 continue;
             }
 
             System.out.println("Scoring query " + trecQuery.getId());
             Features[] features = Scorer.getFeatures(field, trecQuery, reader);
             int positive = 0;
-            for (Map.Entry<Pair<Integer, Integer>, Integer> relevanceEntry : relevances2014.entrySet()) {
+            for (Map.Entry<Pair<Integer, Integer>, Integer> relevanceEntry : relevances.entrySet()) {
                 int queryId = relevanceEntry.getKey().getLeft();
                 int pmcid = relevanceEntry.getKey().getRight();
                 int relevance = relevanceEntry.getValue();
@@ -198,7 +237,7 @@ public class FeatureComputer {
             }
             System.out.println("positives : " + positive);
 
-            for (Map.Entry<Pair<Integer, Integer>, Integer> relevanceEntry : relevances2014.entrySet()) {
+            for (Map.Entry<Pair<Integer, Integer>, Integer> relevanceEntry : relevances.entrySet()) {
                 int queryId = relevanceEntry.getKey().getLeft();
                 int pmcid = relevanceEntry.getKey().getRight();
                 int relevance = relevanceEntry.getValue();
@@ -245,7 +284,7 @@ public class FeatureComputer {
                                                         int queryId,
                                                         int pmcid,
                                                         int relevance,
-                                                        Integer docId) {
+                                                        Integer docId) throws Exception {
         Double classificationScore = null;
         if (queryId <= 10) {
             classificationScore = classificationScoresDiag.get(pmcid);
@@ -258,7 +297,7 @@ public class FeatureComputer {
             if (relevance > 0) {
                 System.out.println(pmcid);
                 classificationScore = new Double(0);
-                // System.exit(0);
+                throw new Exception("Did not find classify score for " + pmcid);
             } else {
                 return false;
             }

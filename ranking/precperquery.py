@@ -1,8 +1,9 @@
-#!/bin/python
-
 import os
 import sys
 import subprocess
+
+sys.path.insert(0, "../utils/")
+import utils
 
 trecEval = "../eval/trec_eval.9.0/trec_eval"
 
@@ -11,6 +12,7 @@ YEAR = sys.argv[2]
 
 QRELS = "../data/qrels/qrels-treceval-" + YEAR + ".txt"
 RESULTS = "../ir/results/results-" + YEAR + ".txt"
+RESULTS_RERANKED = RESULTS + ".reranked." + CLASS_ID
 
 QUERY_OFFSETS = {"diag": 1, "test": 11, "treat": 21}
 QUERY_OFFSET = QUERY_OFFSETS[CLASS_ID]
@@ -29,19 +31,46 @@ def getPrecsPerQuery(precNum, results):
 	
 	return precMap
 	
+def getMovement(qrels, res, resReranked):
+	relTop10 = set([did for (did, rank, score) in res if qrels.get(did) > 0 and rank <= 10])
+	relRerankedTop10 = set([did for (did, rank, score) in resReranked if qrels.get(did) > 0 and rank <= 10])
+	up = relRerankedTop10 - relTop10
+	down = relTop10 - relRerankedTop10
+	return up, down
+
 precs = getPrecsPerQuery("P_10", RESULTS)
-precsReranked = getPrecsPerQuery("P_10", RESULTS + ".reranked." + CLASS_ID)
+precsReranked = getPrecsPerQuery("P_10", RESULTS_RERANKED)
+
 sumPrec = 0.0
 sumPrecReranked = 0.0
+sumUp = 0
+sumDown = 0
+
+qrels = utils.readQrels(QRELS)
+results = utils.readResults(RESULTS)
+resultsReranked = utils.readResults(RESULTS_RERANKED)
+
 for qid, prec in precs.items():
 	if qid in QUERY_RANGE:
+		queryQrels = dict(qrels[qid])
+		queryRes = results[qid]
+		queryResRer = resultsReranked[qid]
+		up, down = getMovement(queryQrels, queryRes, queryResRer)
 		print "%d\t%.2f\t%.2f\t" % (qid, prec, precsReranked[qid]),
 		if precsReranked[qid] != prec:
-			print "%+.2f" % (precsReranked[qid] - prec)
+			print "%+.2f" % (precsReranked[qid] - prec),
+		if len(up) > 0:
+			print "\tup %d" % len(up),
+		else:
+			print "\t",
+		if len(down) > 0:
+			print "\tdown %d" % len(down)
 		else:
 			print
 		sumPrec += prec
 		sumPrecReranked += precsReranked[qid]
+		sumUp += len(up)
+		sumDown += len(down)
 		
 print "-" * 40
-print "avg\t%.2f\t%.2f\t%+.2f" % (sumPrec/len(QUERY_RANGE), sumPrecReranked/len(QUERY_RANGE), (sumPrecReranked-sumPrec)/len(QUERY_RANGE))
+print "avg\t%.2f\t%.2f\t%+.2f\tup %d\tdown %d" % (sumPrec/len(QUERY_RANGE), sumPrecReranked/len(QUERY_RANGE), (sumPrecReranked-sumPrec)/len(QUERY_RANGE), sumUp, sumDown)
