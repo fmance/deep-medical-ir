@@ -28,7 +28,10 @@ def prec(qrels, hedges):
 	dids = getRelevantQrelDocIds(qrels, CLASS_ID)
 #	classifiedDids = utils.readInts(os.path.join(utils.RES_AND_QRELS_DIR, "ids.txt"))
 #	classifierScores = dict(zip(dids, np.random.choice([-1, 1], size=len(dids))))
-	classifierScores = utils.readClassPredictions(CLASSIFIER, CLASS_ID, hedges=hedges)
+	if CLASSIFIER == "Basic":
+		classifierScores = utils.readClassPredictions(CLASSIFIER, CLASS_ID, False, hedges=hedges)
+	else:
+		classifierScores = utils.readClassPredictions(CLASSIFIER, CLASS_ID, True, hedges=hedges)
 	classifierScores = {did:score for did,score in classifierScores.items() if did in dids}
 	good = [did for did in classifierScores.keys() if classifierScores[did] > 0]
 	bad = [did for did in classifierScores.keys() if classifierScores[did] <= 0]

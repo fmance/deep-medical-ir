@@ -54,7 +54,8 @@ public class Indexer {
         indexWriter.close();
 
         double took = (System.currentTimeMillis() - begin) / (1e3 * 60);
-        System.out.println("\nIndexed " + directory.normalize() + ", took " + took + " min, plaintext = " + plaintext);
+        System.out.println("\nIndexed " + directory.normalize() + ", took " + took + " min, plaintext = " + plaintext
+                           + "\n\n");
     }
 
     static class IndexerThread implements Runnable {

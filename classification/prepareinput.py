@@ -56,6 +56,7 @@ def getPositiveRelaxedPmcIds(category):
 	
 	# for diag: open access[filter] AND diagnosis[MeSH major topic]
 	# for treat: open access[filter] AND therapeutics[MeSH]
+	# for test: Physical Examination[mh]
 	return readPmcIds(os.path.join(catDir, "positive-pmc-ids-relaxed-more.txt"))
 
 def getNegativePmcIds(category):
@@ -65,7 +66,8 @@ def getNegativePmcIds(category):
 def getTrainingAndTestIdsForCategory(category):
 	positiveDocIds = getPositivePmcIds(category) & utils.VALID_DOC_IDS # nonQrelsOrResultsDids
 	negativeDocIds = utils.VALID_DOC_IDS - getPositiveRelaxedPmcIds(category)   #nonQrelsOrResultsDids - getPositiveRelaxedPmcIds(category)
-#	negativeDocIds &= readPmcIds(os.path.join(CLASSIFICATION_DATA_DIR, "negative-pmcids.txt"))
+	print "Negative pmc ids before removing mesh-tagged", len(negativeDocIds)
+	negativeDocIds &= set(utils.readInts(os.path.join(CLASSIFICATION_DATA_DIR, "mesh-tagged-pmcids.txt")))
 	positiveDocIds = list(positiveDocIds)
 	negativeDocIds = list(negativeDocIds)
 	print "Total pos %d, total neg %d" % (len(positiveDocIds), len(negativeDocIds))
@@ -191,6 +193,16 @@ def writeIrResAndQrelsDataset():
 															  		os.path.join(resDir, "labels-nn.txt"), \
 															  		os.path.join(resDir, "ids.txt"))
 
+def writeIrResAndAllQrelsDataset():
+	print "Writing ir and all qrels dataset"
+	resDir = os.path.join(CLASSIFICATION_DATA_DIR, "res-and-all-qrels")
+	didsToWrite = resultsDocIds | qrelsDocIds
+	writeDocsData(didsToWrite, [-1] * len(didsToWrite),	os.path.join(resDir, "words.txt"), \
+										  				os.path.join(resDir, "mappings.txt"), \
+										  				os.path.join(resDir, "labels.txt"), \
+												  		os.path.join(resDir, "labels-nn.txt"), \
+												  		os.path.join(resDir, "ids.txt"))
+
 def writeDatasets(category):
 	posIds, negIds = getTrainingAndTestIdsForCategory(category)
 	trainPos, testPos = splitTrainTest(posIds)
@@ -229,8 +241,9 @@ def writeDatasets(category):
 #VOCAB_MAP = readVocabMap()
 #writeEmbeddings()
 
+writeIrResAndAllQrelsDataset()
 #writeIrResAndQrelsDataset()
-writeDatasets(CATEGORY)
+#writeDatasets(CATEGORY)
 
 
 	

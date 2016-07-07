@@ -26,17 +26,34 @@ import ch.ethz.inf.da.cds.ir.util.LuceneUtils;
 import ch.ethz.inf.da.cds.ir.util.QrelUtils;
 import ch.ethz.inf.da.cds.ir.util.XmlUtils;
 
+import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import com.google.common.primitives.Doubles;
 
 public class FeatureComputer {
-    // private static final String CLASSIFIER = "Basic";
-    private static final String CLASSIFIER = "SGDClassifier.epsilon_insensitive.elasticnet";
-    // private static final String CLASSIFIER = "Combined";
-
-    private static final TYPE CLASS_ID = TrecQuery.TYPE.TEST;
+    private static final TYPE CLASS_ID = TrecQuery.TYPE.DIAGNOSIS;
+    private static final List<String> CLASSIFIERS = Lists.newArrayList("Combined");
     private static final String HEDGES = "";// "-hedges" or ""
+
+    private static final Map<TYPE, String> CLASS_ID_TO_CLASSIFIER = ImmutableMap.of(TrecQuery.TYPE.DIAGNOSIS,
+                                                                                    "diag",
+                                                                                    TrecQuery.TYPE.TEST,
+                                                                                    "diag",
+                                                                                    TrecQuery.TYPE.TREATMENT,
+                                                                                    "treat");
+    private static final List<Map<Integer, Double>> CLASSIFICATION_SCORES_LIST = Lists.newArrayList();
+    static {
+        for (String classifierExt : CLASSIFIERS) {
+            try {
+                CLASSIFICATION_SCORES_LIST.add(getClassificationScores(classifierExt,
+                                                                       CLASS_ID_TO_CLASSIFIER.get(CLASS_ID)));
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 
     public static void main(String[] args) throws Exception {
         IndexReader reader = DirectoryReader.open(NIOFSDirectory.open(FilePaths.BM25_INDEX_DIR));
@@ -140,9 +157,6 @@ public class FeatureComputer {
                                              Path featuresFile) throws Exception {
         List<TrecQuery> trecQueries = XmlUtils.parseQueries(queriesFile.toFile());
         Map<Pair<Integer, Integer>, Integer> relevances = QrelUtils.getRelevance(qrelsFile);
-        Map<Integer, Double> classificationScoresDiag = getClassificationScores(CLASSIFIER, "diag");
-        Map<Integer, Double> classificationScoresTest = getClassificationScores(CLASSIFIER, "diag");
-        Map<Integer, Double> classificationScoresTreat = getClassificationScores(CLASSIFIER, "treat");
 
         PrintWriter pw = new PrintWriter(featuresFile.toFile());
         PrintWriter docIdPw = new PrintWriter(featuresFile.toString() + ".doc-ids.txt");
@@ -168,16 +182,7 @@ public class FeatureComputer {
                     relevance = 0;
                 }
 
-                writeFeaturesForQueryDocPair(classificationScoresDiag,
-                                             classificationScoresTest,
-                                             classificationScoresTreat,
-                                             pw,
-                                             docIdPw,
-                                             features,
-                                             queryId,
-                                             pmcid,
-                                             relevance,
-                                             docId);
+                writeFeaturesForQueryDocPair(pw, docIdPw, features, queryId, pmcid, relevance, docId);
             }
 
         }
@@ -204,10 +209,6 @@ public class FeatureComputer {
 
         Map<Pair<Integer, Integer>, Integer> relevances = QrelUtils.getRelevance(qrelsFile);
         Map<Integer, Integer> reverseDocIdMapping = getReverseMapping(docIdMapping);
-
-        Map<Integer, Double> classificationScoresDiag = getClassificationScores(CLASSIFIER, "diag");
-        Map<Integer, Double> classificationScoresTest = getClassificationScores(CLASSIFIER, "diag");
-        Map<Integer, Double> classificationScoresTreat = getClassificationScores(CLASSIFIER, "treat");
 
         PrintWriter pw = new PrintWriter(featuresFile.toFile());
         PrintWriter docIdPw = new PrintWriter(featuresFile.toString() + ".doc-ids.txt");
@@ -244,17 +245,12 @@ public class FeatureComputer {
                 if (queryId != trecQuery.getId() || !validDocIds.contains(pmcid)) {
                     continue;
                 }
-
-                Integer docId = reverseDocIdMapping.get(pmcid);
-
                 if (relevance == 0 && positive == 0) {
                     continue;
                 }
 
-                boolean negativeWritten = writeFeaturesForQueryDocPair(classificationScoresDiag,
-                                                                       classificationScoresTest,
-                                                                       classificationScoresTreat,
-                                                                       pw,
+                Integer docId = reverseDocIdMapping.get(pmcid);
+                boolean negativeWritten = writeFeaturesForQueryDocPair(pw,
                                                                        docIdPw,
                                                                        features,
                                                                        queryId,
@@ -275,51 +271,38 @@ public class FeatureComputer {
         docIdPw.close();
     }
 
-    private static boolean writeFeaturesForQueryDocPair(Map<Integer, Double> classificationScoresDiag,
-                                                        Map<Integer, Double> classificationScoresTest,
-                                                        Map<Integer, Double> classificationScoresTreat,
-                                                        PrintWriter pw,
+    private static boolean writeFeaturesForQueryDocPair(PrintWriter pw,
                                                         PrintWriter docIdPw,
                                                         Features[] features,
                                                         int queryId,
                                                         int pmcid,
                                                         int relevance,
                                                         Integer docId) throws Exception {
-        Double classificationScore = null;
-        if (queryId <= 10) {
-            classificationScore = classificationScoresDiag.get(pmcid);
-        } else if (queryId <= 20) {
-            classificationScore = classificationScoresTest.get(pmcid);
-        } else {
-            classificationScore = classificationScoresTreat.get(pmcid);
-        }
-        if (classificationScore == null) {
-            if (relevance > 0) {
-                System.out.println(pmcid);
-                classificationScore = new Double(0);
-                throw new Exception("Did not find classify score for " + pmcid);
-            } else {
-                return false;
+        List<Double> scores = Lists.newArrayList();
+        for (Map<Integer, Double> classificationScores : CLASSIFICATION_SCORES_LIST) {
+            Double classificationScore = classificationScores.get(pmcid);
+            if (classificationScore == null) {
+                if (relevance > 0) {
+                    throw new Exception("Did not find classify score for " + pmcid);
+                } else {
+                    return false;
+                }
             }
+            scores.add(classificationScore);
         }
-
-        // if (classificationScore > 0) {
-        // classificationScore = 1.0;
-        // } else {
-        // classificationScore = -1.0;
-        // }
 
         if (relevance == 2) {
             relevance = 1;
         }
-
         pw.printf("%d qid:%d ", relevance, queryId);
 
         int featureId = 1;
-        pw.printf("%d:%f ", featureId++, classificationScore);
+        for (Double score : scores) {
+            pw.printf("%d:%f ", featureId++, score);
+        }
 
         for (double feature : features[docId].toList()) {
-            pw.printf("%d:%f ", featureId++, feature);
+            pw.printf("%d:%f ", featureId++, 3 * feature);
         }
 
         pw.printf("# %d\n", pmcid);

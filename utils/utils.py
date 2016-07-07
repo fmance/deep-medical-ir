@@ -96,9 +96,9 @@ def readResults2015B():
 
 def readResultsAllModels(year):
 	scores = []
-	models = ["", "-sep"]
-	if year == 2014:
-		models += ["-expanded", "-expanded-sep"]
+	models = [""]#, "-sep"]
+#	if year == 2014:
+#		models += ["-expanded", "-expanded-sep"]
 	for model in models:
 		scoreFile = os.path.join(IR_RESULTS_DIR, "results-" + str(year) + model + ".txt")
 		scores.append(readResults(scoreFile))
@@ -135,8 +135,8 @@ def maxNormalize(ls):
 	m = max(ls)
 	return [float(x)/m for x in ls]
 
-def readClassPredictions(classifier, classId, hedges=False):
-	if classId == "test":
+def readClassPredictions(classifier, classId, useDiagForTest, hedges=False):
+	if classId == "test" and useDiagForTest:
 		classId = "diag"
 	docIds = readInts(os.path.join(RES_AND_QRELS_DIR, "ids.txt"))
 	hedgesPart = "-hedges" if hedges else ""
@@ -145,7 +145,7 @@ def readClassPredictions(classifier, classId, hedges=False):
 #	if classifier == "NN":
 #		results = map(numpy.sign, results)
 	
-	if classifier != "NN":
-		results = map(lambda x : 2*x-1, results) # transform 1 to 1 and 0 to -1
+#	if classifier != "NN":
+#		results = map(lambda x : 2*x-1, results) # transform 1 to 1 and 0 to -1
 	
 	return dict(zip(docIds, results))

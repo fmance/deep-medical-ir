@@ -2,6 +2,7 @@ package ch.ethz.inf.da.cds.ir.score;
 
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -53,10 +54,10 @@ public class Scorer {
         List<Term> queryTerms = getQueryTerms(reader, trecQuery, field);
         System.out.println(queryTerms);
 
-        double[] tfidfs = new double[reader.maxDoc()];
+        // double[] tfidfs = new double[reader.maxDoc()];
         double[] bm25s = new double[reader.maxDoc()];
-        double[] sumIdfs = new double[reader.maxDoc()];
-        int[] overlaps = new int[reader.maxDoc()];
+        // double[] sumIdfs = new double[reader.maxDoc()];
+        // int[] overlaps = new int[reader.maxDoc()];
 
         // double[] sumTfs = new double[reader.maxDoc()];
         // double[] minTf = new double[reader.maxDoc()];
@@ -72,7 +73,7 @@ public class Scorer {
         float avgFieldLength = LuceneUtils.getAvgFieldLength(field, reader);
 
         long docCount = LuceneUtils.getDocCount(field, reader);
-        double queryNorm = getQueryNorm(queryTerms, docCount, reader);
+        // double queryNorm = getQueryNorm(queryTerms, docCount, reader);
 
         Features[] features = new Features[reader.maxDoc()];
         for (int i = 0; i < features.length; i++) {
@@ -82,7 +83,7 @@ public class Scorer {
         for (Term queryTerm : queryTerms) {
             int docFreq = reader.docFreq(queryTerm);
             double bm25Weight = (k1 + 1) * Math.log(1 + (docCount - docFreq + 0.5) / (docFreq + 0.5));
-            double idf = SIMILARITY.idf(docFreq, docCount);
+            // double idf = SIMILARITY.idf(docFreq, docCount);
 
             for (LeafReaderContext ctx : reader.leaves()) {
                 LeafReader leafReader = ctx.reader();
@@ -96,12 +97,12 @@ public class Scorer {
                     float fieldLength = fieldLengths[globalDocId];
                     int termFreq = postingsEnum.freq();
 
-                    float simTf = SIMILARITY.tf(termFreq);
+                    // float simTf = SIMILARITY.tf(termFreq);
                     // sumTfs[globalDocId] += simTf;
                     // minTf[globalDocId] = Math.min(simTf, minTf[globalDocId]);
                     // maxTf[globalDocId] = Math.max(simTf, maxTf[globalDocId]);
 
-                    double tfidf = simTf * idf * idf;
+                    // double tfidf = simTf * idf * idf;
                     // sumTfIdfs[globalDocId] += tfidf;
                     // minTfIdf[globalDocId] = Math.min(tfidf,
                     // minTfIdf[globalDocId]);
@@ -118,11 +119,11 @@ public class Scorer {
                 }
             }
         }
-
+        double bm25Max = Arrays.stream(bm25s).max().getAsDouble();
         for (int docId = 0; docId < reader.maxDoc(); docId++) {
-            double coord = (double) overlaps[docId] / queryTerms.size();
-            float fieldLength = fieldLengths[docId];
-            tfidfs[docId] *= (coord * queryNorm / Math.sqrt(fieldLength));
+            // double coord = (double) overlaps[docId] / queryTerms.size();
+            // float fieldLength = fieldLengths[docId];
+            // tfidfs[docId] *= (coord * queryNorm / Math.sqrt(fieldLength));
 
             SummaryStats tfStats = null;
             // new SummaryStats(sumTfs[docId], minTf[docId], maxTf[docId],
@@ -136,15 +137,16 @@ public class Scorer {
             // new SummaryStats(sumTfIdfs[docId], minTfIdf[docId],
             // maxTfIdf[docId], sumTfIdfs[docId] / overlaps[docId]);
 
-            features[docId] = new Features.Builder().overlap(overlaps[docId])
-                                                    .coord(coord)
-                                                    .length(fieldLength)
-                                                    .idf(sumIdfs[docId])
-                                                    .tfStats(tfStats)
-                                                    .normTfStats(normTfStats)
-                                                    .tfidfStats(tfIdfStats)
-                                                    .tfidf(tfidfs[docId])
-                                                    .bm25(bm25s[docId])
+            features[docId] = new Features.Builder()
+            // .overlap(overlaps[docId])
+            // .coord(coord)
+            // .length(fieldLength)
+            // .idf(sumIdfs[docId])
+            // .tfStats(tfStats)
+            // .normTfStats(normTfStats)
+            // .tfidfStats(tfIdfStats)
+            // .tfidf(tfidfs[docId])
+            .bm25(bm25s[docId] / bm25Max)
                                                     .build();
 
         }
