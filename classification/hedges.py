@@ -60,14 +60,14 @@ def readHedgesCSV():
 #	out.write("%d\n" % pmid)
 #out.close()
 
-#mapping = getPmidToPmcidMapping()
-#others = utils.readInts("data/hedges/pmids-others.txt")
-#pmcids = [mapping[pmid] for pmid in others if pmid in mapping]
-#print len(pmcids)
-#out = open("pmcids-others.txt", "w")
-#for pmcid in pmcids:
-#	out.write("%d\n" % pmcid)
-#out.close()
+mapping = getPmidToPmcidMapping()
+others = utils.readInts("data/mesh-tagged-pmids.txt")
+pmcids = [mapping[pmid] for pmid in others if pmid in mapping]
+print len(pmcids)
+out = open("data/mesh-tagged-pmcids.txt", "w")
+for pmcid in pmcids:
+	out.write("%d\n" % pmcid)
+out.close()
 	
 	
 

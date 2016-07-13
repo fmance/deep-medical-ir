@@ -4,6 +4,8 @@ import os
 import shutil
 from collections import defaultdict
 import numpy
+import json
+
 
 DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data"))
 IR_RESULTS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../ir/results/"))
@@ -132,8 +134,8 @@ def getAndCopyFiles(filenames, srcRootDir, destDir):
 	copyFiles(pathsDict.values(), destDir)
 
 def maxNormalize(ls):
-	m = max(ls)
-	return [float(x)/m for x in ls]
+	M = max(ls)
+	return [float(x)/M for x in ls]
 
 def readClassPredictions(classifier, classId, useDiagForTest, hedges=False):
 	if classId == "test" and useDiagForTest:
@@ -149,3 +151,59 @@ def readClassPredictions(classifier, classId, useDiagForTest, hedges=False):
 #		results = map(lambda x : 2*x-1, results) # transform 1 to 1 and 0 to -1
 	
 	return dict(zip(docIds, results))
+	
+def writeFilteredTopicModels(year, outFile):
+	res = {}
+	scoreDict = json.load(open(os.path.join(CLASSIFICATION_DIR, "data", "topic-models", "queryresults" + str(year) + ".json")))
+	scoreDict = {int(qid) : docScores for qid, docScores in scoreDict.items()}
+	classifiedDocIds = set(readInts(os.path.join(RES_AND_QRELS_DIR, "ids.txt")))
+	
+#	print [(did, score) for did, score in scoreDict[1] if did == "3361318"]
+	
+	out = open(outFile, "w")
+	for qid in sorted(scoreDict.keys()):
+		dids, scores = zip(*scoreDict[qid])
+		dids = map(int, dids)
+		scores = map(float, scores)
+		normScores = zip(dids, scores)
+		for did, score in normScores:
+			if did in classifiedDocIds:
+				out.write("%d %d %f\n" % (qid, did, score))
+	out.close()
+	
+#writeFilteredTopicModels(2014, os.path.join(CLASSIFICATION_DIR, "data", "topic-models", "scores-2014-filtered.txt"))
+#writeFilteredTopicModels(2015, os.path.join(CLASSIFICATION_DIR, "data", "topic-models", "scores-2015-filtered.txt"))
+
+def writeResultsFromJson(jsonFile, year):
+	scoreDict = json.load(jsonFile)
+	scoreDict = {int(qid) : docScores for qid, docScores in scoreDict.items()}
+	out = open(os.path.join(IR_RESULTS_DIR, "json", "results-" + str(year) + ".txt"), "w")
+	for qid in sorted(scoreDict.keys()):
+		dids, scores = zip(*scoreDict[qid])
+		dids = map(int, dids)
+		scores = map(float, scores)
+		normScores = zip(dids, scores)
+		rank = 1
+		for did, score in normScores[:100]:
+			out.write("%d Q0 %s %d %f STANDARD\n" % (qid, did, rank, score))
+			rank += 1
+	out.close()
+
+#writeResultsFromJson(open(os.path.join(IR_RESULTS_DIR, "json", "combined2014.json")), 2014)
+#writeResultsFromJson(open(os.path.join(IR_RESULTS_DIR, "json", "combined2015.json")), 2015)
+
+def readTopicModels(year):
+	allScores = defaultdict(list)
+	for line in open(os.path.join(CLASSIFICATION_DIR, "data", "topic-models", "scores-" + year + "-filtered.txt")):
+		parts = line.split()
+		qid = int(parts[0])
+		did = int(parts[1])
+		score = float(parts[2])
+		allScores[qid].append((did, score))
+
+	res = {}
+	for qid in sorted(allScores.keys()):
+		dids, scores = zip(*allScores[qid])
+#		scores = maxNormalize(scores)
+		res[qid] = dict(zip(dids, scores))
+	return res

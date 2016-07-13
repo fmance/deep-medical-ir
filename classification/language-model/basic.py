@@ -10,7 +10,7 @@ import utils
 CLASS_ID = sys.argv[1]
 
 TARGETS = ["diag", "test", "physic exam", "investig", "evalu", "examin", "treat", "therap"]
-TERMS = {"diag" : ["diag"], "test": ["diag", "test"], "treat":["treat", "therap"]}
+TERMS = {"diag" : ["diag"], "test": ["diag", "test"], "treat":["treat"]}#, "therap"]}
 
 TO_CLASSIFY_DOC_IDS = utils.readInts("../data/res-and-qrels/ids.txt")
 DOC_IDS = utils.readInts("../data/res-and-all-qrels/ids.txt")
@@ -31,6 +31,9 @@ def getOccurences(did, words):
 	return s
 
 def minOccurences(docLen):
+	if len(sys.argv) == 3:
+		return float(sys.argv[2])
+
 	if CLASS_ID == "diag":
 		return 5.5
 #		return min(4, math.ceil(docLen/200.0))
@@ -38,9 +41,9 @@ def minOccurences(docLen):
 		#if docLen < 400:
 			#return min(2, math.ceil(docLen/100.0))
 		#return min(4.5, math.ceil(docLen/200.0))
-		return 5
+		return 5.25
 	else:
-		return 3#max(1, math.log10(docLen))
+		return 2.0 #3#max(1, math.log10(docLen))
 
 sumDocLen = 0
 for did in TO_CLASSIFY_DOC_IDS:
