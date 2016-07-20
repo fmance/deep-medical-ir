@@ -1,5 +1,3 @@
-#!/bin/python
-
 import os
 import sys
 import scipy.stats
@@ -7,61 +5,31 @@ import scipy.stats
 sys.path.insert(0, "../utils/")
 import utils
 
-CLASSIFIER = sys.argv[1]
-MODEL=sys.argv[2]
-CLASS_ID = sys.argv[3]
 
-QUERY_OFFSETS = {"diag": 1, "test": 11, "treat": 21}
-QUERY_OFFSET = QUERY_OFFSETS[CLASS_ID]
+FILE1 = sys.argv[1]
+FILE2 = sys.argv[2]
 
-def getRankMap(results):
-	docs, ranks, _ = zip(*results)
-	return dict(zip(docs, ranks))
-	
-#	rankMax=max(ranks)
-#	return dict(zip(docs, [rankMax-r for r in ranks]))
+results1 = utils.readResults(FILE1)
+results2 = utils.readResults(FILE2)
 
-def getClassificationRankMap(classificationScores):
-	docs, scores = classificationScores.keys(), classificationScores.values()
-	ranks = scipy.stats.rankdata(scores, method="min")
-	ranks = 1 + max(ranks) - ranks
-	return dict(zip(docs, ranks))
-	
-def getClassificationBordaCounts(classificationScores, filterDocs):
-	classificationScores = {doc: classificationScores[doc] for doc in filterDocs}
-	docs, scores = classificationScores.keys(), classificationScores.values()
-	ranks = scipy.stats.rankdata(scores, method="min")
-	return dict(zip(docs, ranks))
+def rec(x):
+	return 1.0/(20.0 + float(x))
 
-def rrf(xs):
-	return sum(map(lambda x:1.0/(60+x),xs))
-	
-def getTerrierScoresModel(year):
-	scoreFile = os.path.join(utils.IR_RESULTS_DIR, "results-" + str(year) + "-" + MODEL + ".txt")
-	return utils.readResults(scoreFile)
-
-CLASSIFICATION_SCORES = utils.readClassPredictions(CLASSIFIER, CLASS_ID)
-CLASSIFICATION_RANKS = getClassificationRankMap(CLASSIFICATION_SCORES)
-
-def computeRRFScores(year, outputFile):
-	terrierScoresModel = getTerrierScoresModel(year)
-	output = open(outputFile, "w")
-	for qid in range(QUERY_OFFSET, QUERY_OFFSET + 10):
-		rankMap = getRankMap(terrierScoresModel[qid])
-		docs = rankMap.keys() #set.intersection(*map(lambda rankMap : set(rankMap.keys()), rankMaps))# & set(classificationRanks.keys())
-	
-		classificationBordaCounts = getClassificationBordaCounts(CLASSIFICATION_SCORES, docs)
+out = open(FILE1 + ".rrf", "w")
+for qid in sorted(results1.keys()):
+	qidRes1 = results1[qid]
+	qidRes2 = results2[qid]
+	docs1, ranks1, _ = zip(*qidRes1)
+	docs2, ranks2, _ = zip(*qidRes2)
+	ranks1 = dict(zip(docs1, ranks1))
+	ranks2 = dict(zip(docs2, ranks2))
+	docScores = {}
+	for doc in list(set(docs1) | set(docs2)):
+		docScores[doc] = rec(ranks1[doc]) + rec(ranks2[doc])
+	docScores = sorted(docScores.items(), key=lambda ds:ds[1], reverse=True)
+	rank = 1
+	for did, score in docScores[:100]:
+		out.write("%d Q0 %s %d %f STANDARD\n" % (qid, did, rank, score))
+		rank += 1
+out.close()
 		
-		#rrfs = [(doc, rankMap[doc] + classificationBordaCounts[doc]) for doc in docs]
-		rrfs = [(doc, rrf([rankMap[doc], CLASSIFICATION_RANKS[doc]])) for doc in docs]
-
-		rrfs = sorted(rrfs, key=lambda x:x[1], reverse=True)
-		rank = 1
-		for doc, score in rrfs:
-			output.write("%d Q0 %s %d %f STANDARD\n" % (qid, doc, rank, score))
-			rank += 1
-	output.close()
-
-computeRRFScores(2014, os.path.join(utils.IR_RESULTS_DIR, "../results-2014-" + CLASS_ID + ".txt.reranked.RRF"))
-computeRRFScores(2015, os.path.join(utils.IR_RESULTS_DIR, "../results-2015-" + CLASS_ID + ".txt.reranked.RRF"))
-

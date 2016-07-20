@@ -5,6 +5,7 @@ import shutil
 from collections import defaultdict
 import numpy
 import json
+import scipy.stats
 
 
 DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data"))
@@ -98,9 +99,7 @@ def readResults2015B():
 
 def readResultsAllModels(year):
 	scores = []
-	models = [""]#, "-sep"]
-#	if year == 2014:
-#		models += ["-expanded", "-expanded-sep"]
+	models = ["", "-desc", "-exp", "-exp-desc"]
 	for model in models:
 		scoreFile = os.path.join(IR_RESULTS_DIR, "results-" + str(year) + model + ".txt")
 		scores.append(readResults(scoreFile))
@@ -152,9 +151,9 @@ def readClassPredictions(classifier, classId, useDiagForTest, hedges=False):
 	
 	return dict(zip(docIds, results))
 	
-def writeFilteredTopicModels(year, outFile):
+def writeFilteredTopicModels(target, outFile):
 	res = {}
-	scoreDict = json.load(open(os.path.join(CLASSIFICATION_DIR, "data", "topic-models", "queryresults" + str(year) + ".json")))
+	scoreDict = json.load(open(os.path.join(CLASSIFICATION_DIR, "data", "topic-models", "queryresults" + target + ".json")))
 	scoreDict = {int(qid) : docScores for qid, docScores in scoreDict.items()}
 	classifiedDocIds = set(readInts(os.path.join(RES_AND_QRELS_DIR, "ids.txt")))
 	
@@ -171,30 +170,40 @@ def writeFilteredTopicModels(year, outFile):
 				out.write("%d %d %f\n" % (qid, did, score))
 	out.close()
 	
-#writeFilteredTopicModels(2014, os.path.join(CLASSIFICATION_DIR, "data", "topic-models", "scores-2014-filtered.txt"))
-#writeFilteredTopicModels(2015, os.path.join(CLASSIFICATION_DIR, "data", "topic-models", "scores-2015-filtered.txt"))
+#TARGET_TYPE = "desc-unexpanded" # sum or desc
+#writeFilteredTopicModels("2014-" + TARGET_TYPE, os.path.join(CLASSIFICATION_DIR, "data", "topic-models", "scores-2014-" + TARGET_TYPE + "-filtered.txt"))
+#writeFilteredTopicModels("2015-" + TARGET_TYPE, os.path.join(CLASSIFICATION_DIR, "data", "topic-models", "scores-2015-" + TARGET_TYPE + "-filtered.txt"))
 
-def writeResultsFromJson(jsonFile, year):
-	scoreDict = json.load(jsonFile)
+def writeResultsFromJson(target):
+	bm25Res = readResults(os.path.join(IR_RESULTS_DIR, "results-" + target + ".txt"))
+	jsonFile = os.path.join(CLASSIFICATION_DIR, "data", "topic-models", "queryresults" + target.replace("-exp", "") + ".json") 
+	scoreDict = json.load(open(jsonFile))
 	scoreDict = {int(qid) : docScores for qid, docScores in scoreDict.items()}
-	out = open(os.path.join(IR_RESULTS_DIR, "json", "results-" + str(year) + ".txt"), "w")
+	out = open(os.path.join(IR_RESULTS_DIR, "results-" + target + "-lda.txt"), "w")
 	for qid in sorted(scoreDict.keys()):
 		dids, scores = zip(*scoreDict[qid])
 		dids = map(int, dids)
 		scores = map(float, scores)
-		normScores = zip(dids, scores)
+		docScores = zip(dids, scores)
+		
+		bm25DidsForQuery = set([did for (did, _, _) in bm25Res[qid]])
+		docScores = [(did, score) for did, score in docScores if did in bm25DidsForQuery]
+
+		docScores = sorted(docScores, key=lambda ds:ds[1], reverse=True)
 		rank = 1
-		for did, score in normScores[:100]:
+		for did, score in docScores:#[:100]:
 			out.write("%d Q0 %s %d %f STANDARD\n" % (qid, did, rank, score))
 			rank += 1
 	out.close()
 
-#writeResultsFromJson(open(os.path.join(IR_RESULTS_DIR, "json", "combined2014.json")), 2014)
-#writeResultsFromJson(open(os.path.join(IR_RESULTS_DIR, "json", "combined2015.json")), 2015)
+#writeResultsFromJson("2014-sum")
+#writeResultsFromJson("2015-sum")
+#writeResultsFromJson("2014-desc")
+#writeResultsFromJson("2015-desc")
 
-def readTopicModels(year):
+def readTopicModels(target):
 	allScores = defaultdict(list)
-	for line in open(os.path.join(CLASSIFICATION_DIR, "data", "topic-models", "scores-" + year + "-filtered.txt")):
+	for line in open(os.path.join(CLASSIFICATION_DIR, "data", "topic-models", "scores-" + target + "-filtered.txt")):
 		parts = line.split()
 		qid = int(parts[0])
 		did = int(parts[1])
@@ -205,5 +214,23 @@ def readTopicModels(year):
 	for qid in sorted(allScores.keys()):
 		dids, scores = zip(*allScores[qid])
 #		scores = maxNormalize(scores)
+#		scores = scipy.stats.zscore(scores)
+		res[qid] = dict(zip(dids, scores))
+	return res
+	
+def readDoc2VecScores(target):
+	allScores = defaultdict(list)
+	for line in open(os.path.join(CLASSIFICATION_DIR, "data", "doc2vec", "scores-" + target + ".txt")):
+		parts = line.split()
+		qid = int(float(parts[0]))
+		did = int(float(parts[1]))
+		score = float(parts[2])
+		allScores[qid].append((did, score))
+
+	res = {}
+	for qid in sorted(allScores.keys()):
+		dids, scores = zip(*allScores[qid])
+#		scores = maxNormalize(scores)
+#		scores = scipy.stats.zscore(scores)
 		res[qid] = dict(zip(dids, scores))
 	return res

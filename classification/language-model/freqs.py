@@ -21,13 +21,14 @@ TARGETS = ["diag", "test", "physic exam", "investig", "evalu", "examin", "treat"
 
 DOC_IDS = utils.readInts("../data/res-and-all-qrels/ids.txt")
 
-############
-#LINES = codecs.open("../data/res-and-all-qrels/words.txt", "r", "utf-8").read().splitlines()
-#DOCS = zip(DOC_IDS, LINES)
-#print "read docs"
-############
+########### TOGGLE for writing data
+LINES = codecs.open("../data/res-and-qrels/words.txt", "r", "utf-8").read().splitlines() # res-and-ALL-qrels sometimes !!
+DOCS = zip(DOC_IDS, LINES)
+print "read docs"
+###########
 
-LENGTHS = dict(zip(DOC_IDS, utils.readInts("word-counts/lengths.txt")))
+#### TOGGLE for reading data
+#LENGTHS = dict(zip(DOC_IDS, utils.readInts("word-counts/lengths.txt")))
 
 QRELS_2014 = utils.readQrels2014()
 QRELS_2015 = utils.readQrels2015()
@@ -55,8 +56,8 @@ def writeLengths():
 		out.write("%d\n" % len(text.split()))
 	out.close()
 
-#writeWordCounts()
-#writeLengths()
+writeWordCounts()
+writeLengths()
 
 COUNTS_DICT = {}
 for target in TARGETS:
@@ -140,7 +141,7 @@ def wordFreq(qrels, queryRange):
 	
 
 		
-wordFreq(QRELS_2014, QUERY_RANGE)
-wordFreq(QRELS_2015, QUERY_RANGE)
+#wordFreq(QRELS_2014, QUERY_RANGE)
+#wordFreq(QRELS_2015, QUERY_RANGE)
 		
 	

@@ -3,17 +3,29 @@ import sys
 import codecs
 import math
 import re
+from optparse import OptionParser
 
 sys.path.insert(0, "../../utils/")
 import utils
 
 CLASS_ID = sys.argv[1]
 
+op = OptionParser()
+op.add_option("--division_cutoff",
+			  action="store", type=float, default=-1.0,
+			  help="division cutoff.")
+op.add_option("--max_cutoff",
+			  action="store", type=float, default=2.0,
+			  help="max cutoff.")
+
+(opts, args) = op.parse_args()
+
+
 TARGETS = ["diag", "test", "physic exam", "investig", "evalu", "examin", "treat", "therap"]
 TERMS = {"diag" : ["diag"], "test": ["diag", "test"], "treat":["treat"]}#, "therap"]}
 
 TO_CLASSIFY_DOC_IDS = utils.readInts("../data/res-and-qrels/ids.txt")
-DOC_IDS = utils.readInts("../data/res-and-all-qrels/ids.txt")
+DOC_IDS = utils.readInts("../data/res-and-qrels/ids.txt")
 LENGTHS = dict(zip(DOC_IDS, utils.readInts("word-counts/lengths.txt")))
 
 #docs = codecs.open("../data/res-and-qrels/words.txt", "r", "utf-8").read().splitlines()
@@ -31,11 +43,11 @@ def getOccurences(did, words):
 	return s
 
 def minOccurences(docLen):
-	if len(sys.argv) == 3:
-		return float(sys.argv[2])
+	if opts.division_cutoff > 0:
+		return opts.division_cutoff
 
 	if CLASS_ID == "diag":
-		return 5.5
+		return 5.75
 #		return min(4, math.ceil(docLen/200.0))
 	if CLASS_ID == "test":
 		#if docLen < 400:
@@ -43,7 +55,7 @@ def minOccurences(docLen):
 		#return min(4.5, math.ceil(docLen/200.0))
 		return 5.25
 	else:
-		return 2.0 #3#max(1, math.log10(docLen))
+		return 18.25 #2.0 #3#max(1, math.log10(docLen))
 
 sumDocLen = 0
 for did in TO_CLASSIFY_DOC_IDS:
@@ -54,7 +66,7 @@ for did in TO_CLASSIFY_DOC_IDS:
 #		freq = float(occ)/docLen * 1e3
 #		pred = freq/3
 
-	pred = min(2, float(occ) / minOcc)
+	pred = min(opts.max_cutoff, float(occ) / minOcc)
 #	if CLASS_ID == "treat":
 #		if occ > 9:
 #			pred = 2

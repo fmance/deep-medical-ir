@@ -186,22 +186,22 @@ def writeIrResAndQrelsDataset():
 		len(resultsDocIds), len(positiveQrelsAllDocs), len(negativeQrelsDocIds)
 	)
 
-	resAndQrelsDocIds = resultsDocIds | positiveQrelsAllDocs | negativeQrelsDocIds
+	resAndQrelsDocIds = resultsDocIds# | positiveQrelsAllDocs | negativeQrelsDocIds
 	writeDocsData(resAndQrelsDocIds, [-1] * len(resAndQrelsDocIds),	os.path.join(resDir, "words.txt"), \
 													  				os.path.join(resDir, "mappings.txt"), \
 													  				os.path.join(resDir, "labels.txt"), \
 															  		os.path.join(resDir, "labels-nn.txt"), \
 															  		os.path.join(resDir, "ids.txt"))
 
-def writeIrResAndAllQrelsDataset():
-	print "Writing ir and all qrels dataset"
-	resDir = os.path.join(CLASSIFICATION_DATA_DIR, "res-and-all-qrels")
-	didsToWrite = resultsDocIds | qrelsDocIds
-	writeDocsData(didsToWrite, [-1] * len(didsToWrite),	os.path.join(resDir, "words.txt"), \
-										  				os.path.join(resDir, "mappings.txt"), \
-										  				os.path.join(resDir, "labels.txt"), \
-												  		os.path.join(resDir, "labels-nn.txt"), \
-												  		os.path.join(resDir, "ids.txt"))
+#def writeIrResAndAllQrelsDataset():
+#	print "Writing ir and all qrels dataset"
+#	resDir = os.path.join(CLASSIFICATION_DATA_DIR, "res-and-all-qrels")
+#	didsToWrite = resultsDocIds | qrelsDocIds
+#	writeDocsData(didsToWrite, [-1] * len(didsToWrite),	os.path.join(resDir, "words.txt"), \
+#										  				os.path.join(resDir, "mappings.txt"), \
+#										  				os.path.join(resDir, "labels.txt"), \
+#												  		os.path.join(resDir, "labels-nn.txt"), \
+#												  		os.path.join(resDir, "ids.txt"))
 
 def writeDatasets(category):
 	posIds, negIds = getTrainingAndTestIdsForCategory(category)
@@ -241,8 +241,8 @@ def writeDatasets(category):
 #VOCAB_MAP = readVocabMap()
 #writeEmbeddings()
 
-writeIrResAndAllQrelsDataset()
-#writeIrResAndQrelsDataset()
+#writeIrResAndAllQrelsDataset()
+writeIrResAndQrelsDataset()
 #writeDatasets(CATEGORY)
 
 

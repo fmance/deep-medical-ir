@@ -21,6 +21,7 @@ public class FilePaths {
     public static final Path QUERIES_2015_A_PLAINTEXT_FILE = QUERIES_DIR.resolve("topics-2015-A.txt");
     public static final Path QUERIES_2015_B_PLAINTEXT_FILE = QUERIES_DIR.resolve("topics-2015-B.txt");
     public static final Path QUERIES_2014_EXPANDED_FILE = QUERIES_DIR.resolve("topics-2014-exp.txt");
+    public static final Path QUERIES_2015_EXPANDED_FILE = QUERIES_DIR.resolve("topics-2015-exp.txt");
 
     public static final Path RESULTS_DIR = Paths.get("results");
     public static final Path RESULTS_2014_FILE = FilePaths.RESULTS_DIR.resolve("results-2014.txt");

@@ -25,8 +25,8 @@ declare -a classifiers=(
 function max {
 	for classifier in ${classifiers[@]}
 	do
-		p10=`python simplererank.py $classId $year $classifier | grep -Po "MaxP10=\K(0.\d+)"`
-		echo -e "$p10"
+		p10=`python simplererank.py $classId $year --classifier $classifier | grep -Po "MaxP10=\K(0.\d+)"`
+		printf "%-40s\t%s\n" $classifier $p10
 	done
 }
 
@@ -34,8 +34,8 @@ function all {
 	results=()
 	for classifier in ${classifiers[@]}
 	do
-		python simplererank.py $classId $year $classifier
+		python simplererank.py $classId $year --classifier $classifier
 	done
 }
 
-all
+max

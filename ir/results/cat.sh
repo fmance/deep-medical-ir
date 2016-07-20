@@ -5,6 +5,6 @@ function catYear() {
 		results-$target.txt.reranked.treat >  results-$target.txt.reranked
 }
 
-catYear 2014
-catYear 2015
+catYear 2014$1
+catYear 2015$1
 
