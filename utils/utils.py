@@ -33,6 +33,7 @@ def readInts(intsFile):
 	return map(int, open(intsFile).read().split())
 
 VALID_DOC_IDS = set(readInts(os.path.join(DATA_DIR, "doc-ids/valid-doc-ids.txt")))
+VALID_DOC_IDS_2016 = set(readInts(os.path.join(DATA_DIR, "doc-ids/valid-doc-ids-2016.txt")))
 
 LONG_DOC_IDS_PATH = os.path.join(DATA_DIR, "doc-ids/long-doc-ids.txt")
 LONG_DOC_IDS = set(readInts(LONG_DOC_IDS_PATH))
@@ -99,7 +100,7 @@ def readResults2015B():
 
 def readResultsAllModels(year):
 	scores = []
-	models = ["", "-desc", "-exp", "-exp-desc"]
+	models = ["-sum", "-desc", "-exp-sum", "-exp-desc"]
 	for model in models:
 		scoreFile = os.path.join(IR_RESULTS_DIR, "results-" + str(year) + model + ".txt")
 		scores.append(readResults(scoreFile))

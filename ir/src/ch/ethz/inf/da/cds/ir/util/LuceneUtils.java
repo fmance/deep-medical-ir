@@ -75,16 +75,14 @@ public class LuceneUtils {
         indexWriter.addDocument(doc);
     }
 
-    public static List<SearchResult> searchIndex(Path indexPath,
-                                                 Similarity similarity,
-                                                 TrecQuery trecQuery,
-                                                 String field,
-                                                 int numResults) throws IOException, ParseException {
+    private static List<SearchResult> searchIndex(Path indexPath,
+                                                  Similarity similarity,
+                                                  Query luceneQuery,
+                                                  int numResults) throws IOException, ParseException {
         DirectoryReader ireader = DirectoryReader.open(NIOFSDirectory.open(indexPath));
         IndexSearcher isearcher = new IndexSearcher(ireader);
         isearcher.setSimilarity(similarity);
 
-        Query luceneQuery = constructLuceneQuery(trecQuery, field);
         ScoreDoc[] hits = isearcher.search(luceneQuery, numResults).scoreDocs;
 
         List<SearchResult> results = Lists.newArrayList();
@@ -98,9 +96,15 @@ public class LuceneUtils {
         return results;
     }
 
+    public static List<SearchResult> searchBM25Index(Query luceneQuery, int numResults) throws IOException,
+            ParseException {
+        return searchIndex(FilePaths.BM25_INDEX_DIR, new BM25Similarity(), luceneQuery, numResults);
+    }
+
     public static List<SearchResult> searchBM25Index(TrecQuery trecQuery, String field, int numResults)
             throws IOException, ParseException {
-        return searchIndex(FilePaths.BM25_INDEX_DIR, new BM25Similarity(), trecQuery, field, numResults);
+        Query luceneQuery = constructLuceneQuery(trecQuery, field);
+        return searchIndex(FilePaths.BM25_INDEX_DIR, new BM25Similarity(), luceneQuery, numResults);
     }
 
     // public static List<SearchResult> searchTFIDFIndex(TrecQuery trecQuery,

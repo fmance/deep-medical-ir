@@ -1,5 +1,6 @@
 package ch.ethz.inf.da.cds.ir.util;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.file.Files;
@@ -13,6 +14,7 @@ import org.apache.commons.io.FilenameUtils;
 
 import ch.ethz.inf.da.cds.ir.FilePaths;
 
+import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
 public class DocUtils {
@@ -56,14 +58,28 @@ public class DocUtils {
         }
     }
 
+    public static List<String> getValidDocIds2016() {
+        List<String> validDocIds2016 = Lists.newArrayList();
+        for (File dir : FilePaths.PLAINTEXT_DIR.toFile().listFiles()) {
+            for (File subdir : dir.listFiles()) {
+                for (File file : subdir.listFiles()) {
+                    if (file.getName().endsWith(".txt")) {
+                        validDocIds2016.add(FilenameUtils.getBaseName(file.getName()));
+                    }
+                }
+            }
+        }
+        return validDocIds2016;
+    }
+
     public static Path getFullTextPath(Path original) {
         Path full = Paths.get(original.toAbsolutePath().toString() + ".full");
         return Files.exists(full) ? full : original;
     }
 
     public static void main(String[] args) throws IOException {
-        PrintWriter pw = new PrintWriter(DOC_IDS_PATH.resolve("valid-doc-ids.txt").toFile());
-        for (String did : getValidDocIds()) {
+        PrintWriter pw = new PrintWriter(DOC_IDS_PATH.resolve("valid-doc-ids-2016.txt").toFile());
+        for (String did : getValidDocIds2016()) {
             pw.println(did);
         }
         pw.close();

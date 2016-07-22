@@ -40,7 +40,7 @@ else:
 	TITLE_CATS = opts.cat.upper()
 
 TITLE = opts.title_prefix + TITLE_CATS + " - " + TITLE_YEARS
-OUTDIR = "plots" + opts.type
+OUTDIR = "plots/plots" + opts.type
 if not os.path.exists(OUTDIR):
 	os.mkdir(OUTDIR)
 	

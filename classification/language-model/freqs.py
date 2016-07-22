@@ -19,7 +19,7 @@ QUERY_RANGE = range(QUERY_OFFSETS[CLASS_ID], QUERY_OFFSETS[CLASS_ID] + 10)
 TARGETS = ["diag", "test", "physic exam", "investig", "evalu", "examin", "treat", "therap"]
 #TARGETS = ["treat"]
 
-DOC_IDS = utils.readInts("../data/res-and-all-qrels/ids.txt")
+DOC_IDS = utils.readInts("../data/res-and-qrels/ids.txt")
 
 ########### TOGGLE for writing data
 LINES = codecs.open("../data/res-and-qrels/words.txt", "r", "utf-8").read().splitlines() # res-and-ALL-qrels sometimes !!

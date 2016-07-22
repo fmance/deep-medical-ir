@@ -44,6 +44,7 @@ def getOccurences(did, words):
 
 def minOccurences(docLen):
 	if opts.division_cutoff > 0:
+		print opts.division_cutoff
 		return opts.division_cutoff
 
 	if CLASS_ID == "diag":
@@ -55,7 +56,7 @@ def minOccurences(docLen):
 		#return min(4.5, math.ceil(docLen/200.0))
 		return 5.25
 	else:
-		return 18.25 #2.0 #3#max(1, math.log10(docLen))
+		return 18.5 #2.0 #3#max(1, math.log10(docLen))
 
 sumDocLen = 0
 for did in TO_CLASSIFY_DOC_IDS:
