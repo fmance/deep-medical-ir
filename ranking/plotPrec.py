@@ -20,27 +20,54 @@ op.add_option("--type", action="store", default="")
 
 (opts, args) = op.parse_args()
 
-YEAR_MAP = {}
-if opts.year == "all":
-	YEAR_MAP["2014"] = "2014" + opts.type
-	YEAR_MAP["2015"] = "2015" + opts.type
-	TITLE_YEARS = "2014 + 2015"
-else:
-	YEAR_MAP["2014"] = opts.year + opts.type
-	YEAR_MAP["2015"] = opts.year + opts.type
-	TITLE_YEARS = opts.year
+if "desc" in opts.type or "sum" in opts.type or "note" in opts.type:
+	YEAR_MAP = {}
+	if opts.year == "all":
+		YEAR_MAP["2014"] = "2014" + opts.type
+		YEAR_MAP["2015"] = "2015" + opts.type
+		TITLE_YEARS = "2014 + 2015"
+	else:
+		YEAR_MAP["2014"] = opts.year + opts.type
+		YEAR_MAP["2015"] = opts.year + opts.type
+		TITLE_YEARS = opts.year
 
-if opts.cat == "all":
-	SCORE_FILES_2014 = [classId + "-" + YEAR_MAP["2014"] + ".txt" for classId in ["diag", "test", "treat"]]
-	SCORE_FILES_2015 = [classId + "-" + YEAR_MAP["2015"] + ".txt" for classId in ["diag", "test", "treat"]]
-	TITLE_CATS = "DIAG, TEST, TREAT"
+	if opts.cat == "all":
+		SCORE_FILES_2014 = [classId + "-" + YEAR_MAP["2014"] + ".txt" for classId in ["diag", "test", "treat"]]
+		SCORE_FILES_2015 = [classId + "-" + YEAR_MAP["2015"] + ".txt" for classId in ["diag", "test", "treat"]]
+		TITLE_CATS = "DIAG, TEST, TREAT"
+	else:
+		SCORE_FILES_2014 = [opts.cat + "-" + YEAR_MAP["2014"] + ".txt"]
+		SCORE_FILES_2015 = [opts.cat + "-" + YEAR_MAP["2015"] + ".txt"]
+		TITLE_CATS = opts.cat.upper()
+	OUTDIR = "plots/plots" + opts.type
 else:
-	SCORE_FILES_2014 = [opts.cat + "-" + YEAR_MAP["2014"] + ".txt"]
-	SCORE_FILES_2015 = [opts.cat + "-" + YEAR_MAP["2015"] + ".txt"]
-	TITLE_CATS = opts.cat.upper()
+	YEAR_MAP = {}
+	if opts.type == "-":
+		opts.type = ""
+	if opts.year == "all":
+		YEAR_MAP["2014"] = ["2014" + opts.type + "-sum", "2014" + opts.type + "-desc"]
+		YEAR_MAP["2015"] = ["2015" + opts.type + "-sum", "2015" + opts.type + "-desc"]
+		TITLE_YEARS = "2014 + 2015"
+	else:
+		YEAR_MAP["2014"] = [opts.year + opts.type + "-sum", opts.year + opts.type + "-desc"]
+		YEAR_MAP["2015"] = [opts.year + opts.type + "-sum", opts.year + opts.type + "-desc"]
+		TITLE_YEARS = opts.year
+		
+	if opts.cat == "all":
+		SCORE_FILES_2014 = [classId + "-" + yearPart + ".txt" for yearPart in YEAR_MAP["2014"] for classId in ["diag", "test", "treat"]]
+		SCORE_FILES_2015 = [classId + "-" + yearPart + ".txt" for yearPart in YEAR_MAP["2015"] for classId in ["diag", "test", "treat"]]
+		TITLE_CATS = "DIAG, TEST, TREAT"
+	else:
+		SCORE_FILES_2014 = [opts.cat + "-" + yearPart + ".txt" for yearPart in YEAR_MAP["2014"]]
+		SCORE_FILES_2015 = [opts.cat + "-" + yearPart + ".txt" for yearPart in YEAR_MAP["2015"]]
+		TITLE_CATS = opts.cat.upper()
+	OUTDIR = "plots/plots" + opts.type + "-sum-desc"
+
+print SCORE_FILES_2014
+print SCORE_FILES_2015
 
 TITLE = opts.title_prefix + TITLE_CATS + " - " + TITLE_YEARS
-OUTDIR = "plots/plots" + opts.type
+
 if not os.path.exists(OUTDIR):
 	os.mkdir(OUTDIR)
 	

@@ -85,7 +85,7 @@ def readResults(resultsFile):
 		did = int(parts[2])
 		rank = int(parts[3])
 		score = float(parts[4])
-		if did in VALID_DOC_IDS:
+		if did in VALID_DOC_IDS or "2016" in resultsFile:
 			results[qid].append((did, rank, score))
 	return results
 
@@ -100,7 +100,10 @@ def readResults2015B():
 
 def readResultsAllModels(year):
 	scores = []
-	models = ["-sum", "-desc", "-exp-sum", "-exp-desc"]
+	if year == 2016:
+		models = ["-exp-sum", "-exp-desc", "-exp-note"]
+	else:
+		models = ["-sum", "-desc", "-exp-sum", "-exp-desc"]
 	for model in models:
 		scoreFile = os.path.join(IR_RESULTS_DIR, "results-" + str(year) + model + ".txt")
 		scores.append(readResults(scoreFile))
@@ -171,9 +174,10 @@ def writeFilteredTopicModels(target, outFile):
 				out.write("%d %d %f\n" % (qid, did, score))
 	out.close()
 	
-#TARGET_TYPE = "desc-unexpanded" # sum or desc
+#TARGET_TYPE = "sum" # sum or desc or note
 #writeFilteredTopicModels("2014-" + TARGET_TYPE, os.path.join(CLASSIFICATION_DIR, "data", "topic-models", "scores-2014-" + TARGET_TYPE + "-filtered.txt"))
 #writeFilteredTopicModels("2015-" + TARGET_TYPE, os.path.join(CLASSIFICATION_DIR, "data", "topic-models", "scores-2015-" + TARGET_TYPE + "-filtered.txt"))
+#writeFilteredTopicModels("2016-" + TARGET_TYPE, os.path.join(CLASSIFICATION_DIR, "data", "topic-models", "scores-2016-" + TARGET_TYPE + "-filtered.txt"))
 
 def writeResultsFromJson(target):
 	bm25Res = readResults(os.path.join(IR_RESULTS_DIR, "results-" + target + ".txt"))

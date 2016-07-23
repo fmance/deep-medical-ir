@@ -22,10 +22,13 @@ qrels2014 = utils.readQrels2014()
 qrels2015 = utils.readQrels2015()
 qrelsDocIds = set(utils.getQrelsDocIds(qrels2014)) | set(utils.getQrelsDocIds(qrels2015))
 
-results2014AllModels = utils.readResultsAllModels(2014)
-results2015AllModels = utils.readResultsAllModels(2015)
+#results2014AllModels = utils.readResultsAllModels(2014)
+#results2015AllModels = utils.readResultsAllModels(2015)
+#resultsDocIds = map(utils.getResultsDocIds, results2014AllModels) + map(utils.getResultsDocIds, results2015AllModels)
 
-resultsDocIds = map(utils.getResultsDocIds, results2014AllModels) + map(utils.getResultsDocIds, results2015AllModels)
+results2016AllModels = utils.readResultsAllModels(2016)
+resultsDocIds = map(utils.getResultsDocIds, results2016AllModels) 
+
 resultsDocIds = set.union(*map(set, resultsDocIds))
 
 def readPmcIds(pmcIdsFile):

@@ -14,21 +14,12 @@ from optparse import OptionParser
 sys.path.insert(0, "../utils/")
 import utils
 import rankutils
-
+import weights
 
 CLASS_ID = sys.argv[1]
 TARGET = sys.argv[2]
 YEAR = TARGET[:4]
 
-# parse commandline arguments
-#op = OptionParser()
-#op.add_option("--classifier_weight",
-#			  action="store", type=float, default=1.0,
-#			  help="weight of classifier w.r.t classifier+topicModel.")
-
-#(opts, args) = op.parse_args()
-
-# parse commandline arguments
 op = OptionParser()
 op.add_option("--sgd_weight",
 			  action="store", type=float, default=0.5,
@@ -73,10 +64,11 @@ def interpolate(bm25, classifierScore, topicModelScore, doc2vecScore, w, cw, tw)
 	if classifierScore < -10:
 		return bm25 * w
 	else:
+		clsW = (1-w)*(math.pow(bm25, 0.5))
 		if topicModelScore == None:
-			return w * bm25 + (1-w) * classifierScore
+			return w * bm25 + clsW * classifierScore
 		else:
-			return w * bm25 + (1-w) * (cw*classifierScore + (1-cw)*(tw * topicModelScore + (1-tw) * doc2vecScore))
+			return w * bm25 + clsW * (cw*classifierScore + (1-cw)*(tw * topicModelScore + (1-tw) * doc2vecScore))
 
 TOPIC_MODEL_SCORES = utils.readTopicModels(TARGET.replace("-exp", ""))
 DOC2VEC_SCORES = utils.readDoc2VecScores(TARGET.replace("-exp", "").replace("-unexpanded", ""))
@@ -101,21 +93,10 @@ def writeCombinedScores(finalScores):
 		out.close()
 
 def combineScores(basic, sgd):
-#	if sgd == 0 and basic == 0:
-#		final = -1
 	w = opts.sgd_weight
 	if CLASS_ID == "test":
 		w *= 0.5
 	return w * sgd + (1-w) * basic
-
-#def maxNormalizeDict(d):
-#	maxVal = max(d.values())
-#	return {k : v/maxVal for k, v in d.items()}
-
-#def readBM25ClassifierScores():
-#	scores = utils.readClassPredictions("BM25", CLASS_ID, False, False)
-#	scores = {did: math.log1p(score) for did, score in scores.items()}
-#	return maxNormalizeDict(scores)
 
 def getClassifierScores():
 	scores = defaultdict(float)
@@ -124,12 +105,10 @@ def getClassifierScores():
 			scores[did] += score
 	scores = {did: score/len(CLASSIFIERS) for did, score in scores.items()}
 	basicScores = utils.readClassPredictions("Basic", CLASS_ID, False, False)
-#	bm25Scores = readBM25ClassifierScores()
 	finalScores = {}
 	for did in scores.keys():
 		sgd = scores[did]
 		basic = basicScores[did]
-#		bm25 = bm25Scores[did]
 		final = combineScores(basic, sgd)
 		finalScores[did] = (final, sgd, basic)
 		
@@ -206,7 +185,7 @@ def rerankScores(bm25Weight, classifierWeight, topicModelWeight, baselineScores,
 #		for did, score in rerankedScores:
 #			out.write("%d Q0 %s %d %f STANDARD\t#\t%f\t%d\t%f\t%s\t%f\t\t%s\n" %
 #							(qid, did, rank, score,
-#							weight, queryScores[did][0], queryScores[did][1], classifierStr(classifierScores[did]),
+#							bm25Weight, queryScores[did][0], queryScores[did][1], classifierStr(classifierScores[did]),
 #							queryTopicModel[did], qrelStr(queryQrels.get(did))))
 #			rank += 1
 #	out.close()
@@ -218,41 +197,19 @@ def printAllp10sToFile(allP10s):
 		out.write("%f %f %f %s\n" % (w, cw, p10, " ".join(map(str, p10List))))
 	out.close()
 
-def getTopicModelWeight():
-	if "sum" in TARGET:
-		if CLASS_ID == "diag":
-			return 0.95
-		if CLASS_ID == "test":
-			return 0.9
-		if CLASS_ID == "treat":
-			return 0.95
-	if "desc" in TARGET or "note" in TARGET:
-		if CLASS_ID == "diag":
-			return 0.9
-		if CLASS_ID == "test":
-			return 0.85
-		if CLASS_ID == "treat":
-			return 0.85
-
 def lambdaRerank(qrelsFile, baselineScores, classifierScores, rerankedFile):
 	allP10 = []
 	maxP10 = 0.0
-	############
-	topicModelWeight = getTopicModelWeight()
-	#############
+	topicModelWeight = weights.getTopicModelWeight(CLASS_ID, TARGET) 
 	
 	for bm25Weight in np.linspace(0.0, 1.0, 101):
 		print bm25Weight
 		for classifierWeight in np.linspace(0.0, 1.0, 101): # [1]:
 			
 			p10Avg, p10List = rerankScores(bm25Weight, classifierWeight, topicModelWeight, baselineScores, classifierScores, rerankedFile)
-#			p10 = getP10(qrelsFile, rerankedFile)
-#			p10Avg, p10List = getP10fromScores(rerankedScores)
 			maxP10 = max(p10Avg, maxP10)
 			allP10.append((bm25Weight, classifierWeight, topicModelWeight, p10Avg, p10List))
-#			print "%f %f %f," % (weight, classifierWeight, p10)
 #			print "%f," % p10,
-##		print
 	
 	printAllp10sToFile(allP10)
 
@@ -261,8 +218,6 @@ def lambdaRerank(qrelsFile, baselineScores, classifierScores, rerankedFile):
 	
 	print "Baseline=%f -> MaxP10=%f lambda=%f/%f" % (baselineP10, maxP10, bestWeights[0][0], bestWeights[0][1])
 
-
-#	rerankScores(0.62, 0.99, baselineScores, classifierScores, rerankedFile)
 #	rerankScores(bestWeights[0][0], bestWeights[0][1], baselineScores, classifierScores, rerankedFile)
 	return maxP10, allP10
 
@@ -278,7 +233,12 @@ def rerankKnownWeights():
 	baselineScores = getBaselineScores(BASELINE_RESULTS_FILE)
 	classifierScores = getClassifierScores()
 	rerankedFile = BASELINE_RESULTS_FILE + ".reranked." + CLASS_ID
-	rerankScores(0.39, 0.15, baselineScores, classifierScores, rerankedFile)
+	
+	bm25Weight = weights.getBm25Weight(CLASS_ID, TARGET)
+	classifierWeight = weights.getClassifierWeight(CLASS_ID, TARGET)
+	topicModelWeight = 1.0 # weights.getTopicModelWeight(CLASS_ID, TARGET)
+	
+	rerankScores(bm25Weight, classifierWeight, topicModelWeight, baselineScores, classifierScores, rerankedFile)
 
 #rerankKnownWeights()
 

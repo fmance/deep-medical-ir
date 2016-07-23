@@ -14,7 +14,6 @@ import utils
 
 CLASS_ID = sys.argv[1]
 QUERY_OFFSETS = {"diag": 1, "test": 11, "treat": 21}
-QUERY_RANGE = range(QUERY_OFFSETS[CLASS_ID], QUERY_OFFSETS[CLASS_ID] + 10)
 
 TARGETS = ["diag", "test", "physic exam", "investig", "evalu", "examin", "treat", "therap"]
 #TARGETS = ["treat"]
@@ -24,14 +23,11 @@ DOC_IDS = utils.readInts("../data/res-and-qrels/ids.txt")
 ########### TOGGLE for writing data
 LINES = codecs.open("../data/res-and-qrels/words.txt", "r", "utf-8").read().splitlines() # res-and-ALL-qrels sometimes !!
 DOCS = zip(DOC_IDS, LINES)
-print "read docs"
+print "read docs", len(LINES)
 ###########
 
 #### TOGGLE for reading data
 #LENGTHS = dict(zip(DOC_IDS, utils.readInts("word-counts/lengths.txt")))
-
-QRELS_2014 = utils.readQrels2014()
-QRELS_2015 = utils.readQrels2015()
 
 def writeWordCountsForTarget(target):
 	out = open("word-counts/" + target + ".txt", "w")
@@ -140,7 +136,9 @@ def wordFreq(qrels, queryRange):
 	print
 	
 
-		
+#QRELS_2014 = utils.readQrels2014()
+#QRELS_2015 = utils.readQrels2015()
+#QUERY_RANGE = range(QUERY_OFFSETS[CLASS_ID], QUERY_OFFSETS[CLASS_ID] + 10)
 #wordFreq(QRELS_2014, QUERY_RANGE)
 #wordFreq(QRELS_2015, QUERY_RANGE)
 		
