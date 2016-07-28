@@ -1,0 +1,52 @@
+\chapter{Methodology}
+
+
+In this section we formally describe the retrieval pipeline. It consists of three main components:
+\begin{itemize}
+ \item baseline ranking
+ \item document classification
+ \item fusion baseline + classification (baseline + classification fusion)
+\end{itemize}
+\[score = fuse(baseline, classifier, [features])\]
+\section{Input}
+Input: query and set of documents to score. Each query consists of the query text and query type.
+
+Ad discussed in the intro, the idea is to improve on the baseline.
+
+\section{Document classification}
+For each document in the baseline, we classify it depending on the query type.
+Classifiers can be:
+\begin{itemize}
+ \item Stochastic gradient descent
+ \item neural networks
+ \item counting classifiers
+\end{itemize}
+
+We describe each one in detail.
+\subsection{Stochastic gradient descent}
+Can have various loss functions and penalty (l2, elasticnet).
+
+\subsection{Neural nets}
+Implemented based on ...
+
+\subsection{Count classifier}
+Count the number of certain keywords in the document and threshold it.
+
+\section{Reranking}
+Now that we have the baseline scores and classification scores, we have to fuse them. We have several methods:
+\begin{itemize}
+ \item Unsupervised: Interpolation between the two scores, RRF
+ \item Supervised reranking using the two scores and other term statistics as features
+\end{itemize}
+
+We describe each one in detail.
+\subsection{Interpolation}
+Here we interpolate the baseline scores and the classification scores.
+We normalize the scores, and the formula is : .... (don't forget the sqrt bm25)
+
+\subsection{RRF}
+Description....
+
+\subsection{Learning to rank}
+We use RankLib, LambdaMart, etc... (references) Features are computed from the Microsoft feature list.
+
