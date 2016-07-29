@@ -23,6 +23,10 @@ public class AnalyzerConverter {
     }
 
     private static Optional<String> analyzeFile(File file) {
+        if (!file.getName().endsWith(".txt")) {
+            return Optional.empty();
+        }
+
         try {
             Path fileToAnalyze = DocUtils.getFullTextPath(file.toPath());
             List<String> lines = Files.readAllLines(fileToAnalyze);
