@@ -39,6 +39,9 @@ LONG_DOC_IDS_PATH = os.path.join(DATA_DIR, "doc-ids/long-doc-ids.txt")
 LONG_DOC_IDS = set(readInts(LONG_DOC_IDS_PATH))
 
 def readQrels(qrelFile):
+	if "2016" in qrelFile:
+		return defaultdict(defaultdict)
+
 	qrels = defaultdict(list)
 	for line in open(qrelFile):
 		parts = line.split()
@@ -88,6 +91,13 @@ def readResults(resultsFile):
 		if did in VALID_DOC_IDS or "2016" in resultsFile:
 			results[qid].append((did, rank, score))
 	return results
+
+#res2016Notes = readResults(os.path.join(IR_RESULTS_DIR, "results-2016-exp-note.txt"))
+#out = open(os.path.join(IR_RESULTS_DIR, "results-2016-exp-note.txt.1"), "w")
+#for qid, docScores in res2016Notes.items():
+#	for did, rank, score in docScores:
+#		out.write("%d Q0 %s %d %f ETHNote\n" % (qid, did, rank+1, score))
+#out.close()
 
 def readResults2014():
 	return readResults(RESULTS_2014)
@@ -174,7 +184,7 @@ def writeFilteredTopicModels(target, outFile):
 				out.write("%d %d %f\n" % (qid, did, score))
 	out.close()
 	
-#TARGET_TYPE = "sum" # sum or desc or note
+#TARGET_TYPE = "note" # sum or desc or note
 #writeFilteredTopicModels("2014-" + TARGET_TYPE, os.path.join(CLASSIFICATION_DIR, "data", "topic-models", "scores-2014-" + TARGET_TYPE + "-filtered.txt"))
 #writeFilteredTopicModels("2015-" + TARGET_TYPE, os.path.join(CLASSIFICATION_DIR, "data", "topic-models", "scores-2015-" + TARGET_TYPE + "-filtered.txt"))
 #writeFilteredTopicModels("2016-" + TARGET_TYPE, os.path.join(CLASSIFICATION_DIR, "data", "topic-models", "scores-2016-" + TARGET_TYPE + "-filtered.txt"))

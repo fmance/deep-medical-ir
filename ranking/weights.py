@@ -1,18 +1,18 @@
 def getBm25Weight(classId, target):
 	if "sum" in target:
 		if classId == "diag":
-			return 0.5
+			return 0.75
 		if classId == "test":
 			return 0.85
 		if classId == "treat":
-			return 0.5
+			return 0.8
 	if "desc" in target or "note" in target:
 		if classId == "diag":
-			return 0.5
+			return 0.75
 		if classId == "test":
 			return 0.85
 		if classId == "treat":
-			return 0.5
+			return 0.8
 
 def getClassifierWeight(classId, target):
 	if "sum" in target:
@@ -21,14 +21,14 @@ def getClassifierWeight(classId, target):
 		if classId == "test":
 			return 0.1
 		if classId == "treat":
-			return 0.75
+			return 0.5
 	if "desc" in target or "note" in target:
 		if classId == "diag":
 			return 0.5
 		if classId == "test":
 			return 0.1
 		if classId == "treat":
-			return 0.75
+			return 0.5
 
 def getTopicModelWeight(classId, target):
 	if "sum" in target:

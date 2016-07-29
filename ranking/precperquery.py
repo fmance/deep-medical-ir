@@ -8,10 +8,11 @@ import utils
 trecEval = "../eval/trec_eval.9.0/trec_eval"
 
 CLASS_ID = sys.argv[1]
-YEAR = sys.argv[2]
+TARGET = sys.argv[2]
+YEAR = TARGET[:4]
 
 QRELS = "../data/qrels/qrels-treceval-" + YEAR + ".txt"
-RESULTS = "../ir/results/results-" + YEAR + ".txt"
+RESULTS = "../ir/results/results-" + TARGET + ".txt"
 
 if CLASS_ID == "all":
 	RESULTS_RERANKED = RESULTS + ".reranked"
