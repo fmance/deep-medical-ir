@@ -18,8 +18,6 @@ class Sentences(object):
 		for sdir in [self.dirname + d for d in ["00", "01", "02", "03"]]:
 			for ssdir in [os.path.join(sdir, ssdir) for ssdir in sorted(os.listdir(sdir))]:
 				for fname in [os.path.join(ssdir, fname) for fname in sorted(os.listdir(ssdir))]:
-					if not fname.endswith(".txt.sent.analyzed"):
-						continue
 					count += 1
 					if count % 10000 == 0:
 						print "\n\n%d files (%s) in %.2f minutes\n\n" % (count, ssdir, (time.time() - start)/60.0)
@@ -27,7 +25,7 @@ class Sentences(object):
 						yield sentence.split()
 
 def run():
-	sentences = Sentences("../classification/data/sentences/")
+	sentences = Sentences("../../../data/analyzed/")
 	model = gensim.models.Word2Vec(sentences, workers=4, iter=5, size=100, min_count=1)
 	model.save("model")
 

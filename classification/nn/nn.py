@@ -1,5 +1,3 @@
-#!/usr/bin/python
-
 import numpy as np
 import tensorflow as tf
 import os
@@ -8,9 +6,9 @@ import sys
 from itertools import izip
 
 NUM_CLASSES = 2
-VOCAB_SIZE = 3297631 + 1
+VOCAB_SIZE = 4905671 + 1
 EMBED_SIZE = 100
-NUM_FILTERS = 100
+NUM_FILTERS = 50
 MAX_DOC_LEN = 5000 # !!! #
 
 FC1_SIZE = 25
@@ -19,7 +17,7 @@ category = sys.argv[1]
 dataDir = "../data/"
 catDir = os.path.join(dataDir, category)
 irResDir = os.path.join(dataDir, "res-and-qrels")
-resDir = os.path.join(irResDir, "results-adam", category)
+resDir = os.path.join(irResDir, "results", category)
 resFile = os.path.join(resDir, "results.txt.NN")
 testFile = os.path.join(resDir, "results-on-test-docs.txt.NN")
 
@@ -55,28 +53,30 @@ testLabelsChunks = chunks(testLabels, 100)
 resultDocsChunks = chunks(resultDocs, 100)
 resultDummyLabelsChunks = chunks(resultDummyLabels, 100)
 
-numTrainDocs = len(trainDocs)
+def getTrainingBatch(batchSize):
+	randomIndices = np.random.permutation(np.arange(len(trainDocs)))[:batchSize]
+	return trainDocs[randomIndices], trainLabels[randomIndices]
 
-BATCH_SIZE = 100
+#numTrainDocs = len(trainDocs)
+#BATCH_SIZE = 100
+#batchChunks = chunks(np.random.permutation(np.arange(numTrainDocs)), BATCH_SIZE)
+#batchChunkIterator = 0
 
-batchChunks = chunks(np.random.permutation(np.arange(numTrainDocs)), BATCH_SIZE)
-batchChunkIterator = 0
+#def getTrainingBatch():
+#	global batchChunks, batchChunkIterator
 
-def getTrainingBatch():
-	global batchChunks, batchChunkIterator
+#	if batchChunkIterator >= len(batchChunks):
+#		print "\n\nend of batches, chunkIterator = %d\n\n" % batchChunkIterator
+#		sys.stdout.flush()
+#		batchChunks = chunks(np.random.permutation(np.arange(numTrainDocs)), BATCH_SIZE)
+#		batchChunkIterator = 0
 
-	if batchChunkIterator >= len(batchChunks):
-		print "\n\nend of batches, chunkIterator = %d\n\n" % batchChunkIterator
-		sys.stdout.flush()
-		batchChunks = chunks(np.random.permutation(np.arange(numTrainDocs)), BATCH_SIZE)
-		batchChunkIterator = 0
-
-	print "getting batch %d" % batchChunkIterator
-	sys.stdout.flush()
-	currentChunk = batchChunks[batchChunkIterator]
-	batchChunkIterator += 1
-	
-	return trainDocs[currentChunk], trainLabels[currentChunk]
+#	print "getting batch %d" % batchChunkIterator
+#	sys.stdout.flush()
+#	currentChunk = batchChunks[batchChunkIterator]
+#	batchChunkIterator += 1
+#	
+#	return trainDocs[currentChunk], trainLabels[currentChunk]
 	
 
 # each row is an array corresponding to indices of the words in the vocabulary
@@ -155,11 +155,6 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name="accurac
 #cross_entropy = -tf.reduce_sum(y_*tf.log(tf.clip_by_value(y_conv,1e-10,1.0)))
 
 train_step = tf.train.AdamOptimizer(learning_rate=0.001, epsilon=0.1).minimize(loss)
-#train_step = tf.train.AdagradOptimizer(learning_rate=0.001).minimize(loss)
-#train_step = tf.train.AdadeltaOptimizer().minimize(loss)
-
-
-
 
 # Add ops to save and restore all the variables.
 saver = tf.train.Saver()
@@ -202,7 +197,7 @@ def evaluate(outfile, doc_chunks, label_chunks):
 def train(offset, num_iter):
 	acc_train = 0.0
 	for it in range(offset, offset+num_iter+1):
-		batch = getTrainingBatch()
+		batch = getTrainingBatch(100)
 		_, train_loss, train_accuracy, train_l2_conv1, train_l2_fc1 = sess.run([train_step, loss, accuracy, l2_loss_conv1, l2_loss_fc1], feed_dict={
 			x:batch[0], y_: batch[1], keep_prob: 0.5})
 		print("step %d, l2 loss conv1 %g, l2 loss fc1 %g, loss %g, training accuracy %g"%(it, train_l2_conv1, train_l2_fc1, train_loss, train_accuracy))
@@ -220,11 +215,11 @@ def train(offset, num_iter):
 			saver.save(sess, os.path.join(resDir, "nn" + str(it) + ".save"))
 			print "Done checkpoint"
 
-train(0, 7000)
+train(0, 5000)
 
 evaluate(resFile, resultDocsChunks, resultDummyLabelsChunks)
 
 print "Saving checkpoint"
 sys.stdout.flush()
 
-saver.save(sess, os.path.join(resDir, "nn7000.save"))
+saver.save(sess, os.path.join(resDir, "nn5000.save"))
