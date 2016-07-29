@@ -60,13 +60,16 @@ else:
 	
 def interpolate(bm25, classifierScore, topicModelScore, doc2vecScore, w, cw, tw):
 	if classifierScore == None:
+		print "ERROR X"
 		return bm25 * w
 	if classifierScore < -10:
+		print "ERROR Y"
 		return bm25 * w
 	else:
 		clsW = (1-w)*(math.pow(bm25, 0.5))
 		if topicModelScore == None:
-			return w * bm25 + clsW * classifierScore
+			print "ERROR Z"
+			return w * bm25# + clsW * classifierScore
 		else:
 			return w * bm25 + clsW * (cw*classifierScore + (1-cw)*(tw * topicModelScore + (1-tw) * doc2vecScore))
 
@@ -121,7 +124,7 @@ def getClassifierScores():
 	
 #	writeCombinedScores(finalScores)
 	
-	return defaultdict(lambda: (0,-10000,-10000), finalScores)
+	return defaultdict(lambda: (-10000,-10000,-10000), finalScores)
 
 def getP10(qrelsFile, resultsFile):
 	output = subprocess.Popen([EVAL_PROGNAME, qrelsFile, resultsFile], stdout=subprocess.PIPE).communicate()[0]
@@ -144,7 +147,7 @@ def classifierStr(scores):
 	return "%+.2f\t%+.2f\t%+.2f" % scores
 	
 def rerankScores(bm25Weight, classifierWeight, topicModelWeight, baselineScores, classifierScores, rerankedFile):
-#	out = open(rerankedFile, "w")
+	out = open(rerankedFile, "w")
 	allP10s = []
 	for qid in QUERY_RANGE:
 		queryQrels = dict(QRELS[qid])
@@ -168,8 +171,8 @@ def rerankScores(bm25Weight, classifierWeight, topicModelWeight, baselineScores,
 		
 		rerankedScores = [(did, interpolate(queryScores[did][1],
 											classifierScores[did][0],
-											queryTopicModel[did],
-											queryDoc2Vec[did],
+											queryTopicModel.get(did),
+											queryDoc2Vec.get(did),
 											bm25Weight,
 											classifierWeight,
 											topicModelWeight))
@@ -181,14 +184,19 @@ def rerankScores(bm25Weight, classifierWeight, topicModelWeight, baselineScores,
 		p10 = float(len(top10Docs & relDocs)) / 10.0
 		allP10s.append(p10)
 		
-#		rank = 1
-#		for did, score in rerankedScores:
-#			out.write("%d Q0 %s %d %f STANDARD\t#\t%f\t%d\t%f\t%s\t%f\t\t%s\n" %
-#							(qid, did, rank, score,
-#							bm25Weight, queryScores[did][0], queryScores[did][1], classifierStr(classifierScores[did]),
-#							queryTopicModel[did], qrelStr(queryQrels.get(did))))
-#			rank += 1
-#	out.close()
+		rank = 1
+		for did, score in rerankedScores:
+			out.write("%d Q0 %s %3d %f ETHNoteRR\n" % (qid, did, rank, score))
+#			out.write("\t#\t%f\t%d\t%f\t%s\t%f\t%f\t\t%s\n" %
+#							(bm25Weight,
+#							queryScores[did][0],
+#							queryScores[did][1],
+#							classifierStr(classifierScores[did]),
+#							queryTopicModel.get(did, -1),
+#							queryDoc2Vec.get(did, -1),
+#							qrelStr(queryQrels.get(did))))
+			rank += 1
+	out.close()
 	return np.mean(allP10s), allP10s
 
 def printAllp10sToFile(allP10s):
@@ -227,7 +235,7 @@ def run():
 	rerankedFile = BASELINE_RESULTS_FILE + ".reranked." + CLASS_ID
  	lambdaRerank(QRELS_FILE, baselineScores, classifierScores, rerankedFile)
 
-run()
+#run()
 
 def rerankKnownWeights():
 	baselineScores = getBaselineScores(BASELINE_RESULTS_FILE)
@@ -236,11 +244,14 @@ def rerankKnownWeights():
 	
 	bm25Weight = weights.getBm25Weight(CLASS_ID, TARGET)
 	classifierWeight = weights.getClassifierWeight(CLASS_ID, TARGET)
-	topicModelWeight = 1.0 # weights.getTopicModelWeight(CLASS_ID, TARGET)
+	topicModelWeight = weights.getTopicModelWeight(CLASS_ID, TARGET)
 	
-	rerankScores(bm25Weight, classifierWeight, topicModelWeight, baselineScores, classifierScores, rerankedFile)
+	print "Weights: %.2f/%.2f/%.2f" % (bm25Weight, classifierWeight, topicModelWeight)
+	
+	p10Avg, _ = rerankScores(bm25Weight, classifierWeight, topicModelWeight, baselineScores, classifierScores, rerankedFile)
+	print "%.2f" % p10Avg
 
-#rerankKnownWeights()
+rerankKnownWeights()
 
 def getRandomClassifiers(dids, num):
 	classifiers = []
