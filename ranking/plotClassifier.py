@@ -75,14 +75,23 @@ PRECS = {"diag": 	[DIAG_2014_SUM, DIAG_2015_SUM, DIAG_2014_DESC, DIAG_2015_DESC]
 Y_LIMS = {"diag": [0.28, 0.38], "test": [0.26, 0.36], "treat": [0.35, 0.45], "all": [0.28, 0.38]}
 
 def plotPrecs(precs, classId, color="b", setLimits=False):
-	if setLimits:
-		axes = plt.gca()
-		axes.set_ylim(Y_LIMS[classId])
+#	if setLimits:
+#		axes = plt.gca()
+#		axes.set_ylim(Y_LIMS[classId])
 	
-	WEIGHT_RANGE = np.linspace(0.1, 1.0, 91)
+	axes = plt.gca()
+	axes.set_ylim([-0.05, 0.1])
+	
+	WEIGHT_RANGE = np.linspace(0.0, 1.0, 51)
 	baseline = [precs[-1]] * len(precs)
-	plt.plot(WEIGHT_RANGE, baseline, linewidth=3.0, color="black")
-	plt.plot(WEIGHT_RANGE, precs, linewidth=3.0, color=color)
+
+#	plt.plot(WEIGHT_RANGE, baseline, linewidth=3.0, color="black")
+#	plt.plot(WEIGHT_RANGE, precs, linewidth=3.0, color=color)
+	
+	improvements = [prec - baseline[0] for prec in precs]
+	plt.plot(WEIGHT_RANGE, [0] * len(precs), linewidth=3.0, color="black")
+	plt.plot(WEIGHT_RANGE, improvements, linewidth=3.0, color=color)
+	
 #	plt.axvline(x=0.6, linewidth=2, color="black")
 #	plt.axvline(x=0.9, linewidth=2, color="black")
 	plt.grid(linewidth=1)

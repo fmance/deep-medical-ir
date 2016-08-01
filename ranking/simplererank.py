@@ -34,7 +34,7 @@ op.add_option("--max_cutoff",
 			  action="store", type=float, default=1.0,
 			  help="max cutoff.")
 op.add_option("--division_cutoff",
-			  action="store", type=float, default=2.25,
+			  action="store", type=float, default=3.5,
 			  help="division cutoff.")
 
 (opts, args) = op.parse_args()
@@ -79,27 +79,21 @@ if opts.classifier == "all":
 else:
 	CLASSIFIERS = [opts.classifier]
 	
-DIVISION_CUTOFFS = {"diag": {"SVMPerf.hedges" : 2.0, 
-							"SVMPerf" : 2.0,
-							"SGDClassifier.squared_loss.l2": 6.0,
-							"SGDClassifier.squared_loss.l2.hedges": 6.0},
-			"test": {"SVMPerf.hedges": 2.5, 
-					"SVMPerf" : 2.5,
-					"SGDClassifier.squared_loss.l2": 2.5,
-					"SGDClassifier.squared_loss.l2.hedges": 2.5},
-			"treat": {"SVMPerf.hedges": 2.25,
-						"SVMPerf" : 2.25,
-						"SGDClassifier.squared_loss.l2": 2.0,
-						"SGDClassifier.squared_loss.l2.hedges": 2.0}}
-#DIVISION_CUTOFF = DIVISION_CUTOFFS[CLASS_ID][opts.classifier]
-DIVISION_CUTOFF = opts.division_cutoff
+CLASSIFFIER_ROOT = opts.classifier[:opts.classifier.index(".")]
 
-MAX_CUTOFFS = {"SVMPerf.hedges" : 1.00,
-				"SVMPerf": 1.00,
-				"SGDClassifier.squared_loss.l2":2.0,
-				"SGDClassifier.squared_loss.l2.hedges":2.0}
-#MAX_CUTOFF = MAX_CUTOFFS[opts.classifier]
+DIVISION_CUTOFF = opts.division_cutoff
 MAX_CUTOFF = opts.max_cutoff
+
+DIVISION_CUTOFFS = {"SVMPerf" : 3.5,
+					"SGDClassifier": 6.0}
+DIVISION_CUTOFF = DIVISION_CUTOFFS[CLASSIFFIER_ROOT]
+
+MAX_CUTOFFS = {"SVMPerf" : 1.0,
+			   "SGDClassifier":2.0}
+MAX_CUTOFF = MAX_CUTOFFS[CLASSIFFIER_ROOT]
+
+BASIC_WEIGHTS = {"SVMPerf": 0.5}
+BASIC_WEIGHT = BASIC_WEIGHTS[CLASSIFFIER_ROOT]
 
 def rrf(rank1, rank2, weight):
 	return 1.0/(60 + rank1) * weight + 1.0/(60 + rank2) * (1-weight)
@@ -112,7 +106,7 @@ def interpolate(bm25, classifierScore, w):
 		print "ERROR X"
 		return bm25 * w
 	if classifierScore < -10:
-		print "ERROR Y"
+		print "ERROR Y: ", classifierScore
 		return bm25 * w
 	else:
 		clsW = (1-w) #### *(math.pow(bm25, 0.5)) TODO should we use this ???
@@ -142,10 +136,10 @@ def writeCombinedScores(finalScores):
 		out.close()
 
 def combineScores(basic, sgd):
-	w = opts.sgd_weight
-	if CLASS_ID == "test":
-		w *= 0.5
-	return w * sgd + (1-w) * basic
+	w = BASIC_WEIGHT #opts.sgd_weight
+#	if CLASS_ID == "test":
+#		w *= 0.5
+	return (1-w) * sgd + w * basic
 
 def getClassifierScores(maxCutoff, divisionCutoff):
 	scores = defaultdict(float)
@@ -153,15 +147,18 @@ def getClassifierScores(maxCutoff, divisionCutoff):
 		for did, score in utils.readClassPredictions(classifier, CLASS_ID, True, USE_HEDGES).items():
 			scores[did] += score
 	scores = {did: score/len(CLASSIFIERS) for did, score in scores.items()}
+	minScore = min(scores.values())
+	maxScore = max(scores.values())
+	scores = {did: (score-minScore)/(maxScore-minScore) for did, score in scores.items()}
 
-#	basicScores = utils.readClassPredictions("Basic", CLASS_ID, False, False)
-#	basicScores = {did: min(maxCutoff, float(score)/divisionCutoff) for did, score in basicScores.items()}
+	basicScores = utils.readClassPredictions("Basic", CLASS_ID, False, False)
+	basicScores = {did: min(maxCutoff, float(score)/divisionCutoff) for did, score in basicScores.items()}
 	
 	finalScores = {}
 	for did in scores.keys():
 		sgd = scores[did]
-		basic = 0# basicScores[did]
-		final = sgd#combineScores(basic, sgd)
+		basic = basicScores[did]
+		final = combineScores(basic, sgd)
 		finalScores[did] = (final, sgd, basic)
 		
 	maxScore = max([final for (final, _, _) in finalScores.values()])
@@ -173,7 +170,7 @@ def getClassifierScores(maxCutoff, divisionCutoff):
 	
 #	writeCombinedScores(finalScores)
 	
-	return defaultdict(lambda: (-10000,-10000,-10000), finalScores)
+	return finalScores#defaultdict(lambda: (-10000,-10000,-10000), finalScores)
 
 def computeClassifierRankings(classifierScores):
 	if opts.fusion == "interpolation":
@@ -231,15 +228,15 @@ def rerankScores(bm25Weight, baselineScores, classifierScores, classifierRanking
 		if writeFile:
 			rank = 1
 			for did, score in rerankedScores:
-				out.write("%d Q0 %s %3d %f SUMMARY" % (qid, did, rank, score))
-				out.write("\t#\t%f\t%d\t%f\t%s\t%f\t%f\t\t%s\n" %
-								(bm25Weight,
-								queryScores[did][0],
-								queryScores[did][1],
-								classifierStr(classifierScores[did]),
-								queryTopicModel.get(did, -1),
-								queryDoc2Vec.get(did, -1),
-								qrelStr(queryQrels.get(did))))
+				out.write("%d Q0 %s %3d %f SUMMARY\n" % (qid, did, rank, score))
+#				out.write("\t#\t%f\t%d\t%f\t%s\t%f\t%f\t\t%s\n" %
+#								(bm25Weight,
+#								queryScores[did][0],
+#								queryScores[did][1],
+#								classifierStr(classifierScores[did]),
+#								queryTopicModel.get(did, -1),
+#								queryDoc2Vec.get(did, -1),
+#								qrelStr(queryQrels.get(did))))
 				rank += 1
 	
 	if writeFile:
@@ -259,7 +256,7 @@ def lambdaRerank(qrelsFile, baselineScores, classifierScores, classifierRankings
 	classifierWeight = 1.0
 	topicModelWeight = 0#weights.getTopicModelWeight(CLASS_ID, TARGET) 
 	
-	for bm25Weight in np.linspace(0.1, 1.0, 91):
+	for bm25Weight in np.linspace(0.0, 1.0, 51):
 #		print bm25Weight
 #		for classifierWeight in [1]: #np.linspace(0.0, 1.0, 101): # [1]:
 		p10Avg, p10List = rerankScores(bm25Weight, baselineScores, classifierScores, classifierRankings, rerankedFile)
@@ -300,7 +297,7 @@ def varyCutoffs():
 		 	maxP10, allP10 = lambdaRerank(QRELS_FILE, baselineScores, classifierScores, classifierRankings, rerankedFile, suppresOutput=True)
 		 	
 #		 	print "%.2f %.2f %.4f" % (maxCutoff, divisionCutoff, maxP10)
-#		 	print "%.4f" % maxP10
+		 	print "%.4f" % maxP10
 
 #varyCutoffs()
 
@@ -310,7 +307,7 @@ def rerankKnownWeights():
 	classifierRankings = computeClassifierRankings(classifierScores)
 	rerankedFile = BASELINE_RESULTS_FILE + ".reranked." + CLASS_ID + "." + opts.classifier + "." + opts.fusion
 	
-	bm25Weight = 0.82 #weights.getBm25Weight(CLASS_ID, TARGET)
+	bm25Weight = 0.52 #weights.getBm25Weight(CLASS_ID, TARGET)
 	
 #	print "Weights: %.2f" % (bm25Weight, classifierWeight, topicModelWeight)
 	

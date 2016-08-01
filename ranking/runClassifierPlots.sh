@@ -59,9 +59,9 @@ function normalClassifiers {
 }
 
 function svmPerfClassifiers {
-	for loss in 00 01 02 03 04 05 10
+	for loss in 10 05 04 03 02 01 00
 	do
-		for c in 0.00001 0.0001 0.001 0.01 0.1 1
+		for c in 0.0001 0.001 0.01 0.1 1
 		do
 #			python plotClassifier.py --classifier SVMPerf.$loss.$c --fusion $fusion
 			python plotClassifier.py --classifier SVMPerf.$loss.$c.hedges --fusion $fusion
