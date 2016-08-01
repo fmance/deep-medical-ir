@@ -11,9 +11,9 @@ import scipy.stats
 DATA_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../data"))
 IR_RESULTS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../ir/results/"))
 
-RESULTS_2014 = os.path.join(IR_RESULTS_DIR, "results-2014.txt")
-RESULTS_2015_A = os.path.join(IR_RESULTS_DIR, "results-2015.txt")
-RESULTS_2015_B = os.path.join(IR_RESULTS_DIR, "results-2015-B-BM25_Lucene.txt")
+#RESULTS_2014 = os.path.join(IR_RESULTS_DIR, "results-2014.txt")
+#RESULTS_2015_A = os.path.join(IR_RESULTS_DIR, "results-2015.txt")
+#RESULTS_2015_B = os.path.join(IR_RESULTS_DIR, "results-2015-B-BM25_Lucene.txt")
 #BM25_SCORES_2014 = os.path.join(IR_RESULTS_DIR, "bm25-scores-2014.txt")
 #BM25_SCORES_2015 = os.path.join(IR_RESULTS_DIR, "bm25-scores-2015.txt")
 #TFIDF_SCORES_2014 = os.path.join(IR_RESULTS_DIR, "tfidf-scores-2014.txt")
@@ -99,21 +99,21 @@ def readResults(resultsFile):
 #		out.write("%d Q0 %s %d %f ETHNote\n" % (qid, did, rank+1, score))
 #out.close()
 
-def readResults2014():
-	return readResults(RESULTS_2014)
+#def readResults2014():
+#	return readResults(RESULTS_2014)
 
-def readResults2015A():
-	return readResults(RESULTS_2015_A)
+#def readResults2015A():
+#	return readResults(RESULTS_2015_A)
 
-def readResults2015B():
-	return readResults(RESULTS_2015_B)
+#def readResults2015B():
+#	return readResults(RESULTS_2015_B)
 
 def readResultsAllModels(year):
 	scores = []
 	if year == 2016:
 		models = ["-exp-sum", "-exp-desc", "-exp-note"]
 	else:
-		models = ["-sum", "-desc", "-exp-sum", "-exp-desc"]
+		models = ["-sum", "-desc"]#, "-exp-sum", "-exp-desc"]
 	for model in models:
 		scoreFile = os.path.join(IR_RESULTS_DIR, "results-" + str(year) + model + ".txt")
 		scores.append(readResults(scoreFile))

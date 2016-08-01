@@ -9,6 +9,7 @@ trecEval = "../eval/trec_eval.9.0/trec_eval"
 
 CLASS_ID = sys.argv[1]
 TARGET = sys.argv[2]
+CLASSIFIER = sys.argv[3]
 YEAR = TARGET[:4]
 
 QRELS = "../data/qrels/qrels-treceval-" + YEAR + ".txt"
@@ -18,7 +19,7 @@ if CLASS_ID == "all":
 	RESULTS_RERANKED = RESULTS + ".reranked"
 	QUERY_RANGE = range(1, 31)
 else:
-	RESULTS_RERANKED = RESULTS + ".reranked." + CLASS_ID
+	RESULTS_RERANKED = RESULTS + ".reranked." + CLASS_ID + "." + CLASSIFIER
 	QUERY_OFFSETS = {"diag": 1, "test": 11, "treat": 21}
 	QUERY_OFFSET = QUERY_OFFSETS[CLASS_ID]
 	QUERY_RANGE = range(QUERY_OFFSET, QUERY_OFFSET + 10)

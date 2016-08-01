@@ -11,14 +11,27 @@ year=$2
 irResultsDir="../ir/results/"
 
 declare -a classifiers=(
+"Basic"
+"BernoulliNB"
+"MultinomialNB"
+"NearestCentroid"
+"PassiveAggressiveClassifier.hinge"
+"Perceptron"
+"RidgeClassifier"
+"RandomForestClassifier"
 "LinearSVC.squared_hinge.l2"
+"SGDClassifier.log.l2"
+"SGDClassifier.log.elasticnet"
 "SGDClassifier.hinge.l2"
 "SGDClassifier.hinge.elasticnet"
+"SGDClassifier.squared_hinge.l2"
+"SGDClassifier.squared_hinge.elasticnet"
 "SGDClassifier.squared_loss.l2"
 "SGDClassifier.squared_loss.elasticnet"
 "SGDClassifier.epsilon_insensitive.l2"
 "SGDClassifier.epsilon_insensitive.elasticnet"
 "Pipeline.epsilon_insensitive.l2"
+"NN"
 "all"
 )
 
