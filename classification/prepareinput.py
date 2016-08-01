@@ -143,13 +143,13 @@ def writeDocsData(docIds, labels, wordsFile, mappingsFile, labelsFile, nnLabelsF
 		words = words[:MAX_DOC_LEN]
 		
 		######################## NN
-		mappings = [VOCAB_MAP[word] for word in words]
-		mappings += [0] * (MAX_DOC_LEN - len(mappings)) ### 0 for PADDING
-		mappingsOut.write("%s\n" % " ".join(map(str, mappings)))
-		if label == 1:
-			nnLabelsOut.write("1 0\n")
-		else: #label == 0 or -1
-			nnLabelsOut.write("0 1\n")
+#		mappings = [VOCAB_MAP[word] for word in words]
+#		mappings += [0] * (MAX_DOC_LEN - len(mappings)) ### 0 for PADDING
+#		mappingsOut.write("%s\n" % " ".join(map(str, mappings)))
+#		if label == 1:
+#			nnLabelsOut.write("1 0\n")
+#		else: #label == 0 or -1
+#			nnLabelsOut.write("0 1\n")
 		#######################
 
 		wordsOut.write("%s\n" % " ".join(words))
@@ -190,7 +190,7 @@ def writeIrResAndQrelsDataset():
 		len(resultsDocIds), len(positiveQrelsAllDocs), len(negativeQrelsDocIds)
 	)
 
-	resAndQrelsDocIds = resultsDocIds# | positiveQrelsAllDocs | negativeQrelsDocIds
+	resAndQrelsDocIds = resultsDocIds | positiveQrelsAllDocs | negativeQrelsDocIds
 	writeDocsData(resAndQrelsDocIds, [-1] * len(resAndQrelsDocIds),	os.path.join(resDir, "words.txt"), \
 													  				os.path.join(resDir, "mappings.txt"), \
 													  				os.path.join(resDir, "labels.txt"), \
@@ -248,7 +248,7 @@ def writeDatasets(category):
 
 #writeIrResultsIds()
 
-VOCAB_MAP = readVocabMap()
+#VOCAB_MAP = readVocabMap()
 #writeEmbeddings()
 
 #writeIrResAndAllQrelsDataset()
