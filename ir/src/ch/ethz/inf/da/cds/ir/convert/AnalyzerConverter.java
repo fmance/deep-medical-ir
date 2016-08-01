@@ -14,7 +14,7 @@ import ch.ethz.inf.da.cds.ir.util.DocUtils;
 import ch.ethz.inf.da.cds.ir.util.LuceneUtils;
 
 public class AnalyzerConverter {
-    private static final Analyzer ENGLISH_ANALYZER = new EnglishAnalyzer();
+    private static final Analyzer ENGLISH_ANALYZER = new EnglishAnalyzer(LuceneUtils.getIndriStopWords());
 
     public static void main(String[] args) throws Exception {
         Path destRootDir = FilePaths.DATA_DIR.resolve("analyzed");

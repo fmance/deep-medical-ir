@@ -43,6 +43,7 @@ public class Indexer {
         Arrays.sort(subdirs);
 
         IndexWriter indexWriter = LuceneUtils.getBM25IndexWriter();
+        // IndexWriter indexWriter = LuceneUtils.getLMDirichletIndexWriter();
 
         ExecutorService executor = Executors.newFixedThreadPool(INDEXER_THREAD_POOL_SIZE);
         for (File subdir : subdirs) {

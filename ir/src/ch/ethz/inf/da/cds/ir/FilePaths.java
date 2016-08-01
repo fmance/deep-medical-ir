@@ -25,8 +25,11 @@ public class FilePaths {
     public static final Path QUERIES_2016_FILE = QUERIES_DIR.resolve("topics-2016.txt");
 
     public static final Path RESULTS_DIR = Paths.get("results");
-    public static final Path RESULTS_2014_FILE = FilePaths.RESULTS_DIR.resolve("results-2014.txt");
-    public static final Path RESULTS_2015_FILE = FilePaths.RESULTS_DIR.resolve("results-2015.txt");
+    public static final Path RESULTS_2014_SUM_FILE = FilePaths.RESULTS_DIR.resolve("results-2014-sum.txt");
+    public static final Path RESULTS_2015_SUM_FILE = FilePaths.RESULTS_DIR.resolve("results-2015-sum.txt");
+    public static final Path RESULTS_2014_DESC_FILE = FilePaths.RESULTS_DIR.resolve("results-2014-desc.txt");
+    public static final Path RESULTS_2015_DESC_FILE = FilePaths.RESULTS_DIR.resolve("results-2015-desc.txt");
+
     public static final Path RESULTS_2015_B_FILE = FilePaths.RESULTS_DIR.resolve("results-2015-B.txt");
     public static final Path RESULTS_2016_FILE = FilePaths.RESULTS_DIR.resolve("results-2016-exp-sum.txt");
 
@@ -41,5 +44,7 @@ public class FilePaths {
     public static final Path FEATURES_2014 = RESULTS_DIR.resolve("features-2014.txt");
     public static final Path FEATURES_2015 = RESULTS_DIR.resolve("features-2015.txt");
 
-    public static final Path BM25_INDEX_DIR = Paths.get("index");
+    public static final Path BM25_INDEX_DIR = Paths.get("index-bm25-lucene-sw");
+    public static final Path LM_DIRICHLET_INDEX_DIR = Paths.get("index-dirichlet-lucene-sw");
+
 }

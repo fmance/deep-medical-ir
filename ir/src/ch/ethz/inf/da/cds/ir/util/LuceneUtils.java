@@ -2,6 +2,7 @@ package ch.ethz.inf.da.cds.ir.util;
 
 import java.io.IOException;
 import java.io.StringReader;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +12,7 @@ import org.apache.lucene.analysis.Analyzer;
 import org.apache.lucene.analysis.TokenStream;
 import org.apache.lucene.analysis.en.EnglishAnalyzer;
 import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
+import org.apache.lucene.analysis.util.CharArraySet;
 import org.apache.lucene.document.Document;
 import org.apache.lucene.document.Field;
 import org.apache.lucene.document.StringField;
@@ -25,13 +27,12 @@ import org.apache.lucene.index.NumericDocValues;
 import org.apache.lucene.queryparser.classic.MultiFieldQueryParser;
 import org.apache.lucene.queryparser.classic.ParseException;
 import org.apache.lucene.queryparser.classic.QueryParser;
-import org.apache.lucene.search.BooleanClause;
-import org.apache.lucene.search.BooleanQuery;
 import org.apache.lucene.search.CollectionStatistics;
 import org.apache.lucene.search.IndexSearcher;
 import org.apache.lucene.search.Query;
 import org.apache.lucene.search.ScoreDoc;
 import org.apache.lucene.search.similarities.BM25Similarity;
+import org.apache.lucene.search.similarities.LMDirichletSimilarity;
 import org.apache.lucene.search.similarities.Similarity;
 import org.apache.lucene.store.Directory;
 import org.apache.lucene.store.NIOFSDirectory;
@@ -40,7 +41,6 @@ import org.apache.lucene.util.SmallFloat;
 import ch.ethz.inf.da.cds.ir.Article;
 import ch.ethz.inf.da.cds.ir.FilePaths;
 import ch.ethz.inf.da.cds.ir.SearchResult;
-import ch.ethz.inf.da.cds.ir.TrecQuery;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
@@ -50,9 +50,24 @@ public class LuceneUtils {
     public static final String TITLE_FIELD = "title";
     public static final String TEXT_FIELD = "text";
 
+    public static final CharArraySet stopWords = getIndriStopWords();
+
+    public static CharArraySet getIndriStopWords() {
+        CharArraySet stopWords = new CharArraySet(1000, true);
+        try {
+            for (String line : Files.readAllLines(FilePaths.DATA_DIR.resolve("indri-stopwords.txt"))) {
+                line = line.trim();
+                stopWords.add(line);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return stopWords;
+    }
+
     public static IndexWriter getIndexWriter(Path indexPath, Similarity similarity) throws IOException {
         Directory directory = NIOFSDirectory.open(indexPath);
-        IndexWriterConfig config = new IndexWriterConfig(new EnglishAnalyzer());
+        IndexWriterConfig config = new IndexWriterConfig(new EnglishAnalyzer(stopWords));
         config.setRAMBufferSizeMB(4 * 1024);
         config.setSimilarity(similarity);
         return new IndexWriter(directory, config);
@@ -60,6 +75,10 @@ public class LuceneUtils {
 
     public static IndexWriter getBM25IndexWriter() throws IOException {
         return getIndexWriter(FilePaths.BM25_INDEX_DIR, new BM25Similarity());
+    }
+
+    public static IndexWriter getLMDirichletIndexWriter() throws IOException {
+        return getIndexWriter(FilePaths.LM_DIRICHLET_INDEX_DIR, new LMDirichletSimilarity());
     }
 
     // public static IndexWriter getTFIDFIndexWriter() throws IOException {
@@ -101,10 +120,16 @@ public class LuceneUtils {
         return searchIndex(FilePaths.BM25_INDEX_DIR, new BM25Similarity(), luceneQuery, numResults);
     }
 
-    public static List<SearchResult> searchBM25Index(TrecQuery trecQuery, String field, int numResults)
+    public static List<SearchResult> searchBM25Index(String queryString, String field, int numResults)
             throws IOException, ParseException {
-        Query luceneQuery = constructLuceneQuery(trecQuery, field);
+        Query luceneQuery = constructLuceneQuery(queryString, field);
         return searchIndex(FilePaths.BM25_INDEX_DIR, new BM25Similarity(), luceneQuery, numResults);
+    }
+
+    public static List<SearchResult> searchLMDirichletIndex(String queryString, String field, int numResults)
+            throws IOException, ParseException {
+        Query luceneQuery = constructLuceneQuery(queryString, field);
+        return searchIndex(FilePaths.LM_DIRICHLET_INDEX_DIR, new LMDirichletSimilarity(), luceneQuery, numResults);
     }
 
     // public static List<SearchResult> searchTFIDFIndex(TrecQuery trecQuery,
@@ -114,24 +139,24 @@ public class LuceneUtils {
     // trecQuery, field, numResults);
     // }
 
-    private static Query constructLuceneQuery(TrecQuery trecQuery, String field) throws ParseException {
+    private static Query constructLuceneQuery(String queryString, String field) throws ParseException {
         Map<String, Float> boosts = Maps.newHashMap();
         boosts.put(TEXT_FIELD, 3f);
         boosts.put(TITLE_FIELD, 0f);
 
         QueryParser parser = new MultiFieldQueryParser(new String[] { TEXT_FIELD, TITLE_FIELD },
-                                                       new EnglishAnalyzer(),
+                                                       new EnglishAnalyzer(stopWords),
                                                        boosts);
-        Query summaryQuery = parser.parse(QueryParser.escape(trecQuery.getSummary()));
-        if (trecQuery.getDiagnosis().isPresent()) {
-            Query diagnosisQuery = parser.parse(QueryParser.escape(trecQuery.getDiagnosis().get()));
-            BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
-            queryBuilder.add(summaryQuery, BooleanClause.Occur.MUST);
-            queryBuilder.add(diagnosisQuery, BooleanClause.Occur.MUST);
-            return queryBuilder.build();
-        } else {
-            return summaryQuery;
-        }
+        return parser.parse(QueryParser.escape(queryString));
+        // if (trecQuery.getDiagnosis().isPresent()) {
+        // Query diagnosisQuery = parser.parse(QueryParser.escape(trecQuery.getDiagnosis().get()));
+        // BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
+        // queryBuilder.add(summaryQuery, BooleanClause.Occur.MUST);
+        // queryBuilder.add(diagnosisQuery, BooleanClause.Occur.MUST);
+        // return queryBuilder.build();
+        // } else {
+        // return summaryQuery;
+        // }
     }
 
     public static int[] getLuceneToPmcIdMapping(IndexReader reader) throws IOException {
@@ -190,7 +215,7 @@ public class LuceneUtils {
     }
 
     public static void main(String[] args) {
-        Analyzer analyzer = new EnglishAnalyzer();
+        Analyzer analyzer = new EnglishAnalyzer(getIndriStopWords());
         System.out.println(tokenizeString(analyzer, "hello there how are you doing, mate? I'm (16)!?, years old."));
     }
 }

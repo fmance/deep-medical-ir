@@ -17,16 +17,32 @@ import com.google.common.base.Optional;
 import com.google.common.collect.Lists;
 
 public class QueryRunner {
+    private enum Target {
+        SUMMARIES, DESCRIPTIONS
+    }
+
     public static final int NUM_SEARCH_RESULTS = 100;
 
     public static void main(String[] args) throws Exception {
         FilePaths.RESULTS_DIR.toFile().mkdir();
         String field = LuceneUtils.TEXT_FIELD;
-        runQueriesFromXml(FilePaths.QUERIES_2014_FILE.toFile(), field, FilePaths.RESULTS_2014_FILE.toFile());
-        runQueriesFromXml(FilePaths.QUERIES_2015_A_FILE.toFile(), field, FilePaths.RESULTS_2015_FILE.toFile());
-        // runQueriesFromPlaintext(FilePaths.QUERIES_2014_EXPANDED_FILE.toFile(),
-        // field,
-        // FilePaths.RESULTS_2014_EXPANDED_FILE.toFile());
+        runQueriesFromXml(FilePaths.QUERIES_2014_FILE.toFile(),
+                          field,
+                          FilePaths.RESULTS_2014_SUM_FILE.toFile(),
+                          Target.SUMMARIES);
+        runQueriesFromXml(FilePaths.QUERIES_2015_A_FILE.toFile(),
+                          field,
+                          FilePaths.RESULTS_2015_SUM_FILE.toFile(),
+                          Target.SUMMARIES);
+        runQueriesFromXml(FilePaths.QUERIES_2014_FILE.toFile(),
+                          field,
+                          FilePaths.RESULTS_2014_DESC_FILE.toFile(),
+                          Target.DESCRIPTIONS);
+        runQueriesFromXml(FilePaths.QUERIES_2015_A_FILE.toFile(),
+                          field,
+                          FilePaths.RESULTS_2015_DESC_FILE.toFile(),
+                          Target.DESCRIPTIONS);
+        // runQueriesFromPlaintext(FilePaths.QUERIES_2016_FILE.toFile(), field, FilePaths.RESULTS_2016_FILE.toFile());
         // runQueriesFromPlaintext(FilePaths.QUERIES_2015_EXPANDED_FILE.toFile(),
         // field,
         // FilePaths.RESULTS_2015_EXPANDED_FILE.toFile());
@@ -35,10 +51,11 @@ public class QueryRunner {
         // FilePaths.RESULTS_2015_B_FILE.toFile());
     }
 
-    private static void runQueriesFromXml(File queriesXmlFile, String field, File resultsFile) throws Exception {
-        System.out.println("Running queries from " + queriesXmlFile);
+    private static void runQueriesFromXml(File queriesXmlFile, String field, File resultsFile, Target target)
+            throws Exception {
+        System.out.println("Running queries from " + queriesXmlFile + " target = " + target);
         List<TrecQuery> queries = XmlUtils.parseQueries(queriesXmlFile);
-        runTrecQueries(queries, field, resultsFile);
+        runTrecQueries(queries, field, resultsFile, target);
     }
 
     private static void runQueriesFromPlaintext(File queriesPlaintextFile, String field, File resultsFile)
@@ -61,15 +78,22 @@ public class QueryRunner {
             queries.add(query);
         }
 
-        runTrecQueries(queries, field, resultsFile);
+        runTrecQueries(queries, field, resultsFile, Target.SUMMARIES);
     }
 
-    private static void runTrecQueries(List<TrecQuery> queries, String field, File resultsFile)
+    private static void runTrecQueries(List<TrecQuery> queries, String field, File resultsFile, Target target)
             throws FileNotFoundException, IOException, ParseException {
         PrintWriter pw = new PrintWriter(resultsFile);
 
         for (TrecQuery query : queries) {
-            List<SearchResult> results = LuceneUtils.searchBM25Index(query, field, NUM_SEARCH_RESULTS);
+            String queryString = null;
+            if (target == Target.SUMMARIES) {
+                queryString = query.getSummary();
+            } else {
+                queryString = query.getDescription();
+            }
+            List<SearchResult> results = LuceneUtils.searchBM25Index(queryString, field, NUM_SEARCH_RESULTS);
+            // List<SearchResult> results = LuceneUtils.searchLMDirichletIndex(queryString, field, NUM_SEARCH_RESULTS);
             for (SearchResult result : results) {
                 pw.println(query.getId() + " Q0 " + result.getPmcid() + " " + result.getRank() + " "
                            + result.getScore() + " STANDARD");
