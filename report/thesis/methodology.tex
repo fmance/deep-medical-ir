@@ -1,52 +1,92 @@
 \chapter{Methodology}
 
+Now that we have looked at the background and previous work in the Clinical Decision Support area,
+let us proceed to formally introducing our own retrieval system. 
 
-In this section we formally describe the retrieval pipeline. It consists of three main components:
+Recall that the medical queries we focus on have two components:
+\begin{enumerate*}[label=\arabic*)]
+ \item the \emph{query text}, containing the medical case report (patient history, current symptoms, any test results) and
+ \item the \emph{intent type}, that is, the generic clinical question the physician is interested in (diagnosis, test, or treatment).
+\end{enumerate*}
+Therefore, we formally represent medical queries $Q$ as pairs of text and intent type: \[Q = \{Q.text,\ Q.type\}\]
+
+Given a query $Q$, the retrieval system computes a relevance score for each document $D$ in the collection.
+The scoring process takes into account both the query text and the intent type. More precisely, we compute
+$Similarity(Q.text, D)$ and $TypeMatch(Q.type, D)$ to measure how relevant the document is to the query text and the
+query intent type, respectively.
+
+The final score is the fusion between these two scores:
+\[
+ Score(Q, D) = Fusion\left(Similarity(Q.text, D), TypeMatch(Q.type, D)\right)
+\]
+As stated in the introduction, the aim of the paper is to determine whether using the query intent type leads to an improvement
+over the baseline, that is, the similarity score.
+
+Let us now look at each of the three components in the formula individually.
+
+\section{Text Similarity}
+For computing the similarity between a query and a document, we use the well-known BM25 function. We therefore have:
+\[
+Similarity(Q.text, D) = BM25(Q.text,D),% = \displaystyle\sum_{term\in Q.text} \text{IDF}(term)\cdot\displaystyle\frac{freq(term,D)\cdot(k_1+1)}{freq(term,D)+k_1\cdot\left(1-b+b\cdot\frac{|D|}{avgDocLen}\right)}
+\]
+For each query, we also max-normalize the BM25 scores so that the top result has a score of 1.
+
+\section{Intent Type Matching}
+Intent type matching should tell us whether a particular document is useful for the intent type of the query 
+(diagnosis, test or treatment). There are various approaches to do this, but in this paper we mainly look at
+binary classifiers and word-counting for determining whether a document conforms to the intent type of a query.
+
+For each intent type $T$ we construct a classifier and a word-counter in the following way:
 \begin{itemize}
- \item baseline ranking
- \item document classification
- \item fusion baseline + classification (baseline + classification fusion)
+ \item the classifier gives a $ClassifierScore(T,D)$ which measures if document $D$ conforms to type $T$;
+ \item the word counter gives a score which measures the frequency of certain keywords related to type $T$ in document $D$:
+ 
+ \[WordCountScore(T,D) = \displaystyle\frac{\displaystyle\sum_{t\in \text{Keywords}(T)} \text{count}(t,D)}{\text{cutoff}(T)},\]
+  where the cutoff is a positive number determined experimentally.
 \end{itemize}
-\[score = fuse(baseline, classifier, [features])\]
-\section{Input}
-Input: query and set of documents to score. Each query consists of the query text and query type.
 
-Ad discussed in the intro, the idea is to improve on the baseline.
 
-\section{Document classification}
-For each document in the baseline, we classify it depending on the query type.
-Classifiers can be:
+The final intent type matching score is the average of the two scores:
+\[
+ TypeMatch(T, D) = \displaystyle\frac{ClassifierScore(T,D) +  WordCountScore(T,D)}{2}
+\]
+While the word-counter is straightforward, the classifier is a more complex component. As a result, we investigate both
+classical approaches, as well as modern ones (deep-learning).
+
+\subsection{Classical Classifiers}
+
+We use a wide array of classifiers, such as Stochastic-Gradient-Descent-based, with several loss functions:
+    \begin{itemize}  \setlength\itemsep{-0.5em}
+    \item \emph{log} loss, which gives a Logistic Regression Classifier;
+    \item \emph{hinge} and \emph{squared hinge} losses, which give a Support Vector Classifier;
+    \item \emph{squared} and \emph{epsilon insensitive} losses;
+    \end{itemize}
+Other classifiers are: Naive Bayes (Multinomial and Bernoulli variations), Ridge, Perceptron, Passive-Agressive, Nearest Centroid
+and Random Forests.
+
+\subsection{Convolutional Neural Network Classifiers}
+TODO
+
+\section{Fusion of Text Similarity and Intent Type Matching}
+Now that we have the similarity score and the intent type score, we need to fuse them to produce the final score.
+We employ two main methods of fusion: unsupervised and supervised.
+
+\subsection{Unsupervised Fusion}
+There are many ways to fuse two scores, but the ones we look at in this paper are:
 \begin{itemize}
- \item Stochastic gradient descent
- \item neural networks
- \item counting classifiers
+ \item \emph{Linear Interpolation}, where the final score is given by:
+\[  Score(Q, D) = \lambda_{Q.type} \cdot Similarity(Q.text, D) + (1-\lambda_{Q.type}) \cdot TypeMatch(Q.type, D),\]
+where $\lambda_{Q.type} \in [0,1]$ is determined experimentally;
+ \item \emph{Reciprocal Rank Fusion}; TODO
+ \item \emph{Borda Fusion}. TODO
 \end{itemize}
 
-We describe each one in detail.
-\subsection{Stochastic gradient descent}
-Can have various loss functions and penalty (l2, elasticnet).
+\subsection{Supervised Fusion}
+With supervised fusion, we use a subset of the queries as training data, and test on the remaining queries.
+We try several Learning to Rank algorithms: \emph{MART}, \emph{RankNet}, \emph{RankBoost}, \emph{AdaRank},
+\emph{Coordinate Ascent}, \emph{LambdaRank}, \emph{LambdaMart}, \emph{ListNet} and \emph{RandomForest}.
+These algorithms take as input a list of features for each query-document pair and learn how to rank documents from the training
+data.
+The features we use are the two scores from before (similarity and type-match).
 
-\subsection{Neural nets}
-Implemented based on ...
-
-\subsection{Count classifier}
-Count the number of certain keywords in the document and threshold it.
-
-\section{Reranking}
-Now that we have the baseline scores and classification scores, we have to fuse them. We have several methods:
-\begin{itemize}
- \item Unsupervised: Interpolation between the two scores, RRF
- \item Supervised reranking using the two scores and other term statistics as features
-\end{itemize}
-
-We describe each one in detail.
-\subsection{Interpolation}
-Here we interpolate the baseline scores and the classification scores.
-We normalize the scores, and the formula is : .... (don't forget the sqrt bm25)
-
-\subsection{RRF}
-Description....
-
-\subsection{Learning to rank}
-We use RankLib, LambdaMart, etc... (references) Features are computed from the Microsoft feature list.
 
