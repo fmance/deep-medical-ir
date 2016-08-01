@@ -154,7 +154,7 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name="accurac
 #y_conv=tf.nn.softmax(scores)
 #cross_entropy = -tf.reduce_sum(y_*tf.log(tf.clip_by_value(y_conv,1e-10,1.0)))
 
-train_step = tf.train.AdamOptimizer(learning_rate=0.001, epsilon=0.1).minimize(loss)
+train_step = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss)
 
 # Add ops to save and restore all the variables.
 saver = tf.train.Saver()

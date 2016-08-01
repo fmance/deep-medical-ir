@@ -44,37 +44,24 @@ def getOccurences(did, words):
 
 def minOccurences(docLen):
 	if opts.division_cutoff > 0:
-		print opts.division_cutoff
 		return opts.division_cutoff
 
 	if CLASS_ID == "diag":
-		return 5.75
-#		return min(4, math.ceil(docLen/200.0))
+		return 5.5
 	if CLASS_ID == "test":
-		#if docLen < 400:
-			#return min(2, math.ceil(docLen/100.0))
-		#return min(4.5, math.ceil(docLen/200.0))
 		return 5.25
 	else:
-		return 2.0 #3#max(1, math.log10(docLen))
+		return 2.0
 
 sumDocLen = 0
 for did in TO_CLASSIFY_DOC_IDS:
 	docLen = LENGTHS[did]
 	occ = getOccurences(did, TERMS[CLASS_ID])
-	minOcc = minOccurences(docLen)
-#	if CLASS_ID == "diag":
-#		freq = float(occ)/docLen * 1e3
-#		pred = freq/3
+#	minOcc = minOccurences(docLen)
 
-	pred = min(opts.max_cutoff, float(occ) / minOcc)
-#	if CLASS_ID == "treat":
-#		if occ > 9:
-#			pred = 2
-	
-#	if CLASS_ID == "test" and "case report" in doc:
-#		pred += 5
-#	pred = min(3, math.log(1 + float(occ) / (minOcc + 1)))
+	### TODO vary cutoff in  simplererank
+	pred = occ #min(opts.max_cutoff, float(occ) / minOcc)
+
 	out.write("%f\n" % pred)
 	sumDocLen += docLen
 out.close()

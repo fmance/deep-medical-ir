@@ -248,11 +248,11 @@ def writeDatasets(category):
 
 #writeIrResultsIds()
 
-#VOCAB_MAP = readVocabMap()
+VOCAB_MAP = readVocabMap()
 #writeEmbeddings()
 
 #writeIrResAndAllQrelsDataset()
-#writeIrResAndQrelsDataset()
+writeIrResAndQrelsDataset()
 
 #writeDatasets(CATEGORY)
 
