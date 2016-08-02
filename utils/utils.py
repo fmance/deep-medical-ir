@@ -113,10 +113,12 @@ def readResultsAllModels(year):
 	if year == 2016:
 		models = ["-exp-sum", "-exp-desc", "-exp-note"]
 	else:
-		models = ["-sum", "-desc"]#, "-exp-sum", "-exp-desc"]
+		models = ["-sum", "-desc"] #, "-exp-sum", "-exp-desc"]
 	for model in models:
-		scoreFile = os.path.join(IR_RESULTS_DIR, "results-" + str(year) + model + ".txt")
-		scores.append(readResults(scoreFile))
+		scoreFileBM25 = os.path.join(IR_RESULTS_DIR, "results-" + str(year) + model + ".txt")
+		scores.append(readResults(scoreFileBM25))
+		scoreFileLuceneSw = os.path.join(IR_RESULTS_DIR, "results-lucene-sw-" + str(year) + model + ".txt")
+		scores.append(readResults(scoreFileLuceneSw))
 	return scores
 
 def getResultsDocIds(results):

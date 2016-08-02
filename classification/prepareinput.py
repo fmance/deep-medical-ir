@@ -177,7 +177,7 @@ def writeDocsData(docIds, labels, wordsFile, mappingsFile, labelsFile, nnLabelsF
 
 
 def getLabels(pos, neg):
-	return [1] * len(pos) + [0] * len(neg)
+	return [1] * len(pos) + [-1] * len(neg)
 
 def writeIrResAndQrelsDataset():
 	print "Writing ir res and qrels dataset"

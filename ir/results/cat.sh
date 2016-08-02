@@ -1,10 +1,10 @@
-function catYear() {
+function catFiles() {
 	target=$1
-	cat results-$target.txt.reranked.diag \
-		results-$target.txt.reranked.test \
-		results-$target.txt.reranked.treat >  results-$target.txt.reranked
+	CLASSIFIER=$2
+	cat results-$target.txt.reranked.diag.$CLASSIFIER \
+		results-$target.txt.reranked.test.$CLASSIFIER \
+		results-$target.txt.reranked.treat.$CLASSIFIER >  results-$target.txt.reranked.$CLASSIFIER
 }
-
-catYear 2014$1
-catYear 2015$1
-
+TARGET=$1
+CLASSIFIER=$2
+catFiles $TARGET $CLASSIFIER
