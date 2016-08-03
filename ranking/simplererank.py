@@ -25,13 +25,13 @@ op.add_option("--sgd_weight",
 			  action="store", type=float, default=0.5,
 			  help="weight of sgd vs sgd+basic.")
 op.add_option("--classifier",
-			  action="store", default="SGDClassifier.squared_loss.l2",
+			  action="store", default="SVMPerf.10.0.01.hedges",
 			  help="classifier.")
 op.add_option("--fusion",
 			  action="store", default="interpolation",
 			  help="fusion method.")
 op.add_option("--max_cutoff",
-			  action="store", type=float, default=2.0,
+			  action="store", type=float, default=1.0,
 			  help="max cutoff.")
 op.add_option("--division_cutoff",
 			  action="store", type=float, default=4.0,
@@ -52,29 +52,19 @@ EVAL_PROGNAME = "../eval/trec_eval.9.0/trec_eval"
 
 QRELS = utils.readQrels(QRELS_FILE)
 
-if opts.classifier == "all":
+if opts.classifier == "all.hedges":
 	CLASSIFIERS = [
-		"Basic",
-		"BernoulliNB",
-		"MultinomialNB",
-		"NearestCentroid",
-		"PassiveAggressiveClassifier.hinge",
-		"Perceptron",
-		"RidgeClassifier",
-		"RandomForestClassifier",
-		"LinearSVC.squared_hinge.l2",
-		"SGDClassifier.log.l2",
-		"SGDClassifier.log.elasticnet",
-		"SGDClassifier.hinge.l2",
-		"SGDClassifier.hinge.elasticnet",
-		"SGDClassifier.squared_hinge.l2",
-		"SGDClassifier.squared_hinge.elasticnet",
-		"SGDClassifier.squared_loss.l2",
-		"SGDClassifier.squared_loss.elasticnet",
-		"SGDClassifier.epsilon_insensitive.l2",
-		"SGDClassifier.epsilon_insensitive.elasticnet",
-		"Pipeline.epsilon_insensitive.l2",
-		"NN"
+#		"PassiveAggressiveClassifier.hinge.hedges",
+#		"Perceptron.hedges",
+#		"RidgeClassifier.hedges",
+#		"LinearSVC.squared_hinge.l2.hedges",
+#		"SGDClassifier.log.elasticnet.hedges",
+#		"SGDClassifier.hinge.elasticnet.hedges",
+#		"SGDClassifier.epsilon_insensitive.elasticnet.hedges",
+#		"Pipeline.epsilon_insensitive.l2.hedges",
+		"SVMPerf.10.0.01.hedges",
+		"SVMPerf.05.0.001.hedges",
+#		"NN"
 	]
 else:
 	CLASSIFIERS = [opts.classifier]
@@ -88,36 +78,61 @@ DIVISION_CUTOFF = opts.division_cutoff
 MAX_CUTOFF = opts.max_cutoff
 
 DIVISION_CUTOFFS = {"SVMPerf" : 4.0,
-					"SGDClassifier": 6.0,
-					"LinearSVC" : 3.5}
+					"SGDClassifier": 4.0, # 8 ok
+					"LinearSVC" : 6.0, # 4,8 also ok
+					"NN": 4.0,
+					"PassiveAggressiveClassifier": 6.0,
+					"Perceptron": 8.0,
+					"RidgeClassifier": 6.0,
+					"Pipeline": 6.0,
+					"all": 4.0}
 DIVISION_CUTOFF = DIVISION_CUTOFFS.get(CLASSIFFIER_ROOT, opts.division_cutoff)
 
 MAX_CUTOFFS = {"SVMPerf" : 1.0,
 			   "SGDClassifier":1.0,
-			   "LinearSVC" : 1.0}
+			   "LinearSVC" : 1.0,
+			   "NN": 1.0}
 MAX_CUTOFF = MAX_CUTOFFS.get(CLASSIFFIER_ROOT, opts.max_cutoff)
 
 BASIC_WEIGHTS = {"SVMPerf": 0.1,
 				 "SGDClassifier": 0.5,
-				 "LinearSVC" : 0.0}
+				 "LinearSVC" : 0.5,
+				 "NN": 0.0,
+				 "PassiveAggressiveClassifier": 0.5,
+				 "Perceptron": 0.5,
+				 "RidgeClassifier": 0.5,
+				 "Pipeline": 0.5,
+				 "all": 0.1}
 BASIC_WEIGHT = BASIC_WEIGHTS.get(CLASSIFFIER_ROOT, 0.0)
 
-if "SGDClassifier" in opts.classifier:
-	if CLASS_ID == "diag":
-		DIVISION_CUTOFF = 12.0
-	elif CLASS_ID == "test":
-		DIVISION_CUTOFF = 11.0
-	elif CLASS_ID == "treat":
-		DIVISION_CUTOFF = 4.0
+#if "SGDClassifier" in opts.classifier:
+#	if CLASS_ID == "diag":
+#		DIVISION_CUTOFF = 4.0
+#	elif CLASS_ID == "test":
+#		DIVISION_CUTOFF = 4.0
+#	elif CLASS_ID == "treat":
+#		DIVISION_CUTOFF = 4.0
+		
+#if opts.classifier == "SVMPerf.10.0.01":
+#	BASIC_WEIGHT = 0.5
+#	DIVISION_CUTOFF = 13.0
 
 def rrf(rank1, rank2, weight):
 #	if CLASS_ID == "diag":
 #		return 1.0 / (60+rank1)
-	return 1.0/(60 + rank1) * weight + 1.0/(60 + rank2) * (1-weight)
+	rrf1 = weight/(60.0 + rank1)
+	rrf2 = (1.0-weight)/(60.0 + rank2)
+	
+	if CLASS_ID == "test":
+		rrf2 /= 2.0
+	
+	return rrf1 + rrf2
 	
 def borda(rank1, rank2, weight):
 #	if CLASS_ID == "diag":
 #		return 1.0/rank1
+	if CLASS_ID == "treat":
+		rank2 *= 2
 	return 1.0 / (weight * rank1 + (1-weight) * rank2)
 
 def interpolate(bm25, classifierScore, w):
@@ -140,21 +155,13 @@ def interpolate(bm25, classifierScore, w):
 def zscoreDictValues(d):
 	return dict(zip(d.keys(), stats.zscore(d.values())))
 
-def minMaxNormalizeList(ls):
-	minLs = min(ls)
-	maxLs = max(ls)
-	if minLs == maxLs:
-		return [0] * len(ls)
-	else:
-		return [(x-minLs)/(maxLs-minLs) for x in ls]
-
 def getBaselineScores(baselineResultsFile):
 	baselineResults = utils.readResults(baselineResultsFile)
 	normScores = {}
 	for qid in QUERY_RANGE:
 		docs, ranks, scores = zip(*(baselineResults[qid]))
 		### TODO TODO Maybe use log bm25
-		normScores[qid] = dict(zip(docs, zip(ranks, [bm25 for bm25 in minMaxNormalizeList(scores)])))
+		normScores[qid] = dict(zip(docs, zip(ranks, [bm25 for bm25 in utils.minMaxNormalizeList(scores)])))
 	return normScores
 
 def writeCombinedScores(finalScores):
@@ -188,12 +195,11 @@ def getClassifierScores(baselineScores, maxCutoff, divisionCutoff):
 		queryBasicScores = [basicScores[did] for did in docs]
 		queryBasicScores = utils.maxNormalize(queryBasicScores) # TODO ? minmaxnormalize ?
 		
-		queryClfScores = minMaxNormalizeList([clfScores[did] for did in docs])
+		queryClfScores = utils.minMaxNormalizeList([clfScores[did] for did in docs])
 		
 #		combinedScores = map(lambda (x,y) : BASIC_WEIGHT/(60+x) +  (1-BASIC_WEIGHT)/(60+y),
 #									zip(rankList(queryBasicScores), rankList(queryClfScores)))
 		combinedScores = map(combineScores, queryBasicScores, queryClfScores)
-#		combinedScores = minMaxNormalizeList(combinedScores)
 		if CLASS_ID == "test":
 			combinedScores = [score/2.0 for score in combinedScores]
 		
@@ -215,15 +221,15 @@ def computeClassifierRankings(baselineResults, classifierScores):
 		clfScores = [queryClfScores[did][0] for did in docs]
 		invertedScores = [max(clfScores)-score for score in clfScores]
 		ranks = stats.rankdata(invertedScores, method="min")
-		rankings[qid] = dict(zip(docs, ranks))
+		rankings[qid] = dict(zip(docs, map(float, ranks)))
 
 	return rankings
 
-#def getP10(qrelsFile, resultsFile):
-#	output = subprocess.Popen([EVAL_PROGNAME, qrelsFile, resultsFile], stdout=subprocess.PIPE).communicate()[0]
-#	output = output.split()
-#	index = output.index("P_10")
-#	return float(output[index + 2])
+def getP10(qrelsFile, resultsFile):
+	output = subprocess.Popen([EVAL_PROGNAME, qrelsFile, resultsFile], stdout=subprocess.PIPE).communicate()[0]
+	output = output.split()
+	index = output.index("P_10")
+	return float(output[index + 2])
 
 #def getP10fromScores(rerankedScores):
 #	allP10s = []
@@ -357,25 +363,28 @@ def rerankKnownWeights():
 
 #rerankKnownWeights()
 
-def getRandomClassifiers(dids, num):
+def getRandomClassifiers(baselineScores, num):
 	classifiers = []
 	for _ in range(0, num):
-#		classifiers.append(dict(zip(dids, np.random.choice([0, 1], size=len(dids)))))
-		randomNums = np.random.uniform(0, 1, size=len(dids))
-		classifiers.append(dict(zip(dids, zip(randomNums, randomNums, randomNums))))
+		randomClfDict = {}
+		for qid, docScoresDict in baselineScores.items():
+			docs = docScoresDict.keys()
+			randomNums = np.random.uniform(0, 1, size=len(docs))
+			randomClfDict[qid] = dict(zip(docs, zip(randomNums, randomNums, randomNums)))
+		classifiers.append(randomClfDict)
 	return classifiers
 
 def random(numIter):
 	baselineScores = getBaselineScores(BASELINE_RESULTS_FILE)
 	rerankedFile = BASELINE_RESULTS_FILE + ".reranked." + CLASS_ID + ".random"
-	classifiedDids = utils.readInts(os.path.join(utils.RES_AND_QRELS_DIR, "ids.txt"))
-	randomClassifiers = getRandomClassifiers(classifiedDids, numIter)
+#	classifiedDids = utils.readInts(os.path.join(utils.RES_AND_QRELS_DIR, "ids.txt"))
+	randomClassifiers = getRandomClassifiers(baselineScores, numIter)
 	maxP10 = 0.0
 	
 	for weight in np.linspace(0.2,1,41):
 		sumP10 = 0.0
 		for i in range(0, numIter):
-			p10, _ = rerankScores(weight, baselineScores, randomClassifiers[i], rerankedFile)
+			p10, _ = rerankScores(weight, baselineScores, randomClassifiers[i], defaultdict(float), rerankedFile)
 			sumP10 += p10
 		avgP10 = sumP10/numIter
 		maxP10 = max(avgP10, maxP10)
