@@ -143,7 +143,7 @@ def writeDocsData(docIds, labels, wordsFile, mappingsFile, labelsFile, nnLabelsF
 		words = words[:MAX_DOC_LEN]
 		
 		######################## NN
-#		mappings = [VOCAB_MAP[word] for word in words]
+#		mappings = [VOCAB_MAP[word] for word in words[:MAX_DOC_LEN]]
 #		mappings += [0] * (MAX_DOC_LEN - len(mappings)) ### 0 for PADDING
 #		mappingsOut.write("%s\n" % " ".join(map(str, mappings)))
 #		if label == 1:
@@ -207,6 +207,42 @@ def writeIrResAndQrelsDataset():
 #												  		os.path.join(resDir, "labels-nn.txt"), \
 #												  		os.path.join(resDir, "ids.txt"))
 
+
+def writeHedgesDatasets(category):
+	positiveSamples = codecs.open(os.path.join("data/hedges", category + "-analyzed.txt"), "r", "utf-8").read().splitlines()
+	negativeSamples = codecs.open(os.path.join("data/hedges", "others-analyzed.txt"), "r", "utf-8").read().splitlines()
+	positiveLen = len(positiveSamples)
+	negativeSamples = negativeSamples[:positiveLen]
+	
+	print "Positive samples:", positiveLen
+	
+	samples = positiveSamples + negativeSamples 
+	labels = [1] * positiveLen + [-1] * positiveLen
+	
+	mappingsOut = open("data/" + category + "/train/mappings-hedges.txt", "w")
+	nnLabelsOut = open("data/" + category + "/train/labels-nn-hedges.txt", "w")
+	count = 1
+	for sampleLine, label in zip(samples, labels):
+		words = sampleLine.split()
+		mappings = []
+		for word in words:
+			mapping = VOCAB_MAP.get(word, 0)
+			if mapping == 0:
+				print "Doc #%d: word %s does not have mapping, using 0" % (count, word)
+			
+			mappings.append(mapping)
+		mappings += [0] * (MAX_DOC_LEN - len(mappings)) ### 0 for PADDING
+		mappingsOut.write("%s\n" % " ".join(map(str, mappings)))
+		if label == 1:
+			nnLabelsOut.write("1 0\n")
+		else: #label == 0 or -1
+			nnLabelsOut.write("0 1\n")
+		
+		count += 1
+			
+	mappingsOut.close()
+	nnLabelsOut.close()
+
 def writeDatasets(category):
 
 	### UNCOMMENT FOR NEW DOCS
@@ -255,6 +291,7 @@ def writeDatasets(category):
 writeIrResAndQrelsDataset()
 
 #writeDatasets(CATEGORY)
+#writeHedgesDatasets(CATEGORY)
 
 
 	

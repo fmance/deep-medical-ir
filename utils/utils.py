@@ -152,12 +152,31 @@ def maxNormalize(ls):
 	M = max(ls)
 	return [float(x)/M for x in ls]
 
+def minMaxNormalizeList(ls):
+	minLs = min(ls)
+	maxLs = max(ls)
+	if minLs == maxLs:
+		return [0] * len(ls)
+	else:
+		return [(x-minLs)/(maxLs-minLs) for x in ls]
+
 def readClassPredictions(classifier, classId, useDiagForTest, hedges=False):
 	if classId == "test" and useDiagForTest:
 		classId = "diag"
 	docIds = readInts(os.path.join(RES_AND_QRELS_DIR, "ids.txt"))
 	hedgesPart = "-hedges" if hedges else ""
-	results = map(float, open(os.path.join(RES_AND_QRELS_DIR + hedgesPart, "results", classId, "results.txt." + classifier)).read().split())
+	
+	resFile = os.path.join(RES_AND_QRELS_DIR + hedgesPart, "results", classId, "results.txt." + classifier)
+	
+	if "NN" in classifier:
+		results = []
+		for line in open(resFile):
+			parts=line.split()
+			positive = float(parts[0])
+			negative = float(parts[1])
+			results.append(positive-negative)
+	else:
+		results = map(float, open(resFile).read().split())
 	
 #	if classifier == "NN":
 #		results = map(numpy.sign, results)

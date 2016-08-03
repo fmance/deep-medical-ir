@@ -8,17 +8,25 @@ from itertools import izip
 NUM_CLASSES = 2
 VOCAB_SIZE = 4905671 + 1
 EMBED_SIZE = 100
-NUM_FILTERS = 50
 MAX_DOC_LEN = 5000 # !!! #
 
-FC1_SIZE = 25
+MAX_ITER = 5000
+NUM_FILTERS = 100
+FC1_SIZE = 50
+LEARNING_RATE = 1e-3
+BATCH_SIZE = 100
+
+DESCRIPTOR = ".".join(map(str, [MAX_ITER, NUM_FILTERS, FC1_SIZE, LEARNING_RATE, BATCH_SIZE]))
+
+def getDescriptor(iterNum):
+	return ".".join(map(str, [iterNum, NUM_FILTERS, FC1_SIZE, LEARNING_RATE, BATCH_SIZE]))
 
 category = sys.argv[1]
 dataDir = "../data/"
 catDir = os.path.join(dataDir, category)
 irResDir = os.path.join(dataDir, "res-and-qrels")
 resDir = os.path.join(irResDir, "results", category)
-resFile = os.path.join(resDir, "results.txt.NN")
+resFileRoot = os.path.join(resDir, "results.txt.NN")
 testFile = os.path.join(resDir, "results-on-test-docs.txt.NN")
 
 def chunks(l, n):
@@ -28,15 +36,15 @@ def chunks(l, n):
 def read_embeddings():
 	return np.reshape(np.fromfile("embeddings.txt", dtype=np.float32, count=-1,sep=" "), (VOCAB_SIZE, EMBED_SIZE))
 
-print "reading embeddings"
+print DESCRIPTOR, "reading embeddings"
 sys.stdout.flush()
 embeddings = tf.constant(read_embeddings())
 #embeddings = tf.Variable(tf.random_uniform([VOCAB_SIZE, EMBED_SIZE], -1.0, 1.0), name="embeddings")
-print "done"
+print DESCRIPTOR, "done"
 sys.stdout.flush()
 
 def readDocsAndLabels(dirname):
-	print "Reading docs and labels from " + dirname
+	print DESCRIPTOR, "Reading docs and labels from " + dirname
 	sys.stdout.flush()
 
 	docs = np.reshape(np.fromfile(os.path.join(dirname, "mappings.txt"), dtype=np.int32, count=-1,sep=" "), (-1, MAX_DOC_LEN))
@@ -124,29 +132,29 @@ h_pool = tf.reshape(tf.concat(3, poolings), [-1, NUM_FILTERS_TOTAL], name="h_poo
 h_drop = tf.nn.dropout(h_pool, keep_prob, name="h_drop")
 
 # Without second FC layer
-W_fc1 = tf.get_variable("W_fc1", shape=[NUM_FILTERS_TOTAL, NUM_CLASSES], initializer=tf.contrib.layers.xavier_initializer())
-b_fc1 = bias_variable([NUM_CLASSES], "b_fc1")
+#W_fc1 = tf.get_variable("W_fc1", shape=[NUM_FILTERS_TOTAL, NUM_CLASSES], initializer=tf.contrib.layers.xavier_initializer())
+#b_fc1 = bias_variable([NUM_CLASSES], "b_fc1")
 
-l2_loss_fc1 += tf.nn.l2_loss(W_fc1)
-l2_loss_fc1 += tf.nn.l2_loss(b_fc1)
+#l2_loss_fc1 += tf.nn.l2_loss(W_fc1)
+#l2_loss_fc1 += tf.nn.l2_loss(b_fc1)
 
-scores = tf.nn.xw_plus_b(h_drop, W_fc1, b_fc1, name="scores")
+#scores = tf.nn.xw_plus_b(h_drop, W_fc1, b_fc1, name="scores")
 # End W/O second FC layer
 
 # With second FC layer
-#W_fc1 = weight_variable([NUM_FILTERS_TOTAL, FC1_SIZE], "W_fc1")
-#b_fc1 = bias_variable([FC1_SIZE], "b_fc1")
-#h_fc1 = tf.nn.bias_add(tf.matmul(h_drop, W_fc1), b_fc1, name="h_fc1")
+W_fc1 = weight_variable([NUM_FILTERS_TOTAL, FC1_SIZE], "W_fc1")
+b_fc1 = bias_variable([FC1_SIZE], "b_fc1")
+h_fc1 = tf.nn.bias_add(tf.matmul(h_drop, W_fc1), b_fc1, name="h_fc1")
 
-#W_fc2 = weight_variable([FC1_SIZE, NUM_CLASSES], "W_fc2")
-#b_fc2 = bias_variable([NUM_CLASSES], "b_fc2")
+W_fc2 = weight_variable([FC1_SIZE, NUM_CLASSES], "W_fc2")
+b_fc2 = bias_variable([NUM_CLASSES], "b_fc2")
 
-#scores = tf.nn.bias_add(tf.matmul(h_fc1, W_fc2), b_fc2, name="scores")
+scores = tf.nn.bias_add(tf.matmul(h_fc1, W_fc2), b_fc2, name="scores")
 # End With second FC layer
 
 predictions =  tf.argmax(scores, 1, name="predictions")
 
-loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(scores, y_)) + 1e-5 * l2_loss_conv1 + 1e-4 * l2_loss_fc1
+loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(scores, y_)) #+ 1e-5 * l2_loss_conv1 + 1e-4 * l2_loss_fc1
 
 correct_prediction = tf.equal(predictions, tf.argmax(y_,1), name="correct_prediction")
 accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name="accuracy")
@@ -154,7 +162,7 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name="accurac
 #y_conv=tf.nn.softmax(scores)
 #cross_entropy = -tf.reduce_sum(y_*tf.log(tf.clip_by_value(y_conv,1e-10,1.0)))
 
-train_step = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss)
+train_step = tf.train.AdamOptimizer(LEARNING_RATE).minimize(loss)
 
 # Add ops to save and restore all the variables.
 saver = tf.train.Saver()
@@ -165,10 +173,10 @@ sess = tf.InteractiveSession()
 sess.run(tf.initialize_all_variables())
 #############
 
-#saver.restore(sess, os.path.join(resDir, "nn7000.save"))
+#saver.restore(sess, os.path.join(resDir, "nn5000.save"))
 
 def evaluate(outfile, doc_chunks, label_chunks):
-	print "Evaluating"
+	print DESCRIPTOR, "Evaluating"
 	sys.stdout.flush()
 
 	sum_acc = 0.0
@@ -180,16 +188,16 @@ def evaluate(outfile, doc_chunks, label_chunks):
 			x: tdc, y_: tlc, keep_prob: 1.0})
 		for idx in range(0, len(tdc)):
 			scoreIdx = scr[idx]
-			pred.write("%f\n" % (scoreIdx[0] - scoreIdx[1]))
+			pred.write("%f %f\n" % (scoreIdx[0], scoreIdx[1]))
 		sum_acc += len(tdc) * test_accuracy
 		sum_w += len(tdc)
 		counter += 1
-		print "Evaluating chunk %d" % counter
+		print DESCRIPTOR, "Evaluating chunk %d" % counter
 		sys.stdout.flush()
 
 	pred.close()
 	acc = sum_acc/sum_w
-	print "\n\ntotal test docs %d: test accuracy %g\n\n" % (sum_w, acc)
+	print DESCRIPTOR, "\n\ntotal test docs %d: test accuracy %g\n\n" % (sum_w, acc)
 	sys.stdout.flush()
 
 	return acc
@@ -197,29 +205,33 @@ def evaluate(outfile, doc_chunks, label_chunks):
 def train(offset, num_iter):
 	acc_train = 0.0
 	for it in range(offset, offset+num_iter+1):
-		batch = getTrainingBatch(100)
+		batch = getTrainingBatch(BATCH_SIZE)
 		_, train_loss, train_accuracy, train_l2_conv1, train_l2_fc1 = sess.run([train_step, loss, accuracy, l2_loss_conv1, l2_loss_fc1], feed_dict={
 			x:batch[0], y_: batch[1], keep_prob: 0.5})
-		print("step %d, l2 loss conv1 %g, l2 loss fc1 %g, loss %g, training accuracy %g"%(it, train_l2_conv1, train_l2_fc1, train_loss, train_accuracy))
+		print(DESCRIPTOR + 
+			"step %d, l2 loss conv1 %g, l2 loss fc1 %g, loss %g, training accuracy %g"%(it, train_l2_conv1, train_l2_fc1, train_loss, train_accuracy))
 		sys.stdout.flush()
 
 		acc_train += train_accuracy
 
-		if it > 0 and it % 1000 == 0:
-			acc_test = evaluate(testFile, testDocsChunks, testLabelsChunks)
-			print "accuracy:\t\ttrain: %g\t\ttest: %g" % (acc_train/it, acc_test)
-			sys.stdout.flush()
-		if it > 0 and it % 5000 == 0:
-			evaluate(resFile, resultDocsChunks, resultDummyLabelsChunks)
-			print "Saving checkpoint"
-			saver.save(sess, os.path.join(resDir, "nn" + str(it) + ".save"))
-			print "Done checkpoint"
+#		if it > 0 and it % 1000 == 0:
+#			acc_test = evaluate(testFile, testDocsChunks, testLabelsChunks)
+#			print "accuracy:\t\ttrain: %g\t\ttest: %g" % (acc_train/it, acc_test)
+#			sys.stdout.flush()
+		if it > 0 and it % 500 == 0:
+			iterDescriptor = getDescriptor(it)
+			evaluate(resFile + "." + iterDescriptor, resultDocsChunks, resultDummyLabelsChunks)
+			print DESCRIPTOR, "Saving checkpoint"
+			saver.save(sess, os.path.join(resDir, "nn" + iterDescriptor + ".save"))
+			print DESCRIPTOR, "Done checkpoint"
 
-train(0, 5000)
+train(0, MAX_ITER)
 
-evaluate(resFile, resultDocsChunks, resultDummyLabelsChunks)
+evaluate(resFile + "." + DESCRIPTOR, resultDocsChunks, resultDummyLabelsChunks)
 
-print "Saving checkpoint"
+print DESCRIPTOR, "Saving checkpoint"
 sys.stdout.flush()
 
-saver.save(sess, os.path.join(resDir, "nn5000.save"))
+saver.save(sess, os.path.join(resDir, "nn" + DESCRIPTOR + ".save"))
+
+print DESCRIPTOR, "Done"
