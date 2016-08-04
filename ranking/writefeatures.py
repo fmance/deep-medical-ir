@@ -70,7 +70,7 @@ MAX_CUTOFFS = {"SVMPerf" : 1.0,
 			   "NN": 1.0}
 MAX_CUTOFF = MAX_CUTOFFS.get(CLASSIFFIER_ROOT, 1.0)
 
-BASIC_WEIGHTS = {"SVMPerf": 0.1,
+BASIC_WEIGHTS = {"SVMPerf": 0.33,
 				 "SGDClassifier": 0.5,
 				 "LinearSVC" : 0.5,
 				 "NN": 0.0,
@@ -106,30 +106,28 @@ def combineScores(basic, sgd):
 def getClassifierScores(baselineScores, maxCutoff, divisionCutoff):
 	clfScores = utils.readClassPredictions(opts.classifier, CLASS_ID, True, False)
 	
-	docs, scores = clfScores.keys(), clfScores.values()
-	return dict(zip(docs, utils.minMaxNormalizeList(scores)))
+#	docs, scores = clfScores.keys(), clfScores.values()
+#	return dict(zip(docs, utils.minMaxNormalizeList(scores)))
 	
-#	basicScores = utils.readClassPredictions("Basic", CLASS_ID, False, False)
-#	basicScores = {did: min(maxCutoff, float(score)/divisionCutoff) for did, score in basicScores.items()}
+	basicScores = utils.readClassPredictions("Basic", CLASS_ID, False, False)
+	basicScores = {did: min(maxCutoff, float(score)/divisionCutoff) for did, score in basicScores.items()}
 
-#	finalScoresDict = {}
-#	for qid, docScoresDict in baselineScores.items():
-#		docs = docScoresDict.keys()
-#		
-#		queryBasicScores = [basicScores[did] for did in docs]
-#		queryBasicScores = utils.maxNormalize(queryBasicScores) # TODO ? minmaxnormalize ?
-#		
-#		queryClfScores = utils.minMaxNormalizeList([clfScores[did] for did in docs])
-#		
-##		combinedScores = map(lambda (x,y) : BASIC_WEIGHT/(60+x) +  (1-BASIC_WEIGHT)/(60+y),
-##									zip(rankList(queryBasicScores), rankList(queryClfScores)))
-#		combinedScores = map(combineScores, queryBasicScores, queryClfScores)
-#		if CLASS_ID == "test":
-#			combinedScores = [score/2.0 for score in combinedScores]
-#		
-#		finalScoresDict[qid] = dict(zip(docs, zip(combinedScores, queryClfScores, queryBasicScores)))
-#		
-#	return finalScoresDict
+	finalScoresDict = {}
+	for qid, docScoresDict in baselineScores.items():
+		docs = list(set(docScoresDict.keys()) & set(clfScores.keys()))
+		
+		queryBasicScores = [basicScores[did] for did in docs]
+		queryBasicScores = utils.maxNormalize(queryBasicScores) # TODO ? minmaxnormalize ?
+		
+		queryClfScores = utils.minMaxNormalizeList([clfScores[did] for did in docs])
+		
+		combinedScores = map(combineScores, queryBasicScores, queryClfScores)
+		if CLASS_ID == "test":
+			combinedScores = [score/2.0 for score in combinedScores]
+		
+		finalScoresDict[qid] = dict(zip(docs, combinedScores))
+		
+	return finalScoresDict
 
 def getFeatures(dids, bm25Scores, clfScores):
 	bm25s = [bm25Scores[did] for did in dids]
@@ -159,16 +157,16 @@ def writeTrainingFeatures(bm25Scores, clfScores, outFile):
 			continue
 		queryQrels = QRELS[qid]
 		queryScores = bm25Scores[qid]
-		availDocs = set(clfScores.keys()) & set(queryScores.keys())
+		availDocs = set(clfScores[qid].keys()) & set(queryScores.keys())
 
 		positiveDocs = list(set([did for (did, rel) in queryQrels if rel > 0]) & availDocs)
 		negativeDocs = list(set([did for (did, rel) in queryQrels if rel == 0]) & availDocs)
-		negativeDocs = negativeDocs[:len(positiveDocs)]
+#		negativeDocs = negativeDocs[:len(positiveDocs)]
 		
 		print "Query %d: %d available docs, %d positive docs, %d negative docs" % (qid, len(availDocs), len(positiveDocs), len(negativeDocs))
 		
-		writeFeatures(qid, 1, getFeatures(positiveDocs, queryScores, clfScores), out)
-		writeFeatures(qid, 0, getFeatures(negativeDocs, queryScores, clfScores), out)
+		writeFeatures(qid, 1, getFeatures(positiveDocs, queryScores, clfScores[qid]), out)
+		writeFeatures(qid, 0, getFeatures(negativeDocs, queryScores, clfScores[qid]), out)
 		writeDocIds(positiveDocs + negativeDocs, didsOut)
 		
 	out.close()
@@ -183,7 +181,8 @@ def writeTestFeatures(bm25Scores, clfScores, outFile):
 		queryQrels = dict(QRELS[qid])
 		for did, bm25 in bm25Scores[qid].items():
 			relevance = min(1, queryQrels.get(did, 0))
-			out.write("%d qid:%d\t\t1:%f\t\t2:%f\t\t# %d\n" % (relevance, qid, bm25, clfScores[did], did))
+			clfScore = clfScores[qid][did]
+			out.write("%d qid:%d\t\t1:%f\t\t2:%f\t\t# %d\n" % (relevance, qid, bm25, clfScore, did))
 			didsOut.write("%d\n" % did)
 	
 	out.close()

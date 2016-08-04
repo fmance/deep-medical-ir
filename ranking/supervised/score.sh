@@ -2,6 +2,7 @@ target=$2 # CLASSID-YEAR-SUM/DESC
 year=${target//[A-Za-z\-]/}
 
 java -jar trunk/bin/RankLib.jar -load model/f$1.ca -rank ../../ir/results/features-$target-test.txt -score scores.txt ${@:3}
+
 echo "calling python rerank"
 python rerank.py $target-test
 

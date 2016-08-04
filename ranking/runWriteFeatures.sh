@@ -10,3 +10,11 @@ do
 		done
 	done
 done
+
+echo
+echo
+echo "!!!!!!!!!!!!!!!!!!!!!!!!"
+echo "Run ./catFeatures !!!"
+echo "!!!!!!!!!!!!!!!!!!!!!!!!"
+echo
+echo

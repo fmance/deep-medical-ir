@@ -25,7 +25,7 @@ op.add_option("--sgd_weight",
 			  action="store", type=float, default=0.5,
 			  help="weight of sgd vs sgd+basic.")
 op.add_option("--classifier",
-			  action="store", default="SVMPerf.10.0.01.hedges",
+			  action="store", default="SVMPerf.05.0.001.hedges",
 			  help="classifier.")
 op.add_option("--fusion",
 			  action="store", default="interpolation",
@@ -80,7 +80,7 @@ MAX_CUTOFF = opts.max_cutoff
 DIVISION_CUTOFFS = {"SVMPerf" : 4.0,
 					"SGDClassifier": 4.0, # 8 ok
 					"LinearSVC" : 6.0, # 4,8 also ok
-					"NN": 4.0,
+					"NN": 6.0,
 					"PassiveAggressiveClassifier": 6.0,
 					"Perceptron": 8.0,
 					"RidgeClassifier": 6.0,
@@ -94,9 +94,9 @@ MAX_CUTOFFS = {"SVMPerf" : 1.0,
 			   "NN": 1.0}
 MAX_CUTOFF = MAX_CUTOFFS.get(CLASSIFFIER_ROOT, opts.max_cutoff)
 
-BASIC_WEIGHTS = {"SVMPerf": 0.1,
+BASIC_WEIGHTS = {"SVMPerf": 0.33, #0.33
 				 "SGDClassifier": 0.5,
-				 "LinearSVC" : 0.5,
+				 "LinearSVC" : 0.0,
 				 "NN": 0.0,
 				 "PassiveAggressiveClassifier": 0.5,
 				 "Perceptron": 0.5,
