@@ -11,16 +11,22 @@ Recall that the medical queries we focus on have two components:
 Therefore, we formally represent medical queries $Q$ as pairs of text and intent type: \[Q = \{Q.text,\ Q.type\}\]
 
 Given a query $Q$, the retrieval system computes a relevance score for each document $D$ in the collection.
-The scoring process takes into account both the query text and the intent type. More precisely, we compute
-$Similarity(Q.text, D)$ and $TypeMatch(Q.type, D)$ to measure how relevant the document is to the query text and the
+The scoring process takes into account both the query text and the intent type. More precisely, we use the
+$Similarity(Q.text, D)$ and $TypeClassifier(Q.type, D)$ scoring functions to compute the relevance of the document to the query text and the
 query intent type, respectively.
 
-The final score is the fusion between these two scores:
+The final scoring function is a fusion between the two scoring functions:
 \[
- Score(Q, D) = Fusion\left(Similarity(Q.text, D), TypeMatch(Q.type, D)\right)
+ FusedScore(Q, D) = Fusion\left(Similarity(Q.text, D), TypeClassifier(Q.type, D)\right)
 \]
 As stated in the introduction, the aim of the paper is to determine whether using the query intent type leads to an improvement
-over the baseline, that is, the similarity score.
+over the baseline (i.e., the similarity score). Considering $\mathcal{P}: f \rightarrow \mathbb{R}$ the performance function induced
+by a scoring function $f$,
+our goal is to maximize
+\[
+ \mathcal{P}(FusedScore(Q,D)) - \mathcal{P}(Similarity(Q.text,D))
+\]
+
 
 Let us now look at each of the three components in the formula individually.
 
@@ -48,7 +54,7 @@ For each intent type $T$ we construct a classifier and a word-counter in the fol
 
 The final intent type matching score is the average of the two scores:
 \[
- TypeMatch(T, D) = \displaystyle\frac{ClassifierScore(T,D) +  WordCountScore(T,D)}{2}
+ TypeClassifier(T, D) = \displaystyle\frac{ClassifierScore(T,D) +  WordCountScore(T,D)}{2}
 \]
 While the word-counter is straightforward, the classifier is a more complex component. As a result, we investigate both
 classical approaches, as well as modern ones (deep-learning).
@@ -72,13 +78,16 @@ Now that we have the similarity score and the intent type score, we need to fuse
 We employ two main methods of fusion: unsupervised and supervised.
 
 \subsection{Unsupervised Fusion}
-There are many ways to fuse two scores, but the ones we look at in this paper are:
+There are many ways to fuse two scores, these are the ones we look at in this paper:
 \begin{itemize}
  \item \emph{Linear Interpolation}, where the final score is given by:
-\[  Score(Q, D) = \lambda_{Q.type} \cdot Similarity(Q.text, D) + (1-\lambda_{Q.type}) \cdot TypeMatch(Q.type, D),\]
-where $\lambda_{Q.type} \in [0,1]$ is determined experimentally;
- \item \emph{Reciprocal Rank Fusion}; TODO
- \item \emph{Borda Fusion}. TODO
+\[  Score(Q, D) = \lambda \cdot Similarity(Q.text, D) + (1-\lambda) \cdot TypeClassifier(Q.type, D),\]
+where $\lambda\in [0,1]$ is determined experimentally;
+ \item \emph{Weighted Reciprocal Rank Fusion}, where the final score is given by:
+  \[Score(Q,D)\ =  \displaystyle\frac{\lambda}{k + r_1(D)} + \displaystyle\frac{1- \lambda}{k + r_2(D)}, \]
+  where $r_1(D)$ and $r_2(D)$ are the ranks of $D$ in the ordered list of scores induced by $Similarity$ and $TypeClassifier$ for query $Q$, respectively.
+ \item \emph{Weighted Borda Fusion},  where the final score is given by:
+  \[Score(Q,D)\ =  \displaystyle\frac{1}{\lambda \cdot r_1(D) + (1-\lambda)\cdot r_2(D)}, \]
 \end{itemize}
 
 \subsection{Supervised Fusion}

@@ -14,7 +14,53 @@ We also have ground truths, i.e. labels for around x percent of the query-doc pa
 We first one to apply the baseline IR system on the queries, then use the classifier and fusion as described in the prev. section.
 This is applied for both 2014, 2015.
 
-The following params were used...
+\section{Implementation}
+
+\subsection{Computing the similarity scores}
+As mentioned in the methodology section, we use BM25 to compute the similarity scores between queries and documents.
+We use the Lucene information retrieval system for indexing and searching.
+
+Indexing happens in two stages:
+\begin{enumerate}
+ \item parsing the NXML file format into plain-text (article title, abstract and body), using Java's DOM parser;
+ \item indexing the parsed text, using the \texttt{BM25Similarity} and the \texttt{EnglishAnalyzer} for tokenizing and stemming the text.
+\end{enumerate}
+
+At query time, we parse the queries' XML file and retrieve the top 100 results per query, using the same configuration as for indexing.
+For each year, 2014 and 2015, we produce two results file: one using the query summaries and another one using the query descriptions.
+
+
+\subsection{Computing the classifier scores}
+
+
+\subsection{Fusing the similarity and classifier scores}
+Now that we have both the similarity scores and classifier scores, we can finally fuse them together. 
+For the unsupervised fusion methods (linear interpolation, RRF and Borda Fuse), we min-max-normalize both the BM25 scores
+and the classification scores for each query, and fuse the scores as described in the methodology section. The $\lambda$-weight
+is varied in the $[0,1]$ interval, in steps of $0.01$.
+
+
+\section{Evaluation Metric}
+We use precision at 10 (P@10) as the evauation metric. P@10 counts how many relevant results we have in the top 10 retrieved results, for each query.
+The relevance judjements for each query are stored in a \emph{qrels} file, with each document in this file receiving a score of 0, 1 or 2, depending on whether it
+is not relevant, possibly relevant or definitely relevant, respectively. The relevance judgements were assigned by medical experts after each edition of TREC.
+
+For measuring the P@10, we count both 1 and 2 as relevant. Note that only a
+fraction of the 730K documents are actually judged (and in the qrels files), so it may happen that some documents retrieved by our system
+are mis-counted as being not relevant simply because they have not been judged.
+
+
+\section{Results}
+Let us now present the results of our experiments.
+
+\subsection{Unsupervised Reranking}
+
+\subsubsection{Linear Interpolation}
+
+
+
+
+
 
 
 
