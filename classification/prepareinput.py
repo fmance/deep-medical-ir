@@ -88,6 +88,9 @@ def splitTrainTest(ids):
 def getWords(filename):
 	return codecs.open(filename, "r", "utf-8").read().split()
 
+def getTitleWords(filename):
+	return codecs.open(filename, "r", "utf-8").read().splitlines()[0].split()
+
 def readVocabMap():
 	print "Reading vocabulary map"
 	vocabMap = {}
@@ -211,26 +214,41 @@ def writeIrResAndQrelsDataset():
 def writeHedgesDatasets(category):
 	positiveSamples = codecs.open(os.path.join("data/hedges", category + "-analyzed.txt"), "r", "utf-8").read().splitlines()
 	negativeSamples = codecs.open(os.path.join("data/hedges", "others-analyzed.txt"), "r", "utf-8").read().splitlines()
+	negativeSamples = negativeSamples[:len(positiveSamples)]
 	positiveLen = len(positiveSamples)
-	negativeSamples = negativeSamples[:positiveLen]
+	negativeLen = len(negativeSamples)
 	
-	print "Positive samples:", positiveLen
+	print "Positive samples:", positiveLen, ", negative samples:", negativeLen
 	
 	samples = positiveSamples + negativeSamples 
-	labels = [1] * positiveLen + [-1] * positiveLen
+	labels = [1] * positiveLen + [-1] * negativeLen
 	
 	mappingsOut = open("data/" + category + "/train/mappings-hedges.txt", "w")
 	nnLabelsOut = open("data/" + category + "/train/labels-nn-hedges.txt", "w")
 	count = 1
+	unmappedWords = 0
+	totalWords = 0
+	unmappedDocs = 0
+	totalDocs = 0
 	for sampleLine, label in zip(samples, labels):
 		words = sampleLine.split()
 		mappings = []
+		
+		foundUnmapped = False
 		for word in words:
 			mapping = VOCAB_MAP.get(word, 0)
 			if mapping == 0:
 				print "Doc #%d: word %s does not have mapping, using 0" % (count, word)
-			
+				unmappedWords += 1
+				foundUnmapped = True
 			mappings.append(mapping)
+
+		if foundUnmapped:
+			unmappedDocs += 1
+		
+		totalWords += len(words)
+		totalDocs += 1
+		
 		mappings += [0] * (MAX_DOC_LEN - len(mappings)) ### 0 for PADDING
 		mappingsOut.write("%s\n" % " ".join(map(str, mappings)))
 		if label == 1:
@@ -242,6 +260,8 @@ def writeHedgesDatasets(category):
 			
 	mappingsOut.close()
 	nnLabelsOut.close()
+	
+	print "%d/%d unmapped words in %d/%d documents" % (unmappedWords, totalWords, unmappedDocs, totalDocs)
 
 def writeDatasets(category):
 
@@ -284,14 +304,14 @@ def writeDatasets(category):
 
 #writeIrResultsIds()
 
-#VOCAB_MAP = readVocabMap()
+VOCAB_MAP = readVocabMap()
 #writeEmbeddings()
 
 #writeIrResAndAllQrelsDataset()
-writeIrResAndQrelsDataset()
+#writeIrResAndQrelsDataset()
 
 #writeDatasets(CATEGORY)
-#writeHedgesDatasets(CATEGORY)
+writeHedgesDatasets(CATEGORY)
 
 
 	

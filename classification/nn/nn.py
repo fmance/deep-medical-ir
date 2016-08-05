@@ -13,7 +13,7 @@ MAX_DOC_LEN = 5000 # !!! #
 MAX_ITER = 5000
 NUM_FILTERS = 100
 FC1_SIZE = 50
-LEARNING_RATE = 1e-3
+LEARNING_RATE = 0.001
 BATCH_SIZE = 100
 
 DESCRIPTOR = ".".join(map(str, [MAX_ITER, NUM_FILTERS, FC1_SIZE, LEARNING_RATE, BATCH_SIZE]))
@@ -162,7 +162,7 @@ accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32), name="accurac
 #y_conv=tf.nn.softmax(scores)
 #cross_entropy = -tf.reduce_sum(y_*tf.log(tf.clip_by_value(y_conv,1e-10,1.0)))
 
-train_step = tf.train.AdamOptimizer(LEARNING_RATE).minimize(loss)
+train_step = tf.train.AdamOptimizer(learing_rate=LEARNING_RATE).minimize(loss)
 
 # Add ops to save and restore all the variables.
 saver = tf.train.Saver()

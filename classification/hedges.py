@@ -32,7 +32,7 @@ def convertResultsDocIdsToPmids():
 	for pmid, pmcid in filteredMap:
 		out.write("%d %d\n" % (pmid, pmcid))
 	out.close()
-#convertResultsDocIdsToPmids()
+convertResultsDocIdsToPmids()
 	
 MAPPING = getPmidToPmcidMapping()
 def convertPmidFileToPmcidFile(inputFile):
@@ -42,11 +42,11 @@ def convertPmidFileToPmcidFile(inputFile):
 	valid = 0
 	for pmid in pmids:
 		pmcid = MAPPING.get(pmid, -1)
-		if pmcid in utils.VALID_DOC_IDS:
+		if pmcid in utils.VALID_DOC_IDS_2016:
 			valid += 1
 			pmcids.append(pmcid)
-		else:
-			pmcids.append(-1)
+#		else:
+#			pmcids.append(-1)
 	
 	out = open(inputFile + ".converted-to-pmcids.txt", "w")
 	for pmcid in pmcids:
@@ -54,8 +54,9 @@ def convertPmidFileToPmcidFile(inputFile):
 	out.close()
 	print "Valid ids: ", valid
 
-convertPmidFileToPmcidFile("data/hedges/diag-analyzed-ids.txt")
-convertPmidFileToPmcidFile("data/hedges/treat-analyzed-ids.txt")
+#convertPmidFileToPmcidFile("data/hedges/diag-analyzed-ids.txt")
+#convertPmidFileToPmcidFile("data/hedges/treat-analyzed-ids.txt")
+#convertPmidFileToPmcidFile("data/hedges/pmids-others.txt")
 
 def readHedgesCSV():
 	diag = []
