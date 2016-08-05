@@ -13,6 +13,7 @@ from optparse import OptionParser
 
 sys.path.insert(0, "../utils/")
 import utils
+import weights
 
 CLASS_ID = sys.argv[1]
 TARGET = sys.argv[2]
@@ -28,10 +29,12 @@ else:
 
 op = OptionParser()
 op.add_option("--classifier",
-			  action="store", default="SVMPerf.10.0.01.hedges",
+			  action="store", default="SVMPerf.05.0.001.hedges",
 			  help="classifier.")
-
+			  
 (opts, args) = op.parse_args()
+
+print "Using classifier", opts.classifier
 
 QUERY_OFFSETS = {"diag": 1, "test": 11, "treat": 21}
 QUERY_OFFSET = QUERY_OFFSETS[CLASS_ID]
@@ -53,34 +56,9 @@ if "." in opts.classifier:
 else:
 	CLASSIFFIER_ROOT = opts.classifier
 
-DIVISION_CUTOFFS = {"SVMPerf" : 4.0,
-					"SGDClassifier": 4.0, # 8 ok
-					"LinearSVC" : 6.0, # 4,8 also ok
-					"NN": 4.0,
-					"PassiveAggressiveClassifier": 6.0,
-					"Perceptron": 8.0,
-					"RidgeClassifier": 6.0,
-					"Pipeline": 6.0,
-					"all": 4.0}
-DIVISION_CUTOFF = DIVISION_CUTOFFS.get(CLASSIFFIER_ROOT, 4.0)
-
-MAX_CUTOFFS = {"SVMPerf" : 1.0,
-			   "SGDClassifier":1.0,
-			   "LinearSVC" : 1.0,
-			   "NN": 1.0}
-MAX_CUTOFF = MAX_CUTOFFS.get(CLASSIFFIER_ROOT, 1.0)
-
-BASIC_WEIGHTS = {"SVMPerf": 0.33,
-				 "SGDClassifier": 0.5,
-				 "LinearSVC" : 0.5,
-				 "NN": 0.0,
-				 "PassiveAggressiveClassifier": 0.5,
-				 "Perceptron": 0.5,
-				 "RidgeClassifier": 0.5,
-				 "Pipeline": 0.5,
-				 "all": 0.1}
-BASIC_WEIGHT = BASIC_WEIGHTS.get(CLASSIFFIER_ROOT, 0.0)
-
+DIVISION_CUTOFF = weights.DIVISION_CUTOFFS[CLASSIFFIER_ROOT]
+MAX_CUTOFF = weights.MAX_CUTOFFS[CLASSIFFIER_ROOT]
+BASIC_WEIGHT = weights.BASIC_WEIGHTS[CLASSIFFIER_ROOT]
 
 BAD_TRAINING_QUERIES = {"2014-sum": {17, 25}, # 0% prec: 17, 25; 10%: 3, 6, 10, 11, 13, 18, 19, 23, 29
 						"2014-desc": {3, 5, 12, 13, 18, 23, 29}, # 0% prec: 3, 5, 12, 13, 18, 23, 29;  10%: 1, 6, 17, 19, 25
@@ -88,54 +66,13 @@ BAD_TRAINING_QUERIES = {"2014-sum": {17, 25}, # 0% prec: 17, 25; 10%: 3, 6, 10, 
 						"2015-desc" : {5, 18, 20, 24, 25, 27} # 0% prec: 5, 18, 20, 24, 25, 27; 10%: 7, 9, 10, 12
 					}
 
-def getBaselineScores(baselineResultsFile):
-	baselineResults = utils.readResults(baselineResultsFile)
-	normScores = {}
-	for qid in QUERY_RANGE:
-		print "Reading baseline scores for query %d" % qid
-		docs, ranks, scores = zip(*(baselineResults[qid]))
-		normScores[qid] = dict(zip(docs, utils.minMaxNormalizeList(scores)))
-	return normScores
-
-def combineScores(basic, sgd):
-	w = BASIC_WEIGHT #opts.sgd_weight
-#	if CLASS_ID == "test":
-#		sgd /= 2.0
-	return (1-w) * sgd + w * basic
-
-def getClassifierScores(baselineScores, maxCutoff, divisionCutoff):
-	clfScores = utils.readClassPredictions(opts.classifier, CLASS_ID, True, False)
-	
-#	docs, scores = clfScores.keys(), clfScores.values()
-#	return dict(zip(docs, utils.minMaxNormalizeList(scores)))
-	
-	basicScores = utils.readClassPredictions("Basic", CLASS_ID, False, False)
-	basicScores = {did: min(maxCutoff, float(score)/divisionCutoff) for did, score in basicScores.items()}
-
-	finalScoresDict = {}
-	for qid, docScoresDict in baselineScores.items():
-		docs = list(set(docScoresDict.keys()) & set(clfScores.keys()))
-		
-		queryBasicScores = [basicScores[did] for did in docs]
-		queryBasicScores = utils.maxNormalize(queryBasicScores) # TODO ? minmaxnormalize ?
-		
-		queryClfScores = utils.minMaxNormalizeList([clfScores[did] for did in docs])
-		
-		combinedScores = map(combineScores, queryBasicScores, queryClfScores)
-		if CLASS_ID == "test":
-			combinedScores = [score/2.0 for score in combinedScores]
-		
-		finalScoresDict[qid] = dict(zip(docs, combinedScores))
-		
-	return finalScoresDict
-
 def getFeatures(dids, bm25Scores, clfScores):
 	bm25s = [bm25Scores[did] for did in dids]
-	clfs = [clfScores[did] for did in dids]
+	clfs = [clfScores[did][0] for did in dids]
 	return zip(dids, zip(bm25s, clfs))
 	
-def writeFeatures(qid, relevance, features, out):
-	for did, scores in features:
+def writeFeatures(qid, relevances, features, out):
+	for relevance, (did, scores) in zip(relevances, features):
 		out.write("%d qid:%d\t\t" % (relevance, qid))
 		for fnum, fval in enumerate(scores, 1):
 			out.write("%d:%f\t\t" % (fnum, fval))
@@ -156,17 +93,21 @@ def writeTrainingFeatures(bm25Scores, clfScores, outFile):
 			print "Query %d bad, ignoring" % qid
 			continue
 		queryQrels = QRELS[qid]
+		queryQrelsDict = dict(queryQrels)
+		
 		queryScores = bm25Scores[qid]
 		availDocs = set(clfScores[qid].keys()) & set(queryScores.keys())
 
 		positiveDocs = list(set([did for (did, rel) in queryQrels if rel > 0]) & availDocs)
 		negativeDocs = list(set([did for (did, rel) in queryQrels if rel == 0]) & availDocs)
 #		negativeDocs = negativeDocs[:len(positiveDocs)]
-		
+	
+		positiveRels = [queryQrelsDict[did] for did in positiveDocs]
+	
 		print "Query %d: %d available docs, %d positive docs, %d negative docs" % (qid, len(availDocs), len(positiveDocs), len(negativeDocs))
 		
-		writeFeatures(qid, 1, getFeatures(positiveDocs, queryScores, clfScores[qid]), out)
-		writeFeatures(qid, 0, getFeatures(negativeDocs, queryScores, clfScores[qid]), out)
+		writeFeatures(qid, positiveRels, getFeatures(positiveDocs, queryScores, clfScores[qid]), out)
+		writeFeatures(qid, [0] * len(negativeDocs), getFeatures(negativeDocs, queryScores, clfScores[qid]), out)
 		writeDocIds(positiveDocs + negativeDocs, didsOut)
 		
 	out.close()
@@ -179,10 +120,11 @@ def writeTestFeatures(bm25Scores, clfScores, outFile):
 	
 	for qid in QUERY_RANGE:
 		queryQrels = dict(QRELS[qid])
-		for did, bm25 in bm25Scores[qid].items():
-			relevance = min(1, queryQrels.get(did, 0))
-			clfScore = clfScores[qid][did]
-			out.write("%d qid:%d\t\t1:%f\t\t2:%f\t\t# %d\n" % (relevance, qid, bm25, clfScore, did))
+		for did, bm25Score in bm25Scores[qid].items():
+			relevance = queryQrels.get(did, 0)
+#			relevance = min(1, relevance)
+			clfScore = clfScores[qid][did][0]
+			out.write("%d qid:%d\t\t1:%f\t\t2:%f\t\t# %d\n" % (relevance, qid, bm25Score, clfScore, did))
 			didsOut.write("%d\n" % did)
 	
 	out.close()
@@ -192,10 +134,14 @@ def run():
 	print "Writing " + sys.argv[3] + " features for " + CLASS_ID + " " + TARGET
 	
 	print "Reading baselines from", BASELINE_RESULTS_FILE
-	bm25Scores = getBaselineScores(BASELINE_RESULTS_FILE)
+	bm25Scores = utils.getBaselineScores(BASELINE_RESULTS_FILE, QUERY_RANGE)
+	for qid, docRanksScores in bm25Scores.items():
+		docs = docRanksScores.keys()
+		ranks, scores = zip(*(docRanksScores.values()))
+		bm25Scores[qid] = dict(zip(docs, utils.minMaxNormalizeList(scores)))
 	
 	print "Reading classifier"
-	clfScores = getClassifierScores(bm25Scores, MAX_CUTOFF, DIVISION_CUTOFF)
+	clfScores = utils.getClassifierScores(CLASS_ID, opts.classifier, bm25Scores, BASIC_WEIGHT, MAX_CUTOFF, DIVISION_CUTOFF, normalize=False)
 	
 	if TRAIN:
 		writeTrainingFeatures(bm25Scores, clfScores, FEATURE_FILE)

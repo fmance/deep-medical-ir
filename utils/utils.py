@@ -119,6 +119,8 @@ def readResultsAllModels(year):
 		scores.append(readResults(scoreFileBM25))
 		scoreFileLuceneSw = os.path.join(IR_RESULTS_DIR, "results-lucene-sw-" + str(year) + model + ".txt")
 		scores.append(readResults(scoreFileLuceneSw))
+#		scoreFileDirichlet = os.path.join(IR_RESULTS_DIR, "results-dirichlet-" + str(year) + model + ".txt")
+#		scores.append(readResults(scoreFileDirichlet))
 	return scores
 
 def getResultsDocIds(results):
@@ -160,6 +162,42 @@ def minMaxNormalizeList(ls):
 	else:
 		return [(x-minLs)/(maxLs-minLs) for x in ls]
 
+def getBaselineScores(baselineResultsFile, queryRange):
+	baselineResults = readResults(baselineResultsFile)
+	normScores = {}
+	for qid in queryRange:
+		docs, ranks, scores = zip(*(baselineResults[qid]))
+		### TODO TODO Maybe use log bm25
+		normScores[qid] = dict(zip(docs, zip(ranks, [bm25 for bm25 in maxNormalize(scores)])))
+	return normScores
+
+def combineBasicAndClassifierScores(basicWeight, basic, sgd):
+	return (1.0-basicWeight) * sgd + basicWeight * basic
+
+def getClassifierScores(classId, clfName, baselineScores, basicWeight, maxCutoff, divisionCutoff, normalize=True):
+	clfScores = readClassPredictions(clfName, classId, True, False)
+	basicScores = readClassPredictions("Basic", classId, False, False)
+	basicScores = {did: min(maxCutoff, float(score)/divisionCutoff) for did, score in basicScores.items()}
+
+	finalScoresDict = {}
+	for qid, docScoresDict in baselineScores.items():
+		docs = list(set(docScoresDict.keys()) & set(clfScores.keys()))
+		
+		queryBasicScores = [basicScores[did] for did in docs]
+		queryBasicScores = maxNormalize(queryBasicScores) # TODO ? minmaxnormalize ?
+		
+		queryClfScores = minMaxNormalizeList([clfScores[did] for did in docs])
+		
+#		combinedScores = map(lambda (x,y) : BASIC_WEIGHT/(60+x) +  (1-BASIC_WEIGHT)/(60+y),
+#									zip(rankList(queryBasicScores), rankList(queryClfScores)))
+		combinedScores = map(combineBasicAndClassifierScores, [basicWeight] * len(queryBasicScores), queryBasicScores, queryClfScores)
+		if normalize:
+			combinedScores = minMaxNormalizeList(combinedScores)
+		
+		finalScoresDict[qid] = dict(zip(docs, zip(combinedScores, queryClfScores, queryBasicScores)))
+		
+	return finalScoresDict
+
 def readClassPredictions(classifier, classId, useDiagForTest, hedges=False):
 	if classId == "test" and useDiagForTest:
 		classId = "diag"
@@ -172,9 +210,13 @@ def readClassPredictions(classifier, classId, useDiagForTest, hedges=False):
 		results = []
 		for line in open(resFile):
 			parts=line.split()
-			positive = float(parts[0])
-			negative = float(parts[1])
-			results.append(positive-negative)
+			if len(parts) == 1:
+				results.append(float(parts[0]))
+			else:
+				positive = float(parts[0])
+				negative = float(parts[1])
+#				results.append(positive)
+				results.append(positive-negative)
 	else:
 		results = map(float, open(resFile).read().split())
 	

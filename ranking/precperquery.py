@@ -16,7 +16,7 @@ QRELS = "../data/qrels/qrels-treceval-" + YEAR + ".txt"
 RESULTS = "../ir/results/results-" + TARGET + ".txt"
 
 if CLASS_ID == "all":
-	RESULTS_RERANKED = RESULTS + ".reranked"
+	RESULTS_RERANKED = RESULTS + ".reranked." + CLASSIFIER 
 	QUERY_RANGE = range(1, 31)
 else:
 	RESULTS_RERANKED = RESULTS + ".reranked." + CLASS_ID + "." + CLASSIFIER
