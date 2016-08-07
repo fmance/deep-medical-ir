@@ -79,16 +79,26 @@ We employ two main methods of fusion: unsupervised and supervised.
 
 \subsection{Unsupervised Fusion}
 There are many ways to fuse two scores, these are the ones we look at in this paper:
+
 \begin{itemize}
- \item \emph{Linear Interpolation}, where the final score is given by:
-\[  Score(Q, D) = \lambda \cdot Similarity(Q.text, D) + (1-\lambda) \cdot TypeClassifier(Q.type, D),\]
+ \item \emph{Linear Interpolation}, where the final score is given by: 
+ \begin{equation} \label{interp-formula}
+ Score(Q, D) = \lambda \cdot Similarity(Q_{\text{text}}, D) + (1-\lambda) \cdot TypeClassifier(Q_{\text{type}}, D)
+ \end{equation}
 where $\lambda\in [0,1]$ is determined experimentally;
- \item \emph{Weighted Reciprocal Rank Fusion}, where the final score is given by:
-  \[Score(Q,D)\ =  \displaystyle\frac{\lambda}{k + r_1(D)} + \displaystyle\frac{1- \lambda}{k + r_2(D)}, \]
+
+\item \emph{Weighted Reciprocal Rank Fusion}, where the final score is given by:
+ \begin{equation}\label{rrf-formula}
+  Score(Q,D)\ =  \displaystyle\frac{\lambda}{k + r_1(D)} + \displaystyle\frac{1- \lambda}{k + r_2(D)}
+ \end{equation}
   where $r_1(D)$ and $r_2(D)$ are the ranks of $D$ in the ordered list of scores induced by $Similarity$ and $TypeClassifier$ for query $Q$, respectively.
+ 
  \item \emph{Weighted Borda Fusion},  where the final score is given by:
-  \[Score(Q,D)\ =  \displaystyle\frac{1}{\lambda \cdot r_1(D) + (1-\lambda)\cdot r_2(D)}, \]
-\end{itemize}
+ \begin{equation}\label{borda-formula}
+    Score(Q,D)\ =  \displaystyle\frac{1}{\lambda \cdot r_1(D) + (1-\lambda)\cdot r_2(D)}
+ \end{equation}
+  
+  \end{itemize}
 
 \subsection{Supervised Fusion}
 With supervised fusion, we use a subset of the queries as training data, and test on the remaining queries.
