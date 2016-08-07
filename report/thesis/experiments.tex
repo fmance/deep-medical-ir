@@ -100,24 +100,10 @@ Naive Bayes                    	& 			 &              & $10^{-3}$ (Laplace smooth
 Table \ref{interpolation-res} lists the absolute P@10 improvements of the reranked results, using the linear combination of BM25 and classifier scores (formula \ref{interp-formula}),
 with the best $\lambda$ being $0.7\pm 0.02$.
 
-The best rerankers are the ones using SVM classifiers, with the top one giving an overall improvement of over 6 percentage
-points in P@10. For 2014, the best classifier was SVM with Rec@K loss (8.33\% and 10\% improvements), 
-and for 2015 they were SVM with Precision@K loss and Ridge (4\% improvements).
-
-In particular, for summaries 2014, the top reranked result is $31.67\%+8.33\% = 40\%$, which is better than the top automatic submission
-from TREC 2014 (39\%).
-
-Generally, the improvements for 2014 are at least 
-twice as high as the ones for 2015, but this may be due to the lower baseline precisions from 2014 compared to 2015.
-
-Looking more closely, we can see that all the top 10 classifiers are not more than 0.7\% worse off compared to the top one. However, the bottom three
-are clearly worse, yielding improvements less than 3\%. In the case of neural networks, the problem might be the small size of the training data,
-while the Perceptron and Bayes classifiers are too naive for this kind of task.
-
 % Please add the following required packages to your document preamble:
 % \usepackage{booktabs}
 % \usepackage{graphicx}
-\begin{table}[]
+\begin{table}[h!]
 \centering
 \caption{Absolute P@10 improvement over the baseline, using weighted \textbf{linear combination fusion} of the baseline BM25 scores and the classifier scores.}
 \label{interpolation-res}
@@ -127,7 +113,7 @@ while the Perceptron and Bayes classifiers are too naive for this kind of task.
   & \textbf{Summaries 2014} & \textbf{Descriptions 2014} & \textbf{Summaries 2015} & \textbf{Descriptions 2015} & \textbf{Average} \\ 
 Baseline                             & 31.67                   & 25                         & 38.67                   & 35                         &   32.59               \\ \midrule
 SVM (with Precision@K loss)                                 & +8                       & +9                          & +\textbf{4}              & +3.33                       & +\textbf{6.08}    \\ 
-SVM (with Rec@K loss)                                    & +\textbf{8.33}           & \textbf{10}                & +3                       & +2.67                       & +6                \\ 
+SVM (with Rec@K loss)                                    & +\textbf{8.33}           & +\textbf{10}                & +3                       & +2.67                       & +6                \\ 
 Ridge                                          & +7                       & +9                          & +3.33                    & +\textbf{4}                 & +5.83             \\ 
 SVM (with ROC area loss)                                    & +7.67                    & +9.67                       & +2                       & +3.67                       & +5.75             \\ 
 SVM (with Error-rate loss)                                 & +8                       & +8.67                       & +3                       & +3                          & +5.67             \\ 
@@ -147,6 +133,45 @@ Naive Bayes                                      & +3                       & +4
 }
 \end{table}
 
+The best rerankers are the ones using SVM classifiers, with the top one giving an overall improvement of over 6 percentage
+points in P@10. For 2014, the best classifier was SVM with Rec@K loss (8.33\% and 10\% improvements), 
+and for 2015 they were SVM with Precision@K loss and Ridge (4\% improvements).
+
+In particular, for summaries 2014, the top reranked result is $31.67\%+8.33\% = 40\%$, which is better than the top automatic submission
+from TREC 2014 (39\%).
+
+Generally, the improvements for 2014 are at least 
+twice as high as the ones for 2015, but this may be due to the lower baseline precisions from 2014 compared to 2015.
+
+Looking more closely, we can see that all the top 10 classifiers are not more than 0.7\% worse off compared to the top one. However, the bottom three
+are clearly worse, yielding improvements less than 3\%. In the case of neural networks, the problem might be the small size of the training data,
+while the Perceptron and Bayes classifiers are too naive for this kind of task.
+
+
+\begin{figure}
+\centerline{
+  \includegraphics[scale=0.22]{../../ranking/plots/interpolation/all/all.SVMPerf.04.0.001.hedges.png}
+  }
+  \caption{P@10 improvements using SVM with Precision@K loss function.}
+\end{figure}
+
+
+\begin{figure}
+\centerline{
+  \includegraphics[scale=0.22]{../../ranking/plots/interpolation/all/all.SVMPerf.05.0.001.hedges.png}
+  }
+  \caption{P@10 improvements using SVM with Recall@K loss function.}
+\end{figure}
+
+\begin{figure}
+\centerline{
+  \includegraphics[scale=0.27]{../../ranking/plots/bar/all.SVMPerf.04.0.001.hedges.interpolation.png}
+  }
+  \caption{P@10 improvements per query using SVM with Recall@K loss function.}
+\end{figure}
+
+
+
 
 \subsubsection{Reciprocal Rank Fusion}
 Table \ref{rrf-res} lists the absolute P@10 improvements of the reranked results, using Reciprocal Rank Fusion of the BM25 and classifier ranks (formula \ref{rrf-formula}),
@@ -160,7 +185,7 @@ might be that RRF loses some information by not using the actual scores, but jus
 % Please add the following required packages to your document preamble:
 % \usepackage{booktabs}
 % \usepackage{graphicx}
-\begin{table}[]
+\begin{table}[h!]
 \centering
 \caption{Absolute P@10 improvement over the baseline, using weighted \textbf{reciprocal rank fusion} of the baseline BM25 scores and the classifier scores.}
 \label{rrf-res}
@@ -199,7 +224,7 @@ Weight was $0.6\pm0.05$
 % Please add the following required packages to your document preamble:
 % \usepackage{booktabs}
 % \usepackage{graphicx}
-\begin{table}[]
+\begin{table}[h!]
 \centering
 \caption{Absolute P@10 improvement over the baseline, using weighted \textbf{Borda fusion} of the baseline BM25 scores and the classifier scores.}
 \label{borda-res}
