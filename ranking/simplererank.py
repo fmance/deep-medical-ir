@@ -126,9 +126,6 @@ def rerankScores(bm25Weight, baselineScores, classifierScores, classifierRanking
 		queryClfRankings = classifierRankings[qid]
 		queryClfScores = classifierScores[qid]
 		
-#		if CLASS_ID == "test" and CLASSIFFIER_ROOT == "NN" and YEAR == "2015":
-#			bm25Weight = 1.0
-		
 		if opts.fusion == "interpolation":
 			rerankedScores = [(did, utils.interpolate(queryScores[did][1], queryClfScores[did][0], bm25Weight)) for did in queryScores.keys()]
 		elif opts.fusion == "rrf":

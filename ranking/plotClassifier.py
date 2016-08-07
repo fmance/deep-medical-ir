@@ -8,6 +8,9 @@ import pprint
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+from cycler import cycler
+from matplotlib.ticker import MultipleLocator, FormatStrFormatter
+
 
 op = OptionParser()
 op.add_option("--classifier",
@@ -40,7 +43,8 @@ def getPrecs(target):
 	out, _ = p.communicate()
 	lines = out.splitlines()
 	lines.pop()
-	return map(float, lines)
+	precs = map(float, lines)
+	return map(lambda p: p * 100.0, precs)
 
 print "Classifier : " + opts.classifier + ", fusion : " + opts.fusion
 
@@ -78,75 +82,114 @@ PRECS = {"diag": 	[DIAG_2014_SUM, DIAG_2015_SUM, DIAG_2014_DESC, DIAG_2015_DESC]
 #	treat = getPrecs("treat " + targetWithoutClass)
 #	return np.mean([diag, test, treat], axis=0)
 
-Y_LIMS = {"diag": [0.28, 0.38], "test": [0.26, 0.36], "treat": [0.35, 0.45], "all": [0.28, 0.38]}
+WEIGHT_RANGE = np.linspace(0.0, 1.0, 51)
 
-def plotPrecs(precs, classId, color="b", setLimits=False):
-	WEIGHT_RANGE = np.linspace(0.0, 1.0, 51)
-	baseline = [precs[-1]] * len(precs)
-
-	#####################
-#	if setLimits:
-#		axes = plt.gca()
-#		axes.set_ylim(Y_LIMS[classId])
-#	plt.plot(WEIGHT_RANGE, baseline, linewidth=3.0, color="black")
-#	plt.plot(WEIGHT_RANGE, precs, linewidth=3.0, color=color)
-	#####################
-	
-	#####################
+def plotDiffs(diffs, labels, title, texts):
 	axes = plt.gca()
-	axes.set_ylim([-0.05, 0.1])
-	improvements = [prec - baseline[0] for prec in precs]
-	plt.plot(WEIGHT_RANGE, [0] * len(precs), linewidth=3.0, color="black")
-	plt.plot(WEIGHT_RANGE, improvements, linewidth=3.0, color=color)
-	#####################
+	axes.set_ylim([-5, 10])
 	
-#	plt.axvline(x=0.6, linewidth=2, color="black")
-#	plt.axvline(x=0.9, linewidth=2, color="black")
-	plt.grid(linewidth=1)
+	plt.xlabel("BM25 Weight")
+
+	baseline, = plt.plot(WEIGHT_RANGE, [0] * len(diffs[0]), linewidth=3.0, color="black", label="Baseline", zorder=10)
 	
+	lines = []
+	for diff, label in zip(diffs, labels):
+		line, = plt.plot(WEIGHT_RANGE, diff, linewidth=3.0, label=label, zorder=10)
+		lines.append(line)
+	
+	for y in range(-4, 10, 1):
+		plt.plot(np.linspace(0, 1, 11), [y] * len(np.linspace(0,1,11)),  color="white", lw=1)
+	
+#	axes.legend(handles=lines, loc="upper left", frameon=False)
+
+	for text in texts:
+		plt.text(text[0], text[1], text[2], fontsize="large")
+	
+#	axes.set_axis_bgcolor("0.92")
+#	axes.grid(color="white", linestyle="-", linewidth=1)
+	
+#	axes.grid()
+#	axes.set_axisbelow(True)
+	
+	axes.get_xaxis().grid(False)
+	
+	plt.title(title)
+
+def getDiff(precs):
+	baseline = precs[-1]
+	return [prec - baseline for prec in precs]
+
 def subplot(string):
+	plt.rc('axes', prop_cycle=(cycler('color', ['#BD2828', '#1459A8', '#35871E'])))
+
 	ax = plt.subplot(string)
+	
 	ax.spines["top"].set_visible(False)    
 	ax.spines["bottom"].set_visible(False)    
 	ax.spines["right"].set_visible(False)    
 	ax.spines["left"].set_visible(False) 
+	
 	ax.get_xaxis().tick_bottom()    
 	ax.get_yaxis().tick_left() 
 	
-	ax.set_yticks(np.arange(-0.5,0.1,0.01),minor=True)
-	ax.yaxis.grid(True, which="minor")
+#	ax.set_yticks(range(-5,11,1),minor=True)
+#	ax.yaxis.grid(True, which="minor")
+#	
+#	ax.set_xticks([0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0], minor=True)
+#	ax.xaxis.grid(True, which='minor')
+
+	ax.yaxis.set_major_formatter(FormatStrFormatter("%+d"))
 	
-	ax.set_xticks([0.1,0.2,0.3,0.4,0.5,0.6,0.7,0.8,0.9,1.0], minor=True)
-	ax.xaxis.grid(True, which='minor')
-	
-#	plt.tick_params(axis="both", which="both", bottom="off", top="off", labelbottom="on", left="off", right="off", labelleft="on")  	
+	plt.tick_params(axis="both", which="both", bottom="off", top="off", labelbottom="on", left="off", right="off", labelleft="on")  	
 
 def plotSumDescAllYears(classId, sum2014, sum2015, desc2014, desc2015):
-	subplot(321)
-	plotPrecs(sum2014, classId, color="red")
-	plotPrecs(sum2015, classId)
-	plt.title(opts.classifier + " " + classId.upper() + " SUM")
+	diffSum2014 = getDiff(sum2014)
+	diffSum2015 = getDiff(sum2015)
+	diffDesc2014 = getDiff(desc2014)
+	diffDesc2015 = getDiff(desc2015)
 	
-	subplot(322)
-	plotPrecs(desc2014, classId, color="red")
-	plotPrecs(desc2015, classId)
-	plt.title(opts.classifier + " " + classId.upper() + " DESC")
+	meanSum = np.mean([sum2014, sum2015], axis=0)
+	meanDesc = np.mean([desc2014, desc2015], axis=0)
 	
-	subplot(323)
-	plotPrecs(np.mean([sum2014, desc2014], axis=0), classId, color="red")
-	plt.title(opts.classifier + " " + "AVERAGE DESC+SUM 2014")
+	diffMeanSum = getDiff(meanSum)
+	diffMeanDesc = getDiff(meanDesc)
+		
+	mean2014 = np.mean([sum2014, desc2014], axis=0)
+	mean2015 = np.mean([sum2015, desc2015], axis=0)
+	meanOvr = np.mean([sum2014, sum2015, desc2014, desc2015], axis=0)
 	
-	subplot(324)
-	plotPrecs(np.mean([sum2015, desc2015], axis=0), classId)
-	plt.title(opts.classifier + " " + "AVERAGE DESC+SUM 2015")
+	diffMean2014 = getDiff(mean2014)
+	diffMean2015 = getDiff(mean2015)
+	diffMeanOvr = getDiff(meanOvr)
+
+	plt.style.use("ggplot")
+
+	subplot(131)
+	plotDiffs([diffSum2014, diffSum2015],
+				["Summaries 2014", "Summaries 2015"],
+				"Summaries P@10 improvements",
+				[(0.05, 5.78, "Summaries 2014"), (0.34, 2.5, "Summaries 2015")]
+				)
 	
-	subplot(325)
-	plotPrecs(np.mean([sum2014, sum2015, desc2014, desc2015], axis=0), classId, setLimits=True)
-	plt.title(opts.classifier + " " + "AVERAGE SUM & DESC 2014 & 2015")
+	subplot(132)
+	plotDiffs([diffDesc2014, diffDesc2015],
+				["Descriptions 2014", "Descriptions 2015"],
+				"Descriptions P@10 improvements",
+				[(0.2, 7.5, "Descriptions 2014"), (0.37, 2.9, "Descriptions 2015")]
+				)
+	
+	subplot(133)
+	plotDiffs([diffMean2014, diffMean2015, diffMeanOvr],
+				["Mean 2014", "Mean 2015", "Mean 2014 & 2015"],
+				"Mean P@10 improvements",
+				[(0.25, 7.7, "Mean 2014"), (0.64, 1.5, "Mean 2015"), (0.29, 4.2, "Mean 2014 & 2015")]
+				)
+
+	plt.subplots_adjust(wspace=0.08)
 
 	matplotlib.rcParams.update({'font.size': 20})
 	fig = matplotlib.pyplot.gcf()
-	fig.set_size_inches(25, 25)
+	fig.set_size_inches(40, 8)
 
 	saveDir = "plots/" + opts.fusion + "/" + classId
 	if not os.path.exists(saveDir):
