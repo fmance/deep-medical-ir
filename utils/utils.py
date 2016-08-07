@@ -215,8 +215,8 @@ def readClassPredictions(classifier, classId, useDiagForTest, hedges=False):
 			else:
 				positive = float(parts[0])
 				negative = float(parts[1])
-#				results.append(positive)
-				results.append(positive-negative)
+				results.append(positive)
+#				results.append(positive-negative)
 	else:
 		results = map(float, open(resFile).read().split())
 	
@@ -227,6 +227,17 @@ def readClassPredictions(classifier, classId, useDiagForTest, hedges=False):
 #		results = map(lambda x : 2*x-1, results) # transform 1 to 1 and 0 to -1
 	
 	return dict(zip(docIds, results))
+
+def interpolate(bm25, classifierScore, w):
+	if classifierScore == None:
+		print "ERROR X"
+		return bm25 * w
+	if classifierScore < -10:
+		print "ERROR Y: ", classifierScore
+		return bm25 * w
+	else:
+		clsW = (1-w) #### *(math.pow(bm25, 0.5)) TODO should we use this ???
+		return w * bm25 + clsW * classifierScore #(cw*classifierScore + (1-cw)*(tw * topicModelScore + (1-tw) * doc2vecScore))
 	
 def writeFilteredTopicModels(target, outFile):
 	res = {}

@@ -59,6 +59,7 @@ else:
 
 DIVISION_CUTOFF = weights.DIVISION_CUTOFFS.get(CLASSIFFIER_ROOT, opts.division_cutoff)
 MAX_CUTOFF = weights.MAX_CUTOFFS.get(CLASSIFFIER_ROOT, opts.max_cutoff)
+
 BASIC_WEIGHT = weights.BASIC_WEIGHTS.get(CLASSIFFIER_ROOT, 0.0)
 
 def rrf(rank1, rank2, weight):
@@ -68,17 +69,6 @@ def rrf(rank1, rank2, weight):
 	
 def borda(rank1, rank2, weight):
 	return 1.0 / (weight * rank1 + (1-weight) * rank2)
-
-def interpolate(bm25, classifierScore, w):
-	if classifierScore == None:
-		print "ERROR X"
-		return bm25 * w
-	if classifierScore < -10:
-		print "ERROR Y: ", classifierScore
-		return bm25 * w
-	else:
-		clsW = (1-w) #### *(math.pow(bm25, 0.5)) TODO should we use this ???
-		return w * bm25 + clsW * classifierScore #(cw*classifierScore + (1-cw)*(tw * topicModelScore + (1-tw) * doc2vecScore))
 
 #TOPIC_MODEL_SCORES = utils.readTopicModels(TARGET.replace("-exp", ""))
 #DOC2VEC_SCORES = utils.readDoc2VecScores(TARGET.replace("-exp", "").replace("-unexpanded", ""))
@@ -136,8 +126,11 @@ def rerankScores(bm25Weight, baselineScores, classifierScores, classifierRanking
 		queryClfRankings = classifierRankings[qid]
 		queryClfScores = classifierScores[qid]
 		
+#		if CLASS_ID == "test" and CLASSIFFIER_ROOT == "NN" and YEAR == "2015":
+#			bm25Weight = 1.0
+		
 		if opts.fusion == "interpolation":
-			rerankedScores = [(did, interpolate(queryScores[did][1], queryClfScores[did][0], bm25Weight)) for did in queryScores.keys()]
+			rerankedScores = [(did, utils.interpolate(queryScores[did][1], queryClfScores[did][0], bm25Weight)) for did in queryScores.keys()]
 		elif opts.fusion == "rrf":
 			rerankedScores = [(did, rrf(queryScores[did][0], queryClfRankings[did], bm25Weight)) for did in queryScores.keys()]
 		elif opts.fusion == "borda":

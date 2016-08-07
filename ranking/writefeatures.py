@@ -29,7 +29,7 @@ else:
 
 op = OptionParser()
 op.add_option("--classifier",
-			  action="store", default="SVMPerf.05.0.001.hedges",
+			  action="store", default="SVMPerf.04.0.001.hedges",
 			  help="classifier.")
 			  
 (opts, args) = op.parse_args()
@@ -44,11 +44,13 @@ QRELS_FILE = "../data/qrels/qrels-treceval-" + YEAR + ".txt"
 
 if TRAIN:
 	BASELINE_RESULTS_FILE = "../ir/results/bm25-" + TARGET.replace("-unexpanded", "") + ".txt"
-	FEATURE_FILE = "../ir/results/features-" + CLASS_ID + "-" + TARGET + "-train.txt"
+	FEATURE_FILE = "../ir/results/features-" + CLASS_ID + "-" + TARGET + "-" + opts.classifier + "-train.txt"
 else:
 	BASELINE_RESULTS_FILE = "../ir/results/results-" + TARGET.replace("-unexpanded", "") + ".txt"
-	FEATURE_FILE = "../ir/results/features-" + CLASS_ID + "-" + TARGET + "-test.txt"
+	FEATURE_FILE = "../ir/results/features-" + CLASS_ID + "-" + TARGET + "-" + opts.classifier + "-test.txt"
 	
+BM25_WEIGHT = 0.7	
+
 QRELS = utils.readQrels(QRELS_FILE)
 
 if "." in opts.classifier:
@@ -69,7 +71,8 @@ BAD_TRAINING_QUERIES = {"2014-sum": {17, 25}, # 0% prec: 17, 25; 10%: 3, 6, 10, 
 def getFeatures(dids, bm25Scores, clfScores):
 	bm25s = [bm25Scores[did] for did in dids]
 	clfs = [clfScores[did][0] for did in dids]
-	return zip(dids, zip(bm25s, clfs))
+	fused = map(utils.interpolate, bm25s, clfs, [BM25_WEIGHT] * len(bm25s))
+	return zip(dids, zip(bm25s, clfs, fused))
 	
 def writeFeatures(qid, relevances, features, out):
 	for relevance, (did, scores) in zip(relevances, features):
@@ -124,7 +127,8 @@ def writeTestFeatures(bm25Scores, clfScores, outFile):
 			relevance = queryQrels.get(did, 0)
 #			relevance = min(1, relevance)
 			clfScore = clfScores[qid][did][0]
-			out.write("%d qid:%d\t\t1:%f\t\t2:%f\t\t# %d\n" % (relevance, qid, bm25Score, clfScore, did))
+			fused = utils.interpolate(bm25Score, clfScore, BM25_WEIGHT)
+			out.write("%d qid:%d\t\t1:%f\t\t2:%f\t\t3:%f\t\t# %d\n" % (relevance, qid, bm25Score, clfScore, fused, did))
 			didsOut.write("%d\n" % did)
 	
 	out.close()

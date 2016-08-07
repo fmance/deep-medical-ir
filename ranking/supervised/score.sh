@@ -1,5 +1,6 @@
-target=$2 # CLASSID-YEAR-SUM/DESC
+target=$2 # CLASSID-YEAR-SUM/DESC-CLASSIFIER
 year=${target//[A-Za-z\-]/}
+year=${year:0:4}
 
 java -jar trunk/bin/RankLib.jar -load model/f$1.ca -rank ../../ir/results/features-$target-test.txt -score scores.txt ${@:3}
 

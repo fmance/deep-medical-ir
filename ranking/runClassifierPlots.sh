@@ -21,7 +21,7 @@ declare -a classifiers=(
 "RidgeClassifier"
 "PassiveAggressiveClassifier.hinge.0.01"
 
-"Perceptron"
+"Perceptron.elasticnet"
 "MultinomialNB"
 )
 

@@ -11,6 +11,7 @@ import utils
 
 MIN_DOC_LEN = 1000
 MAX_DOC_LEN = 5000
+MAX_NN_DOC_LEN = 500
 EMBED_SIZE = 100
 
 CATEGORY = sys.argv[1]
@@ -146,8 +147,8 @@ def writeDocsData(docIds, labels, wordsFile, mappingsFile, labelsFile, nnLabelsF
 		words = words[:MAX_DOC_LEN]
 		
 		######################## NN
-#		mappings = [VOCAB_MAP[word] for word in words[:MAX_DOC_LEN]]
-#		mappings += [0] * (MAX_DOC_LEN - len(mappings)) ### 0 for PADDING
+#		mappings = [VOCAB_MAP[word] for word in words[:MAX_NN_DOC_LEN]]
+#		mappings += [0] * (MAX_NN_DOC_LEN - len(mappings)) ### 0 for PADDING
 #		mappingsOut.write("%s\n" % " ".join(map(str, mappings)))
 #		if label == 1:
 #			nnLabelsOut.write("1 0\n")
@@ -232,8 +233,9 @@ def writeHedgesDatasets(category):
 	totalDocs = 0
 	for sampleLine, label in zip(samples, labels):
 		words = sampleLine.split()
-		mappings = []
+		words = words[:MAX_NN_DOC_LEN]
 		
+		mappings = []
 		foundUnmapped = False
 		for word in words:
 			mapping = VOCAB_MAP.get(word, 0)
@@ -249,7 +251,7 @@ def writeHedgesDatasets(category):
 		totalWords += len(words)
 		totalDocs += 1
 		
-		mappings += [0] * (MAX_DOC_LEN - len(mappings)) ### 0 for PADDING
+		mappings += [0] * (MAX_NN_DOC_LEN - len(mappings)) ### 0 for PADDING
 		mappingsOut.write("%s\n" % " ".join(map(str, mappings)))
 		if label == 1:
 			nnLabelsOut.write("1 0\n")
@@ -304,14 +306,14 @@ def writeDatasets(category):
 
 #writeIrResultsIds()
 
-VOCAB_MAP = readVocabMap()
+#VOCAB_MAP = readVocabMap()
 #writeEmbeddings()
 
 #writeIrResAndAllQrelsDataset()
 #writeIrResAndQrelsDataset()
 
 #writeDatasets(CATEGORY)
-writeHedgesDatasets(CATEGORY)
+#writeHedgesDatasets(CATEGORY)
 
 
 	
