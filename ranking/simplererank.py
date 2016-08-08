@@ -222,7 +222,7 @@ def rerankKnownWeights():
 	classifierRankings = computeClassifierRankings(baselineScores, classifierScores)
 	rerankedFile = BASELINE_RESULTS_FILE + ".reranked." + CLASS_ID + "." + opts.classifier + "." + opts.fusion
 	
-	bm25Weight = 0.4 #weights.getBm25Weight(CLASS_ID, TARGET)
+	bm25Weight = 0.62 #weights.getBm25Weight(CLASS_ID, TARGET)
 	
 #	print "Weights: %.2f" % (bm25Weight, classifierWeight, topicModelWeight)
 	

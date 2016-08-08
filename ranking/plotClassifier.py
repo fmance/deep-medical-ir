@@ -86,7 +86,7 @@ WEIGHT_RANGE = np.linspace(0.0, 1.0, 51)
 
 def plotDiffs(diffs, labels, title, texts):
 	axes = plt.gca()
-	axes.set_ylim([-5, 10])
+	axes.set_ylim([-5, 11])
 	
 	plt.xlabel("BM25 Weight")
 
@@ -94,10 +94,10 @@ def plotDiffs(diffs, labels, title, texts):
 	
 	lines = []
 	for diff, label in zip(diffs, labels):
-		line, = plt.plot(WEIGHT_RANGE, diff, linewidth=3.0, label=label, zorder=10)
+		line, = plt.plot(WEIGHT_RANGE, diff, linewidth=3.0, label=label, zorder=10) #, marker="D", markersize=6, markeredgewidth=0)
 		lines.append(line)
 	
-	for y in range(-4, 10, 1):
+	for y in range(-4, 11, 1):
 		plt.plot(np.linspace(0, 1, 11), [y] * len(np.linspace(0,1,11)),  color="white", lw=1)
 	
 #	axes.legend(handles=lines, loc="upper left", frameon=False)
@@ -165,29 +165,53 @@ def plotSumDescAllYears(classId, sum2014, sum2015, desc2014, desc2015):
 	plt.style.use("ggplot")
 
 	subplot(131)
+	
+	if opts.fusion == "interpolation":
+		if opts.classifier == "SVMPerf.04.0.001.hedges":
+			sumTexts = [(0.05, 5.78, "Summaries 2014"), (0.34, 2.5, "Summaries 2015")]
+			descTexts = [(0.2, 7.5, "Descriptions 2014"), (0.37, 2.9, "Descriptions 2015")]
+			meanTexts = [(0.25, 7.7, "Mean 2014"), (0.64, 1.5, "Mean 2015"), (0.29, 4.2, "Mean 2014 & 2015")]
+		elif opts.classifier == "SVMPerf.05.0.001.hedges":
+			sumTexts = [(0.03, 5.78, "Summaries 2014"), (0.36, 2.5, "Summaries 2015")]
+			descTexts = [(0.2, 7.4, "Descriptions 2014"), (0.38, 2.7, "Descriptions 2015")]
+			meanTexts = [(0.26, 7.7, "Mean 2014"), (0.66, 0.88, "Mean 2015"), (0.29, 4.2, "Mean 2014 & 2015")]
+	elif opts.fusion == "rrf":
+		if opts.classifier == "SGDClassifier.squared_loss.elasticnet.hedges":
+			sumTexts = [(0.04, 7.3, "Summaries 2014"), (0.3, 2.5, "Summaries 2015")]
+			descTexts = [(0.01, 7.5, "Descriptions 2014"), (0.37, 3.2, "Descriptions 2015")]
+			meanTexts = [(0.14, 7.7, "Mean 2014"), (0.59, 1.0, "Mean 2015"), (0.27, 4.5, "Mean 2014 & 2015")]
+	else:
+		if opts.classifier == "SGDClassifier.squared_loss.elasticnet.hedges":
+			sumTexts = [(0.04, 7.1, "Summaries 2014"), (0.26, 2.3, "Summaries 2015")]
+			descTexts = [(0.25, 6.3, "Descriptions 2014"), (0.37, 2.3, "Descriptions 2015")]
+			meanTexts = [(0.09, 7.7, "Mean 2014"), (0.59, 0.6, "Mean 2015"), (0.27, 4.4, "Mean 2014 & 2015")]
+	
 	plotDiffs([diffSum2014, diffSum2015],
 				["Summaries 2014", "Summaries 2015"],
 				"Summaries P@10 improvements",
-				[(0.05, 5.78, "Summaries 2014"), (0.34, 2.5, "Summaries 2015")]
+				sumTexts
 				)
 	
 	subplot(132)
 	plotDiffs([diffDesc2014, diffDesc2015],
 				["Descriptions 2014", "Descriptions 2015"],
 				"Descriptions P@10 improvements",
-				[(0.2, 7.5, "Descriptions 2014"), (0.37, 2.9, "Descriptions 2015")]
+				descTexts
 				)
 	
 	subplot(133)
 	plotDiffs([diffMean2014, diffMean2015, diffMeanOvr],
 				["Mean 2014", "Mean 2015", "Mean 2014 & 2015"],
 				"Mean P@10 improvements",
-				[(0.25, 7.7, "Mean 2014"), (0.64, 1.5, "Mean 2015"), (0.29, 4.2, "Mean 2014 & 2015")]
+				meanTexts
 				)
 
 	plt.subplots_adjust(wspace=0.08)
 
-	matplotlib.rcParams.update({'font.size': 20})
+	matplotlib.rcParams.update({'font.size': 20,
+								'xtick.labelsize':'x-large',
+								'ytick.labelsize':'x-large'})
+	
 	fig = matplotlib.pyplot.gcf()
 	fig.set_size_inches(40, 8)
 

@@ -152,7 +152,7 @@ while the Perceptron and Bayes classifiers are too naive for this kind of task.
 \centerline{
   \includegraphics[scale=0.22]{../../ranking/plots/interpolation/all/all.SVMPerf.04.0.001.hedges.png}
   }
-  \caption{P@10 improvements using SVM with Precision@K loss function.}
+  \caption{P@10 improvements using linear combination and SVM with Precision@K loss function.}
 \end{figure}
 
 
@@ -160,14 +160,14 @@ while the Perceptron and Bayes classifiers are too naive for this kind of task.
 \centerline{
   \includegraphics[scale=0.22]{../../ranking/plots/interpolation/all/all.SVMPerf.05.0.001.hedges.png}
   }
-  \caption{P@10 improvements using SVM with Recall@K loss function.}
+  \caption{P@10 improvements using linear combination and SVM with Recall@K loss function.}
 \end{figure}
 
 \begin{figure}
 \centerline{
   \includegraphics[scale=0.27]{../../ranking/plots/bar/all.SVMPerf.04.0.001.hedges.interpolation.png}
   }
-  \caption{P@10 improvements per query using SVM with Recall@K loss function.}
+  \caption{P@10 improvements per query using linear combination and SVM with Recall@K loss function.}
 \end{figure}
 
 
@@ -216,6 +216,20 @@ Perceptron                                                              & +2    
 }
 \end{table}
 
+\begin{figure}[h!]
+\centerline{
+  \includegraphics[scale=0.22]{../../ranking/plots/rrf/all/all.SGDClassifier.squared_loss.elasticnet.hedges.png}
+  }
+  \caption{P@10 improvements using RRF and SVM with squared loss function.}
+\end{figure}
+
+\begin{figure}
+\centerline{
+  \includegraphics[scale=0.27]{../../ranking/plots/bar/all.SGDClassifier.squared_loss.elasticnet.hedges.rrf.png}
+  }
+  \caption{P@10 improvements per query using RRF and SVM with squared loss function.}
+\end{figure}
+
 
 
 \subsubsection{Borda Fuse}
@@ -255,8 +269,21 @@ Perceptron                                              & +1.33           & +2  
 }
 \end{table}
 
+\begin{figure}
+\centerline{
+  \includegraphics[scale=0.22]{../../ranking/plots/borda/all/all.SGDClassifier.squared_loss.elasticnet.hedges.png}
+  }
+  \caption{P@10 improvements using Borda fusion and SVM with squared loss function.}
+\end{figure}
 
 
+
+\begin{figure}
+\centerline{
+  \includegraphics[scale=0.27]{../../ranking/plots/bar/all.SGDClassifier.squared_loss.elasticnet.hedges.borda.png}
+  }
+  \caption{P@10 improvements per query using Borda fusion and SVM with Squared loss function.}
+\end{figure}
 
 
 

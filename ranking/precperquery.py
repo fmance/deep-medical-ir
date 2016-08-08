@@ -4,6 +4,7 @@ import subprocess
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
+from matplotlib import lines
 from cycler import cycler
 from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 
@@ -130,22 +131,17 @@ def barPlot(baselinePrecs, rerankedPrecs, title):
 
 	diffPerQuery = np.array([(reranked-base) for reranked,base in zip(rerankedPrecs, baselinePrecs)])
 	positiveDiffs = [diff if diff > 0 else 0 for diff in diffPerQuery]
-	negativeDiffsAsPositive = [-diff if diff < 0 else 0 for diff in diffPerQuery]
-	
-	baselineMinusNegatives = [base-neg for (base,neg) in zip(baselinePrecs, negativeDiffsAsPositive)]
-	
-	width=0.75
+	negativeDiffs = [diff if diff < 0 else 0 for diff in diffPerQuery]
 	
 	plt.plot(range(0,32,1), [0] * len(range(0,32,1)), color="black")
 	
-	posDiffBar = plt.bar(QUERY_RANGE_NP, positiveDiffs, edgecolor="#2A6FA8", color="#2A6FA8", align="center",
-						bottom=baselinePrecs, label="Improvement P@10", linewidth=3, width=width)
+	baselineBar = plt.bar(QUERY_RANGE_NP, baselinePrecs, color="#99B6CF", align="center", label="Baseline")
+	posDiffBar = plt.bar(QUERY_RANGE_NP, positiveDiffs, color="#2A6FA8", align="center", bottom=baselinePrecs, label="Increase")
+	negDiffBar = plt.bar(QUERY_RANGE_NP, negativeDiffs, color="#CCB4B5", align="center", bottom=[0] * len(QUERY_RANGE_NP), label="Decrease")
 	
-	negDiffBar = plt.bar(QUERY_RANGE_NP, negativeDiffsAsPositive, edgecolor="#99B6CF", color="#99B6CF", alpha=0.3,
-							align="center", bottom=baselineMinusNegatives, label="Worsening P@10", linewidth=3,  width=width)
-	
-	baseBar = plt.bar(QUERY_RANGE_NP, baselineMinusNegatives, edgecolor="#99B6CF", color="#99B6CF", align="center",
-						label="Baseline P@10", linewidth=3, width=width)
+	marker1 = lines.Line2D([], [], marker="s", markersize=25, linewidth=0, color="#2A6FA8", markeredgewidth=0)
+	marker2 = lines.Line2D([], [], marker="s", markersize=25, linewidth=0, color="#99B6CF", markeredgewidth=0)
+	marker3 = lines.Line2D([], [], marker="s", markersize=25, linewidth=0, color="#CCB4B5", markeredgewidth=0)
 							
 	plt.title(title, loc="left", fontsize="large")
 
@@ -160,6 +156,8 @@ def barPlot(baselinePrecs, rerankedPrecs, title):
 	
 	ax.get_xaxis().tick_bottom()    
 	ax.get_yaxis().tick_left() 
+	
+	ax.legend((marker1, marker2, marker3), ("Increase", "Baseline", "Decrease"), frameon=False, bbox_to_anchor=(0.405, 1))
 	
 #	ax.yaxis.set_major_formatter(FormatStrFormatter("%+d"))
 	ax.xaxis.grid(False)
@@ -181,20 +179,15 @@ def plot():
 	
 	ax = plt.subplot(411)
 	barPlot(baseSum2014, rrSum2014, "Summaries 2014: " + titleExt + "%.2f%%)" % (np.mean(rrSum2014)-np.mean(baseSum2014)))
-#	ax.legend(frameon=False, bbox_to_anchor=(0.49, 1))
-	
+
 	ax = plt.subplot(412)
 	barPlot(baseDesc2014, rrDesc2014, "Descriptions 2014: " + titleExt + "%.2f%%)" % (np.mean(rrDesc2014)-np.mean(baseDesc2014)))
-#	ax.legend(frameon=False, bbox_to_anchor=(0.49, 1))
 	
 	ax = plt.subplot(413)
 	barPlot(baseSum2015, rrSum2015, "Summaries 2015: " + titleExt + "%.2f%%)" % (np.mean(rrSum2015)-np.mean(baseSum2015)))
-#	ax.legend(frameon=False, bbox_to_anchor=(0.49, 1))
 	
 	ax = plt.subplot(414)
 	barPlot(baseDesc2015, rrDesc2015, "Descriptions 2015: " + titleExt + "%.2f%%)" % (np.mean(rrDesc2015)-np.mean(baseDesc2015)))
-#	ax.legend(frameon=False, bbox_to_anchor=(0.4, 1))
-	
 
 	plt.subplots_adjust(hspace=0.3)
 	
