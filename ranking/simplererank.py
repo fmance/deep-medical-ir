@@ -25,7 +25,7 @@ op.add_option("--sgd_weight",
 			  action="store", type=float, default=0.5,
 			  help="weight of sgd vs sgd+basic.")
 op.add_option("--classifier",
-			  action="store", default="SVMPerf.05.0.001.hedges",
+			  action="store", default="SVMPerf.04.0.001.hedges",
 			  help="classifier.")
 op.add_option("--fusion",
 			  action="store", default="interpolation",
@@ -36,6 +36,10 @@ op.add_option("--max_cutoff",
 op.add_option("--division_cutoff",
 			  action="store", type=float, default=4.0,
 			  help="division cutoff.")
+op.add_option("--no_basic",
+			  action="store_true",
+			  help="don't use basic classifier.")
+
 
 (opts, args) = op.parse_args()
 
@@ -61,6 +65,8 @@ DIVISION_CUTOFF = weights.DIVISION_CUTOFFS.get(CLASSIFFIER_ROOT, opts.division_c
 MAX_CUTOFF = weights.MAX_CUTOFFS.get(CLASSIFFIER_ROOT, opts.max_cutoff)
 
 BASIC_WEIGHT = weights.BASIC_WEIGHTS.get(CLASSIFFIER_ROOT, 0.0)
+if opts.no_basic:
+	BASIC_WEIGHT = 0
 
 def rrf(rank1, rank2, weight):
 	rrf1 = weight/(60.0 + rank1)

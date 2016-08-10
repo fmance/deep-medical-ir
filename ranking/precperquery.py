@@ -16,7 +16,7 @@ trecEval = "../eval/trec_eval.9.0/trec_eval"
 CLASS_ID = sys.argv[1]
 CLASSIFIER = sys.argv[2]
 
-if CLASS_ID == "all":
+if CLASS_ID == "all" or CLASS_ID == "regression":
 	QUERY_RANGE = range(1, 31)
 else:
 	QUERY_OFFSETS = {"diag": 1, "test": 11, "treat": 21}
@@ -121,6 +121,8 @@ def run(target):
 
 	if CLASS_ID == "all":
 		rerankedResultsFile = resultsFile + ".reranked." + CLASSIFIER 
+	elif CLASS_ID == "regression":
+		rerankedResultsFile = os.path.join("supervised", "results-" + target + "-SVMPerf.04.0.001.hedges-test.9.5.reranked.txt")
 	else:
 		rerankedResultsFile = resultsFile + ".reranked." + CLASS_ID + "." + CLASSIFIER
 

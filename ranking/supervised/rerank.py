@@ -9,9 +9,12 @@ import sys
 #import utils
 
 TARGET = sys.argv[1]
+RERANKER_CONFIG = sys.argv[2]
 
 IR_RESULTS = "../../ir/results/"
 DOC_IDS_FILE = os.path.join(IR_RESULTS, "features-" + TARGET + ".txt.doc-ids.txt")
+
+OUTPUT_FILE = "results-" + TARGET + "." + RERANKER_CONFIG + ".reranked.txt"
 
 docIds = map(int, open(DOC_IDS_FILE).read().split())
 
@@ -31,7 +34,7 @@ rankings = {}
 for qid, docScores in scores.items():
 	rankings[qid] = sorted(docScores, reverse=True, key=lambda kv:kv[1])
 
-out = open("results-reranked.txt", "w")
+out = open(OUTPUT_FILE, "w")
 for qid, docScores in rankings.items():
 #	if qid >= 10 and qid <= 20: # !!! don't rerank test queries
 #		for did, rank, score in BASELINE_SCORES[qid]:
