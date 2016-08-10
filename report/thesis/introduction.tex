@@ -17,5 +17,33 @@ containted in the query, as well as the query intent type (for example, if the p
 Recall that our idea is to make use of both the medical case report as well as the query intent type, and retrieve documents
 that are relevant to both the medical case 
 
+This type of medical ir featured in the cds track at TREC 2014 and 2015.
+However, most participants did not dive/delve too deeply into the matter of using the intent types, mostly used the query text only.
+Tried other approaches like QE, PRF, etc did not really make use of
+the query intent type.
+The few participants that did either tried naive approaches, adding synomnyms or if they looked into the classifiers, they only used one particular setting.
+Probably due to lack of data, 2014, no prior queries and 2015 only 30 queries, never tried supervised, learning 2 rank methods.
+This is discussed in more detail the related work more deeply in the next section.
+
+This paper, we pick up on the idea of using classifiers + fusion, but now we have more data, and relevance judgements. 
+this enables us to explore a much wider array of approaches than previous teams.
+Various classifiers (svm, logreg, nn)
+various fusion methods (unsupervised, supervised - l2r)
+Can also choose supervised ones, using one year as training data. Somtething that couldn't have been done earlier.
+The fact that we have relevance judgements for 60 queries already enables us to more confidently evaluate all approaches.
+
+We design and implement a framework to combine these classifiers and fusion methods and also analyze their performance in detail.
+
+The goal is to see how well each of these differnt methods work on the trec 2014/15 use case, and try to
+give a recommendation on what direction would pay off to pursue in this area.
+We asses the pros and cons of each approach
+We discuss and examine in detail the effect of the approaches. such as improvements per query, movements etc.
+
+After tryin a multitude of combinations, we are confident we can make a recommendation.
+Improved 2014 by 8-9 percent and 2015 by 3-4\%. Can make a recommendation on which config is the best.
+
+
+
+
 
 
