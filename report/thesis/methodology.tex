@@ -1,39 +1,52 @@
 \chapter{Methodology}
 
-Now that we have looked at the background and previous work in the Clinical Decision Support (CDS) area,
-let us proceed to formally introducing our own retrieval system. 
+Now that we have looked into the background and the previous work from the Clinical Decision Support (CDS) area,
+let us proceed to formally defining our own retrieval system. 
 
-Recall that the medical queries we focus on have two components:
+The general setting is the following: we have a list of medical queries $\mathcal{Q}$ and a document collection $\mathcal{D}$.
+For each query $Q \in \mathcal{Q}$, 
+the retrieval system uses a scoring function $f:(Q,D)\rightarrow\mathbb{R}$ to compute the relevance score $f(Q,D)$ 
+for each
+document $D\in\mathcal{D}$, producing a list of scores $[f(Q,D_1), f(Q,D_2), \cdots, f(Q,D_{|\mathcal{D}|})]$,
+sorted in descending order.
+The rank $r_Q(D)$ of document $D$ is the position of $D$ in the list of sorted scores for query $Q$.
+A performance function $\mathcal{P}:f\rightarrow\mathbb{R}$ measures the \emph{quality} of the rankings produced by
+$f$, averaged over all the queries in $ \mathcal{Q}$.
+
+Let us now define our scoring function.
+Recall that the medical queries we are interested in have two components:
 \begin{enumerate*}[label=\arabic*)]
  \item the \emph{query text}, containing the medical case report (patient history, current symptoms, any test results) and
  \item the \emph{query intent type}, that is, the generic clinical question the physician is interested in (diagnosis, test, or treatment).
 \end{enumerate*}
-We therefore represent a CDS medical query $Q$ as a tuple of text and intent type: \[Q = \left(Q_{\text{text}},\ Q_{\text{type}}\right)\]
+We therefore represent a medical query $Q\in\mathcal{Q}$ as a tuple of text and intent type: \[Q = \left(Q_{\text{text}},\ Q_{\text{type}}\right).\]
 
-Given a query $Q$, the retrieval system computes a relevance score for each document $D$ in the collection.
-The scoring process takes into account both the query text \emph{and} the intent type. More precisely, we use the
+Given a query $Q$, the retrieval system computes a relevance score for each document $D\in\mathcal{D}$.
+The scoring process takes into account both the query text \emph{and} the query intent type. More precisely, we use the
 $\textsf{SimilarityScore}(Q_{\text{text}}, D)$ and $\textsf{TypeClassifier}(Q_{\text{type}}, D)$ scoring functions to compute the relevance of the document to the query text and the
 query intent type, respectively.
 
-The final scoring function is the fusion between the two scoring functions:
+The final score is given by:
 \begin{equation}\label{fusion}
   \textsf{FinalScore}(Q, D) = \textsf{Fusion}\left(\textsf{Similarity}(Q_{\text{text}}, D), \textsf{TypeClassifier}(Q_{\text{type}}, D)\right)
 \end{equation}
 
+Our scoring function is therefore a \emph{fusion} of two other scoring functions.
 In this paper, we study how to choose $\textsf{TypeClassifier}$ and $\textsf{Fusion}$ in order to maximize
-
 \[
  \mathcal{P}(\textsf{Fusion}(\textsf{Similarity}, \textsf{TypeClassifier})) - \mathcal{P}(\textsf{Similarity})
 \]
+where $\mathcal{P}: f \rightarrow \mathbb{R}$ is the performance measure (e.g. Precision@10) of scoring function $f$.
 
-where $\mathcal{P}: f \rightarrow \mathbb{R}$ is a function (e.g. Precision@10) that measures the performance of the system using $f$ 
-as the scoring function. In other words, we want to see if and how \emph{combining} the $\textsf{TypeClassifier}$ and $\textsf{Similarity}$ 
-scores leads to an improvement in precision compared to using only the \emph{baseline} $\textsf{Similarity}$ scores.
+In other words, we want to see \emph{if} and \emph{how} using the query intent types (via the
+$\textsf{TypeClassifier}$) together with the \emph{baseline} \textsf{Similarity} scores
+leads to an improvement in precision compared to only using the $\textsf{Similarity}$ scores.
 
 Let us now look at each of the three components in formula \ref{fusion} individually.
 
 \section{Text Similarity}
-For computing the similarity between a query and a document, we use the well-known BM25\cite{bm25} function. We therefore have:
+For computing the similarity between a query and a document, we use the well-known BM25 function\cite{bm25}.
+We therefore have:
 \begin{equation}\label{bm25-formula}
  \textsf{Similarity}(Q_{\text{text}}, D) = \textsf{BM25}(Q_{\text{text}},D)% = \displaystyle\sum_{term\in Q.text} \text{IDF}(term)\cdot\displaystyle\frac{freq(term,D)\cdot(k_1+1)}{freq(term,D)+k_1\cdot\left(1-b+b\cdot\frac{|D|}{avgDocLen}\right)}
 \end{equation}
@@ -44,14 +57,14 @@ Intent type matching should tell us whether a particular document is useful for 
 (diagnosis, test or treatment). There are various approaches to do this, but in this paper we mainly look at
 binary classification and keyword-counting.
 
-For each intent type $T$ we construct a classifier and a keyword-counter in the following way:
+For each intent type $T$ we construct a machine-learning classifier and a keyword-counter in the following way:
 \begin{itemize}
- \item the classifier computes $\textsf{ClassifierScore}(T,D)$ which measures how much document $D$ conforms to type $T$;
+ \item the ML-classifier computes $\textsf{ClassifierScore}(T,D)$ which measures how much document $D$ conforms to type $T$;
  \item the keyword counter computes a score which measures the frequency of certain keywords related to type $T$ in document $D$:
  \begin{equation}\label{basic-formula}
-  \textsf{KeywordCounterScore}(T,D) = \displaystyle\frac{\displaystyle\sum_{t\in \textsf{Keywords}(T)} \textsf{count}(t,D)}{\textsf{cutoff}},
+  \textsf{KeywordCounterScore}(T,D) = \min\left(1,\,\, \displaystyle\frac{\displaystyle\sum_{w\in \textsf{Keywords}(T)} \textsf{count}(w,D)}{\textsf{cutoff}}\right),
  \end{equation}
-  where \textsf{cutoff} is a positive number determined empirically.
+  where $\textsf{cutoff} > 0$ is determined empirically.
 \end{itemize}
 
 The final intent type matching score is a linear combination of the two scores:
@@ -60,20 +73,27 @@ The final intent type matching score is a linear combination of the two scores:
 \end{equation}
 where $\alpha\in (0,1)$.
 
-While the word-counter is straightforward, the classifier is a more complex component. In this paper, we investigate 
+The purpose of the keyword counter is to ``double-check'' the classifier predictions and potentially correct its mistakes.
+This would be the case, for instance,
+if a document with many diagnosis-related words is misclassified as a non-diagnosis document,
+or, vice-versa, if a document with no diagnosis-related words is misclassied as a diagnosis document.
+In these cases, the keyword counter would either increase or decrease the overall score, moving it closer to the truth.
+
+
+While the keyword counter is straightforward, the classifier is a more complex component. In this paper, we investigate 
 a variety of classifiers, ranging from classical ones like logistic regression and support vector machines, to more modern
 ones, like neural networks. Let us give a short overview:
 
 \begin{itemize}
- \item \textbf{Support Vector Machine (SVM)} classifiers --
+ \item \textbf{Support Vector Machine (SVM)} classifiers ---
 %  are a popular method for binary classification. SVM classifiers work by
 % trying to \emph{separate} the feature hyperplane by a \emph{support vector}
 % that maximizes the distance to the nearest points of the two classes.
 % In this paper, 
 we use multiple loss functions, such as hinge loss,
 squared hinge loss, $\epsilon$-insensitive loss, squared loss, zero/one loss and error-rate loss. 
-We also use SVM classifiers developed in \cite{svmperf1},
-\cite{svmperf2} and \cite{svmperf3}, which use multivariate,
+We also use SVM classifiers developed in \cite{svmperf3}, \cite{svmperf1} and
+\cite{svmperf2}, which use multivariate,
 nonlinear loss functions such as $F_1$ loss, Precision@K loss, Recall@K loss and ROC-Area loss;
 \item \textbf{Ridge} \cite{scikit} --- similar to SVM with squared loss;
 \item \textbf{Logistic regression} \cite{scikit} --- similar to SVM with the logistic function loss;
@@ -83,7 +103,7 @@ nonlinear loss functions such as $F_1$ loss, Precision@K loss, Recall@K loss and
 \item \textbf{Naive Bayes} \cite{ir-intro};
 \item \textbf{Multilayer Perceptron} \cite{scikit};
 \item \textbf{Convolutional Neural Networks} --- based on the construction from \cite{cnn}, but using an additional
-hidden layer before the last (fully connected) layer and using fixed, pre-trained word embeddings with \texttt{word2vec} \cite{w2v}.
+hidden layer before the last (fully connected) layer and using fixed, \texttt{word2vec}-learned word embeddings \cite{w2v}.
 \end{itemize}
 
 \section{Fusion of Text Similarity and Intent Type Matching}
@@ -93,29 +113,29 @@ We employ two main methods of fusion: unsupervised and supervised.
 \subsection{Unsupervised Fusion}
 Let $Q$ and $D$ be a query and a document and let $S=\textsf{SimilarityScore}(Q_{\text{text}}, D)$
 and $C=\textsf{TypeClassifierScore}(Q_{\text{type}}, D)$, where \textsf{SimilarityScore} and \textsf{TypeClassifierScore}
-are defined in equations \ref{bm25-formula} and \ref{clf-combine-formula}, respectively.
+are defined as in equations \ref{bm25-formula} and \ref{clf-combine-formula}, respectively.
 
-Furthermore, let $r_1$ and $r_2$ be the ranks of $D$ in the ordered list of scores computed by the
-\textsf{Similarity} and \textsf{TypeClassifier} scoring functions for query $Q$ over all documents in the collection,
+Furthermore, let $r_S$ and $r_C$ be the ranks of $D$ in the ordered list of scores given by the
+\textsf{Similarity} and \textsf{TypeClassifier} scoring functions for query $Q$ over all documents in collection $\mathcal{D}$,
 respectively.
 
 We separately look into three unsupervised fusion methods:
 \begin{itemize}
 
- \item \textbf{Weighted Linear Combination}, where the fused score is given by: 
+ \item \textbf{Weighted Linear Combination} --- the fused score is given by: 
  \begin{equation} \label{interp-formula}
- \textsf{LinComb}(S, C) = \lambda S + (1-\lambda) C, \text{ with } \lambda \in (0,1);
+ \textsf{LinComb}(S, C) = \lambda S + (1-\lambda) C, \text{ where } \lambda \in (0,1);
  \end{equation}
 
-\item \textbf{Weighted Reciprocal Rank Fusion}, where the fused score is given by:
+\item \textbf{Weighted Reciprocal Rank Fusion} --- the fused score is given by:
  \begin{equation}\label{rrf-formula}
-  \textsf{RRF}(r_1, r_2) =  \displaystyle\frac{\lambda}{k + r_1} + \displaystyle\frac{1- \lambda}{k + r_2},  \text{ with } \lambda \in (0,1)
-  \text{ and } k\in\mathbb{R};
+  \textsf{RRF}(r_S, r_C) =  \displaystyle\frac{\lambda}{k + r_S} + \displaystyle\frac{1- \lambda}{k + r_C},  \text{ where } \lambda \in (0,1)
+  \text{ and } k>0;
  \end{equation}
  
- \item \textbf{Weighted Borda Fusion},  where the fused score is given by:
+ \item \textbf{Weighted Borda Fusion} ---  the fused score is given by:
  \begin{equation}\label{borda-formula}
-   \textsf{Borda}(r_1, r_2) =  \displaystyle\frac{1}{\lambda \cdot r_1 + (1-\lambda)\cdot r_2},  \text{ with } \lambda \in (0,1).
+   \textsf{Borda}(r_S, r_C) =  \displaystyle\frac{1}{\lambda \cdot r_S + (1-\lambda)\cdot r_C},  \text{ where } \lambda \in (0,1).
  \end{equation}
   \end{itemize}
 
@@ -124,7 +144,7 @@ is determined empirically for each of the three methods. For $\lambda=1$, the fu
 while for $\lambda=0$, the fused score is equal to the type classifier score.
 
 \subsection{Supervised Fusion}
-We use several supervised fusion methods, based on \textbf{Learning to Rank} algorithms:
+Let us now briefly list the various supervised fusion methods that we use:
 \begin{itemize}
  \item {Ada Rank} \cite{adaRank};
  \item {Rank Net} \cite{rankNet};
@@ -135,8 +155,19 @@ We use several supervised fusion methods, based on \textbf{Learning to Rank} alg
   \item {Linear Regression}.
 \end{itemize}
 
-These algorithms take as input a list of features for each query-document pair $(Q,D)$ and learn how to rank documents based on the
-training data, where the relevance of the query-document pairs is known.
-We use the $\textsf{SimilarityScore}(Q_{\text{text}},D)$ and $\textsf{TypeClassifierScore}(Q_{\text{type}}, D)$ as the two features.
+These algorithms are called \textbf{Learning to Rank} algorithms --
+they take as input a list of features for each query-document pair $(Q,D)$ in the training set
+and learn how to rank documents based on the
+relevance judgements of those pairs. At test time, they apply the learned model to rerank other query-document pairs.
+
+In our case, we use the $\textsf{SimilarityScore}(Q_{\text{text}},D)$ and $\textsf{TypeClassifierScore}(Q_{\text{type}}, D)$ 
+as features for each $(Q,D)$-pair.
+\\
+\\
+We have now given a complete theoretical definition of our retrieval system. We described the problem setting,
+the two main components of the scoring function --- the baseline similarity score and the classifier score ---
+and also the various reranking algorithms used for fusing the two scores.
+
+Let us now move forward to the implementation part.
 
 
