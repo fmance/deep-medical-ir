@@ -1,10 +1,15 @@
-\chapter{Experiments}
+\chapter{Experimental Results}
 
 In this chapter, we present the application of the theory from the previous section. Concretely, we apply the system on Trec 2014 and 2015
-clinical decision support track. 
+clinical decision support track.
 
-\section{Results}
-\subsection{Classifier Parameters}
+\paragraph{Evaluation Metric}
+To evaluate the quality of our rankings, we use the precision at 10 (P@10) metric, which counts for each query the fraction of
+relevant results from the top 10 retrieved results. For example, if 4 documents are relevant for a query out of the top 10 retrieved,
+then P@10 is equal to 40\%. The P@10 for one run (e.g., summaries 2014/2015, descriptions 2014/2015) is the average of
+the P@10 values for each query.
+
+\section{Classifier Parameters}
 Table \ref{params} lists the classifiers we use and their configurations (loss function, penalty). We empirically determine
 the regularization
 parameters by varying them in a cerain range (for example, $[10^{-4},\cdots,10^4]$ in steps of powers of 10) and choosing the ones
@@ -47,9 +52,9 @@ Naive Bayes                    	& 			 &              & $10^{-3}$ (Laplace smooth
 }
 \end{table}
 
-\subsection{Unsupervised Reranking}
+\section{Unsupervised Reranking}
 
-\subsubsection{Linear Combination}
+\subsection{Linear Combination}
 Table \ref{interpolation-res} lists the absolute P@10 improvements of the reranked results, using the linear combination of BM25 and classifier scores (formula \ref{interp-formula}),
 with the best $\lambda$ being $0.7\pm 0.02$.
 
@@ -100,7 +105,7 @@ Looking more closely, we can see that all the top 10 classifiers are not more th
 are clearly worse, yielding improvements less than 3\%. In the case of neural networks, the problem might be the small size of the training data,
 while the Perceptron and Bayes classifiers are too naive for this kind of task.
 
-\subsubsection{Reciprocal Rank Fusion}
+\subsection{Reciprocal Rank Fusion}
 Table \ref{rrf-res} lists the absolute P@10 improvements of the reranked results, using Reciprocal Rank Fusion of the BM25 and classifier ranks (formula \ref{rrf-formula}),
 with the best $\lambda$ being $0.6\pm 0.02$.
 Similar to the linear combination method, SVM gave the best results, although the best one here uses a squared loss instead of 
@@ -143,7 +148,7 @@ Perceptron                                                              & +2    
 }
 \end{table}
 
-\subsubsection{Borda Fuse}
+\subsection{Borda Fuse}
 The results using the Borda Fusion algorithm are listed in table \ref{borda-res}, with the optimal weight being $\lambda=0.6\pm0.05$.
 Similar to RRF, SVM with squared loss is the reranker that gives the best improvement. However, the results for Borda are lower
 than RRF by around 0.5\%.
@@ -182,7 +187,7 @@ Perceptron                                              & +1.33           & +2  
 }
 \end{table}
 
-\subsubsection{Weighting analysis}
+\subsection{Weighting analysis}
 
 Figures \ref{interp-weight}, \ref{rrf-weight} and \ref{borda-weight} show how the improvement in P@10 behaves as the
 weight is varied between 0 and 1. A weight of 0 means only the classifier scores count and a weight of 1 means
@@ -195,73 +200,73 @@ We can also re-confirm that the 2014 improvements are much higher than the ones 
 Even though linear combination is the best on average, RRF and Borda are better for 2014. However, the weight for which they are
 best for 2014 (around 0.4) would make 2015 worse than the baseline.
 
-\begin{figure}
-\centerline{
-  \includegraphics[scale=0.22]{../../ranking/plots/interpolation/all/all.SVMPerf.04.0.001.hedges.png}
-  }
-  \caption{P@10 improvements using linear combination and SVM with Precision@K loss function.}
-  \label{interp-weight}
-\end{figure}
-
-\begin{figure}
-\centerline{
-  \includegraphics[scale=0.22]{../../ranking/plots/rrf/all/all.SGDClassifier.squared_loss.elasticnet.hedges.png}
-  }
-  \caption{P@10 improvements using RRF and SVM with squared loss function.}
-  \label{rrf-weight}
-\end{figure}
-
-\begin{figure}
-\centerline{
-  \includegraphics[scale=0.22]{../../ranking/plots/borda/all/all.SGDClassifier.squared_loss.elasticnet.hedges.png}
-  }
-  \caption{P@10 improvements using Borda fusion and SVM with squared loss function.}
-  \label{borda-weight}
-\end{figure}
+% \begin{figure}
+% \centerline{
+%   \includegraphics[scale=0.22]{../../ranking/plots/interpolation/all/all.SVMPerf.04.0.001.hedges.png}
+%   }
+%   \caption{P@10 improvements using linear combination and SVM with Precision@K loss function.}
+%   \label{interp-weight}
+% \end{figure}
+% 
+% \begin{figure}
+% \centerline{
+%   \includegraphics[scale=0.22]{../../ranking/plots/rrf/all/all.SGDClassifier.squared_loss.elasticnet.hedges.png}
+%   }
+%   \caption{P@10 improvements using RRF and SVM with squared loss function.}
+%   \label{rrf-weight}
+% \end{figure}
+% 
+% \begin{figure}
+% \centerline{
+%   \includegraphics[scale=0.22]{../../ranking/plots/borda/all/all.SGDClassifier.squared_loss.elasticnet.hedges.png}
+%   }
+%   \caption{P@10 improvements using Borda fusion and SVM with squared loss function.}
+%   \label{borda-weight}
+% \end{figure}
 
 \subsubsection{Effect of the keyword counter}
-\begin{figure}[h!]
-\centerline{
-  \includegraphics[scale=0.22]{../../ranking/plots/basic-vs-non-basic.png}
-  }
-  \caption{Effect of using the keyword counter.}
-  \label{basic-effect-plot}
-\end{figure}
+% \begin{figure}[h!]
+% \centerline{
+%   \includegraphics[scale=0.22]{../../ranking/plots/basic-vs-non-basic.png}
+%   }
+%   \caption{Effect of using the keyword counter.}
+%   \label{basic-effect-plot}
+% \end{figure}
 
-\subsubsection{Improvement per query}
+\subsection{Improvement per query}
 
 Figures \ref{interp-query}, \ref{rrf-query}, \ref{borda-query} show the increase or decrease in P@10 for each query,
 using linear interpolation, RRF and Borda fuse, respectively. All four cases are shown (summaries and descriptions for 2014 and 2015).
 
-\begin{figure}
-\centerline{
-  \includegraphics[scale=0.27]{../../ranking/plots/bar/all.SVMPerf.04.0.001.hedges.interpolation.png}
-  }
-  \caption{P@10 improvements per query using linear combination and SVM with Recall@K loss function.}
-  \label{interp-query}
-\end{figure}
+% \begin{figure}
+% \centerline{
+%   \includegraphics[scale=0.27]{../../ranking/plots/bar/all.SVMPerf.04.0.001.hedges.interpolation.png}
+%   }
+%   \caption{P@10 improvements per query using linear combination and SVM with Recall@K loss function.}
+%   \label{interp-query}
+% \end{figure}
 
 For the linear interpolation method, 16, 18, 14 and 10 queries have increased and 3, 1, 6 and 4 have decreased
 for the four cases, respectively. For 2015, the highest overall increase was by fat for treatment queries (21 to 30).
+% 
+% \begin{figure}
+% \centerline{
+%   \includegraphics[scale=0.27]{../../ranking/plots/bar/all.SGDClassifier.squared_loss.elasticnet.hedges.rrf.png}
+%   }
+%   \caption{P@10 improvements per query using RRF and SVM with squared loss function.}
+%   \label{rrf-query}
+% \end{figure}
+% 
+% \begin{figure}
+% \centerline{
+%   \includegraphics[scale=0.27]{../../ranking/plots/bar/all.SGDClassifier.squared_loss.elasticnet.hedges.borda.png}
+%   }
+%   \caption{P@10 improvements per query using Borda fusion and SVM with Squared loss function.}
+%   \label{borda-query}
+% \end{figure}
 
-\begin{figure}
-\centerline{
-  \includegraphics[scale=0.27]{../../ranking/plots/bar/all.SGDClassifier.squared_loss.elasticnet.hedges.rrf.png}
-  }
-  \caption{P@10 improvements per query using RRF and SVM with squared loss function.}
-  \label{rrf-query}
-\end{figure}
 
-\begin{figure}
-\centerline{
-  \includegraphics[scale=0.27]{../../ranking/plots/bar/all.SGDClassifier.squared_loss.elasticnet.hedges.borda.png}
-  }
-  \caption{P@10 improvements per query using Borda fusion and SVM with Squared loss function.}
-  \label{borda-query}
-\end{figure}
-
-
-\subsection{Supervised reranking}
+\section{Supervised reranking}
 
 We now present the results of the supervised reranking strategies. We use several learning to rank algorithms, we present the ones that have the best results.
 As described earlier, when reranking the 2014 queries, we use the 2015 ones as training set and vice versa.
@@ -343,22 +348,22 @@ RankBoost         & 11             & 12                & 19               & 20  
 }
 \end{table}
 
-
-\begin{figure}[h!]
-\centerline{
-  \includegraphics[scale=0.3]{../../ranking/plots/unjudged.png}
-  }
-  \caption{Unjudged docs.}
-  \label{unjudged-fig}
-\end{figure}
-
-\begin{figure}
-\centerline{
-  \includegraphics[scale=0.27]{../../ranking/plots/bar/regression.regression.png}
-  }
-  \caption{P@10 improvements per query using linear regression for reranking.}
-  \label{regression-query}
-\end{figure}
+% 
+% \begin{figure}[h!]
+% \centerline{
+%   \includegraphics[scale=0.3]{../../ranking/plots/unjudged.png}
+%   }
+%   \caption{Unjudged docs.}
+%   \label{unjudged-fig}
+% \end{figure}
+% 
+% \begin{figure}
+% \centerline{
+%   \includegraphics[scale=0.27]{../../ranking/plots/bar/regression.regression.png}
+%   }
+%   \caption{P@10 improvements per query using linear regression for reranking.}
+%   \label{regression-query}
+% \end{figure}
 
 \subsection{Comparison with prev. paper}
 % Please add the following required packages to your document preamble:

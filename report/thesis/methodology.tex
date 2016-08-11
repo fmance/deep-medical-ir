@@ -31,7 +31,16 @@ The final score is given by:
   \textsf{FinalScore}(Q, D) = \textsf{Fusion}\left(\textsf{Similarity}(Q_{\text{text}}, D), \textsf{TypeClassifier}(Q_{\text{type}}, D)\right)
 \end{equation}
 
-Our scoring function is therefore a \emph{fusion} of two other scoring functions.
+Our scoring function is therefore a \emph{fusion} of two other scoring functions (Fig. \ref{diagram}).
+
+\begin{figure}[h!]
+\centerline{
+  \includegraphics[scale=0.25]{diagram.png}
+  }
+  \caption{Scoring function components}
+  \label{diagram}
+\end{figure}
+
 In this paper, we study how to choose $\textsf{TypeClassifier}$ and $\textsf{Fusion}$ in order to maximize
 \[
  \mathcal{P}(\textsf{Fusion}(\textsf{Similarity}, \textsf{TypeClassifier})) - \mathcal{P}(\textsf{Similarity})
@@ -52,8 +61,8 @@ We therefore have:
 \end{equation}
 
 
-\section{Intent Type Matching}
-Intent type matching should tell us whether a particular document is useful for the intent type of the query 
+\section{Intent Type Scoring}
+Intent type scoring should tell us whether a particular document is useful for the intent type of the query 
 (diagnosis, test or treatment). There are various approaches to do this, but in this paper we mainly look at
 binary classification and keyword-counting.
 
@@ -67,7 +76,7 @@ For each intent type $T$ we construct a machine-learning classifier and a keywor
   where $\textsf{cutoff} > 0$ is determined empirically.
 \end{itemize}
 
-The final intent type matching score is a linear combination of the two scores:
+The final intent type score is a linear combination of the two scores:
 \begin{equation}\label{clf-combine-formula}
  \textsf{TypeClassifierScore} = \alpha\cdot\textsf{ClassifierScore} + (1-\alpha)\cdot\textsf{KeywordCountScore},
 \end{equation}
@@ -106,7 +115,7 @@ nonlinear loss functions such as $F_1$ loss, Precision@K loss, Recall@K loss and
 hidden layer before the last (fully connected) layer and using fixed, \texttt{word2vec}-learned word embeddings \cite{w2v}.
 \end{itemize}
 
-\section{Fusion of Text Similarity and Intent Type Matching}
+\section{Fusion of Text Similarity and Intent Type Scores}
 Now that we have the similarity score and the intent type score, we need to fuse them to produce the final score.
 We employ two main methods of fusion: unsupervised and supervised.
 
@@ -127,13 +136,13 @@ We separately look into three unsupervised fusion methods:
  \textsf{LinComb}(S, C) = \lambda S + (1-\lambda) C, \text{ where } \lambda \in (0,1);
  \end{equation}
 
-\item \textbf{Weighted Reciprocal Rank Fusion} --- the fused score is given by:
+\item \textbf{Weighted Reciprocal Rank Fusion} \cite{rrf} --- the fused score is given by:
  \begin{equation}\label{rrf-formula}
   \textsf{RRF}(r_S, r_C) =  \displaystyle\frac{\lambda}{k + r_S} + \displaystyle\frac{1- \lambda}{k + r_C},  \text{ where } \lambda \in (0,1)
   \text{ and } k>0;
  \end{equation}
  
- \item \textbf{Weighted Borda Fusion} ---  the fused score is given by:
+ \item \textbf{Weighted Borda Fusion} \cite{borda} ---  the fused score is given by:
  \begin{equation}\label{borda-formula}
    \textsf{Borda}(r_S, r_C) =  \displaystyle\frac{1}{\lambda \cdot r_S + (1-\lambda)\cdot r_C},  \text{ where } \lambda \in (0,1).
  \end{equation}
@@ -143,7 +152,7 @@ The weight $\lambda$ measures the contribution of the baseline \textsf{Similarit
 is determined empirically for each of the three methods. For $\lambda=1$, the fused score is equal to the baseline,
 while for $\lambda=0$, the fused score is equal to the type classifier score.
 
-\subsection{Supervised Fusion}
+\subsection{Supervised Fusion}\label{sup-fusion}
 Let us now briefly list the various supervised fusion methods that we use:
 \begin{itemize}
  \item {Ada Rank} \cite{adaRank};
@@ -162,11 +171,18 @@ relevance judgements of those pairs. At test time, they apply the learned model 
 
 In our case, we use the $\textsf{SimilarityScore}(Q_{\text{text}},D)$ and $\textsf{TypeClassifierScore}(Q_{\text{type}}, D)$ 
 as features for each $(Q,D)$-pair.
-\\
-\\
+\begin{figure}[h!]
+\centerline{
+  \includegraphics[scale=0.25]{diagram2.png}
+  }
+  \caption{System architecture.}
+  \label{diagram2}
+\end{figure}
+
 We have now given a complete theoretical definition of our retrieval system. We described the problem setting,
 the two main components of the scoring function --- the baseline similarity score and the classifier score ---
 and also the various reranking algorithms used for fusing the two scores.
+Figure \ref{diagram2} shows the entire system architecture with all the main components.
 
 Let us now move forward to the implementation part.
 
