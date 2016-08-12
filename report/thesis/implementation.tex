@@ -1,0 +1,170 @@
+\chapter{Implementation}\label{impl}
+
+In this chapter we discuss the implementation of the system formally defined in the previous section. We first
+introduce the data we are working on, then move on to implementing the similarity and type classifier scoring functions,
+and finish by implementing the various usupervised and supervised fusion methods.
+
+\section{Data}
+For our use case, we use the data from the TREC 2014 and 2015 Clinical Decision support track \cite{trec}, which provides:
+\begin{itemize}
+ \item the list of queries;
+ \item the document collection;
+ \item relevance judgements (\emph{qrels}) for several query-document pairs.
+\end{itemize}
+
+\subsection{Queries}
+We have 30 queries from TREC 2014 CDS track and 30 queries from TREC 2015 CDS track.
+As previously discussed, queries have two components, the query text and the query intent type.
+In both years, 2014 and 2015, queries 1--10 have type \emph{diagnosis}, queries 11--20 have type \emph{test}
+and queries 21--30 have type \emph{treatment}.
+Furthermore, the query text comes in two versions: a \emph{description}, which is more verbose and written in natural language,
+and a \emph{summary} of the description. Queries are provided in XML format. 
+Let us have a look at an example query from 2014:
+
+\begin{Verbatim}[fontsize=\small]
+  <topic number="1" type="diagnosis">
+    <description>
+      A 58-year-old African-American woman presents to the ER
+      with episodic pressing/burning anterior chest pain that began two
+      days earlier for the first time in her life. The pain started while
+      she was walking, radiates to the back, and is accompanied by nausea,
+      diaphoresis and mild dyspnea, but is not increased on inspiration.
+      The latest episode of pain ended half an hour prior to her arrival.
+      She is known to have hypertension and obesity. She denies smoking,
+      diabetes, hypercholesterolemia, or a family history of heart disease.
+      She currently takes no medications. Physical examination is normal.
+      The EKG shows nonspecific changes.
+    </description>
+    <summary>
+      58-year-old woman with hypertension and obesity presents with
+      exercise-related episodic chest pain radiating to the back.
+    </summary>
+  </topic>
+\end{Verbatim}
+
+\subsection{Document collection}
+We are provided with around 733,100 medical articles from the Open Access subset of PubMedCentral \cite{oa}. The articles are in NXML format
+and contain the title, abstract (if any) and the full text. However, some documents (around 50,000) do not include the full text
+as NXML but as a scanned PDF image. For these documents, we use the Open Access FTP Service \cite{oa-ftp} to fetch the plaintext contents.
+
+\subsection{Relevance judgements}\label{qrels}
+We have relevance judgements for around 38,000 query-document pairs for 2014 and 2015 each, with around 10\% of them
+being positive (relevant). The relevance judgements were assigned by medical experts after each edition of TREC CDS.
+
+Since not all $733100\times 60$ query-document pairs could possibly be evaluated, it frequently happens that our system retrieves documents
+that are not judged, and by default considered non-relevant. This \emph{may} negatively impact the performance evaluation of
+the system, since part of these documents may actually be relevant.
+
+\section{Implementation of the scoring function}
+We now present the implementation of the scoring function \ref{fusion}. Recall that the function has three components:
+the baseline similarity score, the type classifier score and the fusion of scores.
+
+\subsection{Computing the similarity scores}\label{sim-impl}
+As discussed in \ref{bm25-formula}, we use the \textsf{BM25} scoring function to compute the similarity scores between the query
+text and documents. To this end, we employ the Lucene information retrieval system \cite{lucene}, which works in two main stages:
+\begin{enumerate*}[label=\arabic*)]
+ \item \emph{indexing} the document collection;
+ \item running the \emph{search queries} on the index. 
+\end{enumerate*}
+
+We index the document collection as follows:
+\begin{enumerate}[label=\arabic*)]
+ \item we parse each NXML file into plain text (article title, abstract and body), using Java's DOM parser.
+  If an NXML file is missing the full article text, we parse it from the plaintext-version of the Open-Access collection instead;
+ \item we send the parsed text to Lucene for indexing,
+    using the \texttt{BM25 Similarity} and the \texttt{English Analyzer} for tokenization and stemming.
+\end{enumerate}
+
+At query time, we parse the XML file containing the queries, and convert the query text to Lucene queries.
+
+We have four sets of query runs: using the summaries from 2014, using the descriptions from 2014, using the summaries from 2015 and,
+lastly, using the descriptions from 2015. 
+For each run, we retrieve the top 100 results per query
+(using the same configuration as for indexing --- \texttt{BM25 Similarity} and \texttt{English Analyzer})
+thereby producing four sets of rankings.
+
+These rankings form the baseline of the system, which is then fused
+with the type classifier scores, discussed next.
+
+\subsection{Computing the type classifier scores}
+Computing the type classifier scores involves only the document collection and the three query intent types (diagnosis, test and treatment);
+we do not need the text of the queries for this part. 
+
+Furthermore, we do not use the documents in their original form,
+but we tokenize, lowercase and stem them using Lucene's \texttt{EnglishAnalyzer}.
+
+Recall from formula \ref{clf-combine-formula} that the final type classifier score is a linear combination of the 
+machine-learning classifier score and the keyword-counter score. Let us now discuss how these two are implemented.
+
+\subsubsection{Keyword Counter}
+For the keyword counter, we use formula \ref{basic-formula} with the following keywords sets per type:
+\begin{itemize}
+ \item for diagnosis, we use \{\emph{diag}\} --- the stem of terms like ``diagnosis'', ``diagnostic'', ``diagnose'' etc;
+ \item for test, we use \{\emph{diag}, \emph{test}\} -- the stem of terms like ``test'', ``testing'' etc;
+ \item for treatment, we use \{\emph{treat}\} --- the stem of terms like ``treat'', ``treatment'', ``treated'' etc.
+\end{itemize}
+
+\subsubsection{Machine-learning classifier}
+
+\paragraph{Training data}
+For the ML-classifier, we need training data for each of the three intent types. For this, we use the Clinical Hedges Database (CHD)
+\cite{chd},
+which has diagnosis labels for around 1100 documents, and treatment labels for around 8000 documents. It does
+not have any test labels, but we can use the diagnosis labels for test, since the two intent types are relatively similar
+(this was also the approach taken by \cite{choi}).
+The CHD also has 37000 documents of other types, which we use as \emph{negative} samples.
+One drawback of the CHD, however, is that the training documents are not part of the Open-Access subset, so their full text is not
+available for (programatic) download. Therefore, we can only use the titles and the abstracts for training.
+
+\paragraph{Classifier implementation}
+We use \texttt{scikit-learn} \cite{scikit} for the SVM-based classifiers with hinge,
+squared hinge, $\epsilon$-insensitive and squared losses, as well as for the Ridge, Logistic, Perceptron,
+Passive Aggressive, Naive Bayes and Multilayer Perceptron classifiers.
+We also use \texttt{scikit-learn} to compute the TFIDF-based document features.
+
+We use \texttt{SVM-perf} (\cite{svmperf3}, \cite{svmperf1}, \cite{svmperf2})
+for the SVM-based classifiers with zero/one, error-rate, $F_1$, Precision@K, Recall@K and ROC-area losses.
+
+For the convolutional neural networks, we use the \texttt{gensim} package \cite{gensim} to learn the \texttt{word2vec}
+word embeddings (trained over the entire document collection)
+and the \texttt{tensorflow} package \cite{tf} for training the neural networks, based on the construction
+from \cite{cnn} and \cite{cnn-code}, with an additional hidden layer before the last (fully connected) layer.
+
+The classifier output is the (confidence) value of the decision function, or the probabilities, when available (e.g.,
+for Logistic Regression or Naive Bayes).
+
+\subsection{Fusion of similarity and classifier scores}
+Now that we computed both the similarity scores and the classifier scores, we can finally fuse them together.
+Before doing that, however, we scale them to the $[0,1]$ interval.
+
+\subsubsection{Unsupervised fusion}\label{impl-unsup}
+For the three unsupervised fusion methods, Linear Combination, RRF and Borda, we vary the weight $\lambda$ from 0 to 1 in steps of 0.01,
+according to equations \ref{interp-formula}, \ref{rrf-formula} and \ref{borda-formula}, respectively. 
+For each weight and for each query, we fuse the BM25
+score of every document in the top 100 of the baseline of that query with its type classifier score, 
+and re-sort the resulting scores in decreasing order.
+We then decide, based on experiments, which weights yield the highest improvement for each fusion method.
+
+\subsubsection{Supervised fusion}
+For the supervised fusion, we need to set aside a subset of the queries as training data, and test on the remaining ones.
+Since we have queries from two years, we can use the queries from 2014 as training data and the queries from
+the 2015 as test data, and vice-versa.
+
+The training data itself consists of (query, document, relevance, features) tuples. Since the relevance judgements are only available
+for the query-document pairs in the \emph{qrels}, we can only use those for training. As features, we use the 
+similarity scores and the type classifier scores, as discussed in \ref{sup-fusion}. To sum up, for each
+query-document pair in the \emph{qrels}, we compute the two scores and together with the relevance judgement, we add them
+to the training set.
+
+For the test data, we take each query-document pair in the baseline results, compute the two feature scores and add them
+to the test set.
+
+We then apply the learning to rank algorithms listed in \ref{sup-fusion} on the training data and run the learned models on the test data.
+The algorithms are implemented in the \texttt{RankLib} package of the \texttt{Lemur} project \cite{ranklib}.
+\\
+\\
+Now that our system is implemented, we move forward to the experiments section.
+
+
+
+

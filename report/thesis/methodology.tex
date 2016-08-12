@@ -1,4 +1,4 @@
-\chapter{Methodology}
+\chapter{Methodology}\label{meth}
 
 Now that we have looked into the background and the previous work from the Clinical Decision Support (CDS) area,
 let us proceed to formally defining our own retrieval system. 
@@ -51,6 +51,19 @@ In other words, we want to see \emph{if} and \emph{how} using the query intent t
 $\textsf{TypeClassifier}$) together with the \emph{baseline} \textsf{Similarity} scores
 leads to an improvement in precision compared to only using the $\textsf{Similarity}$ scores.
 
+\paragraph{Observation} It is important to note at this point that, even though scoring function \ref{fusion} does
+compute the final scores,
+the actual retrieval is performed in two steps: 
+\begin{enumerate}
+ \item we first retrieve the top $N$ documents according to their \textsf{Similarity} scores \emph{only};
+ \vspace{-0.2cm}
+ \item we then \emph{re-score} these $N$ documents according to formula \ref{fusion}.
+\end{enumerate}
+This helps us avoid cases where documents with little textual \textsf{Similarity} to the query text
+have high \textsf{Fused} scores due to very high \textsf{TypeClassifier} scores masking out potentially low \textsf{Similarity} scores.
+We therefore use step 1 from above as a ``filter'' to make sure the re-scored documents are still the ones that had high textual
+\textsf{Similarity} to begin with.
+
 Let us now look at each of the three components in formula \ref{fusion} individually.
 
 \section{Text Similarity}
@@ -60,8 +73,7 @@ We therefore have:
  \textsf{Similarity}(Q_{\text{text}}, D) = \textsf{BM25}(Q_{\text{text}},D)% = \displaystyle\sum_{term\in Q.text} \text{IDF}(term)\cdot\displaystyle\frac{freq(term,D)\cdot(k_1+1)}{freq(term,D)+k_1\cdot\left(1-b+b\cdot\frac{|D|}{avgDocLen}\right)}
 \end{equation}
 
-
-\section{Intent Type Scoring}
+\section{Intent Type Scoring}\label{intent-scoring}
 Intent type scoring should tell us whether a particular document is useful for the intent type of the query 
 (diagnosis, test or treatment). There are various approaches to do this, but in this paper we mainly look at
 binary classification and keyword-counting.
@@ -125,7 +137,7 @@ and $C=\textsf{TypeClassifierScore}(Q_{\text{type}}, D)$, where \textsf{Similari
 are defined as in equations \ref{bm25-formula} and \ref{clf-combine-formula}, respectively.
 
 Furthermore, let $r_S$ and $r_C$ be the ranks of $D$ in the ordered list of scores given by the
-\textsf{Similarity} and \textsf{TypeClassifier} scoring functions for query $Q$ over all documents in collection $\mathcal{D}$,
+\textsf{Similarity} and \textsf{TypeClassifier} scoring functions for query $Q$ over the top $N$ retrieved documents,
 respectively.
 
 We separately look into three unsupervised fusion methods:
@@ -171,18 +183,20 @@ relevance judgements of those pairs. At test time, they apply the learned model 
 
 In our case, we use the $\textsf{SimilarityScore}(Q_{\text{text}},D)$ and $\textsf{TypeClassifierScore}(Q_{\text{type}}, D)$ 
 as features for each $(Q,D)$-pair.
-\begin{figure}[h!]
+
+We have now given a complete theoretical definition of our retrieval system. We described the problem setting,
+the two main components of the scoring function --- the baseline similarity score and the classifier score ---
+and also the various reranking algorithms used for fusing the two scores.
+
+Figure \ref{diagram2} shows the entire system architecture with all the main components.
+
+\begin{figure}
 \centerline{
   \includegraphics[scale=0.25]{diagram2.png}
   }
   \caption{System architecture.}
   \label{diagram2}
 \end{figure}
-
-We have now given a complete theoretical definition of our retrieval system. We described the problem setting,
-the two main components of the scoring function --- the baseline similarity score and the classifier score ---
-and also the various reranking algorithms used for fusing the two scores.
-Figure \ref{diagram2} shows the entire system architecture with all the main components.
 
 Let us now move forward to the implementation part.
 

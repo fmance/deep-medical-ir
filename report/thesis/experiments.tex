@@ -1,29 +1,59 @@
 \chapter{Experimental Results}
 
-In this chapter, we present the application of the theory from the previous section. Concretely, we apply the system on Trec 2014 and 2015
-clinical decision support track.
+Let us now present the experimental results of applying our system formally defined in Chapter \ref{meth} and implemented in Chapter 
+\ref{impl}
+to the TREC 2014 and 2015 Clinical Decision Support track.
+We first discuss the evaluation metric and the classifier parameters,
+then we move on to discussing the results for the unsupervised fusion methods (Linear Combination, RRF and Borda)
+and then the results for the supervised fusion methods (Learning to Rank). We then do an overall comparison between the best results from each strategy
+and, finally, we compare our overall best with the results from \cite{choi}.
 
-\paragraph{Evaluation Metric}
-To evaluate the quality of our rankings, we use the precision at 10 (P@10) metric, which counts for each query the fraction of
-relevant results from the top 10 retrieved results. For example, if 4 documents are relevant for a query out of the top 10 retrieved,
-then P@10 is equal to 40\%. The P@10 for one run (e.g., summaries 2014/2015, descriptions 2014/2015) is the average of
-the P@10 values for each query.
+\section{Query runs}\label{runs} Before we begin, let us recall that we have four \emph{runs} with 30 queries each:
+\begin{itemize}
+ \item using the query \emph{summaries} from \emph{2014};
+ \item using the query \emph{descriptions} from \emph{2014};
+ \item using the query \emph{summaries} from \emph{2015};
+ \item using the query \emph{descriptions} from \emph{2015};
+\end{itemize}
+
+We present a set of results for each of these runs and also three \emph{mean results}:
+\begin{itemize}
+ \item the mean for 2014 (summaries and descriptions);
+ \item the mean for 2015 (summaries and descriptions);
+ \item the overall mean over all four runs.
+\end{itemize}
+
+\section{Evaluation Metric}
+To evaluate the quality of our rankings, we use the precision at 10 (P@10) metric, which counts for each query the percentage of
+relevant results from the top 10 retrieved results. For example, if 4 documents of the top 10 retrieved results are relevant,
+then P@10 is equal to 40\%. The P@10 is then averaged over all queries in a run.
+
+As discussed in Section \ref{qrels}, the ground truths --- relevance judgements --- are provided by medical experts
+and stored in the (\emph{qrels}) files.
 
 \section{Classifier Parameters}
-Table \ref{params} lists the classifiers we use and their configurations (loss function, penalty). We empirically determine
-the regularization
-parameters by varying them in a cerain range (for example, $[10^{-4},\cdots,10^4]$ in steps of powers of 10) and choosing the ones
+Table \ref{params} lists the 17 classifiers we use and their configurations. 
+We empirically determine
+the 
+parameters by varying them in a cerain range (for example, the regularization parameters
+in the $[10^{-4},\cdots,10^4]$ in steps of powers of 10) and choosing the ones
 that give the
 best P@10 improvement averaged over all four categories.
-For the Multilayer-perceptron we use two layers of size 50 and 5 respectively. For the Neural Networks,
-we use 100 convolution filters of size 3, 4 and 5, respectively and 50 nodes in next hidden layer. The word-embedding size is 100 
-and is computed using \texttt{word2vec} over the preprocessed TREC 2014 document corpus.
 
+For the Multilayer Perceptron classifier, we achieved the best results by using two layers of size 50 and 5 respectively
+(we ranged the layer sizes from 5 to 100 and the number of layers from 1 to 3).
+
+For the Convolutional Neural Networks classifier, we achieved the best results by
+using 100 convolution filters of size 3, 4 and 5, respectively and 50 nodes in last hidden layer; the word-embedding size is 100
+(we ranged the number of filters from 50 to 150 and the number of nodes in the last hidden layer from 0, i.e., no hidden layer, to 75).
+
+The weight $\alpha$ of the Keyword Counter score to the overall classifier score (formula \ref{clf-combine-formula}) is set to 0.4 and
+the \textsf{cutoff} is set to 4.
 
 % Please add the following required packages to your document preamble:
 % \usepackage{booktabs}
 % \usepackage{graphicx}
-\begin{table}[]
+\begin{table}[h!]
 \centering
 \caption{Best classifier parameters found}
 \label{params}
@@ -52,20 +82,37 @@ Naive Bayes                    	& 			 &              & $10^{-3}$ (Laplace smooth
 }
 \end{table}
 
-\section{Unsupervised Reranking}
+\section{Unsupervised Fusion Results}
+Let us now present the results for the unsupervised fusion methods. 
 
-\subsection{Linear Combination}
-Table \ref{interpolation-res} lists the absolute P@10 improvements of the reranked results, using the linear combination of BM25 and classifier scores (formula \ref{interp-formula}),
-with the best $\lambda$ being $0.7\pm 0.02$.
+For each of the four runs listed in Section \ref{runs} and for each of the seventeen classifiers listed in Table \ref{params}, we perform a fusion of scores
+between the baseline BM25 similarity scores and the classifier scores. 
+We therefore produce seventeen sets of results for each of the four runs,
+one set of results per classifier.
+We then average for each classifier the results of the corresponding four runs, producing seventeen \emph{average results}.
+This shows which classifier leads to the highest P@10 improvement for that fusion method.
+
+Furthermore, we look at the contribution of the keyword counter towards the overall P@10 improvement. More precisely,
+we look at what the improvement is \emph{with} (default) versus \emph{without} using the keyword counter, that is, using $\alpha=0.4$
+versus using $\alpha=0$, respectively, in formula \ref{clf-combine-formula}.
+
+Lastly, using the best classifier, we show for each run the improvement for the 30 queries individually.
+
+\subsection{Linear Combination Results}
+We begin by showing the results of the Linear Combination fusion method (formula \ref{interp-formula}) in table \ref{interpolation-res}.
+The weight $\lambda$ is set to $0.7\pm 0.02$.
+
+The first line shows the \emph{baseline} P@10 for each of the four runs.
+The next lines show the \emph{absolute} P@10 \emph{improvements} for each classifier.
 
 % Please add the following required packages to your document preamble:
 % \usepackage{booktabs}
 % \usepackage{graphicx}
-\begin{table}[h]
+\begin{table}[h!]
 \centering
-\caption{Absolute P@10 improvement over the baseline, using weighted \textbf{linear combination fusion} of the baseline BM25 scores and the classifier scores.}
+\caption{Weighted \textbf{Linear Combination} --- absolute P@10 improvements.}
 \label{interpolation-res}
-\resizebox{\textwidth}{!}{%
+\resizebox{1.15\textwidth}{!}{%
 \begin{tabular}{@{}llllll@{}}
 \toprule
   & \textbf{Summaries 2014} & \textbf{Descriptions 2014} & \textbf{Summaries 2015} & \textbf{Descriptions 2015} & \textbf{Average} \\\midrule
@@ -101,27 +148,26 @@ from TREC 2014 (39\%).
 Generally, the improvements for 2014 are at least 
 twice as high as the ones for 2015, but this may be due to the lower baseline precisions from 2014 compared to 2015.
 
-Looking more closely, we can see that all the top 10 classifiers are not more than 0.7\% worse off compared to the top one. However, the bottom three
-are clearly worse, yielding improvements less than 3\%. In the case of neural networks, the problem might be the small size of the training data,
-while the Perceptron and Bayes classifiers are too naive for this kind of task.
+Looking more closely, we can see that the top 10 classifiers are not more than 0.7\% worse off compared to the best,
+which means that any one of them could be trusted to work well with other queries.
 
-\subsection{Reciprocal Rank Fusion}
-Table \ref{rrf-res} lists the absolute P@10 improvements of the reranked results, using Reciprocal Rank Fusion of the BM25 and classifier ranks (formula \ref{rrf-formula}),
-with the best $\lambda$ being $0.6\pm 0.02$.
-Similar to the linear combination method, SVM gave the best results, although the best one here uses a squared loss instead of 
-Precision@K (which came out fourth).
+However, the bottom three classifiers are more modest, yielding improvements less than 3\%.
+In the case of neural networks, the problem might be the small size of the training data,
+while the Perceptron and Bayes classifiers are too naive for this task.
+Nevertheless, they still give some moderate improvements for 2014 and Summaries 2015.
 
-However, the RRF improvements are overall lower than for linear combination: the best improvement is 4.75\% compared to 6\%, respectively. One reason
-might be that RRF loses some information by not using the actual scores, but just the ranks instead.
+\subsection{Reciprocal Rank Fusion Results}
+Let us now show the results of the Reciprocal Rank fusion method (formula \ref{rrf-formula}) in table \ref{rrf-res}.
+The weight $\lambda$ is set to $0.6\pm 0.02$ and $k$ is set to 60.
 
 % Please add the following required packages to your document preamble:
 % \usepackage{booktabs}
 % \usepackage{graphicx}
-\begin{table}[h]
+\begin{table}[h!]
 \centering
-\caption{Absolute P@10 improvement over the baseline, using weighted \textbf{reciprocal rank fusion} of the baseline BM25 scores and the classifier scores.}
+\caption{Weighted \textbf{Reciprocal Rank Fusion} --- absolute P@10 improvements.}
 \label{rrf-res}
-\resizebox{\textwidth}{!}{%
+\resizebox{1.15\textwidth}{!}{%
 \begin{tabular}{@{}llllll@{}}
 \toprule
                                     & \textbf{Summaries 2014} & \textbf{Descriptions 2014} & \textbf{Summaries 2015} & \textbf{Descriptions 2015} & \textbf{Average} \\ \midrule
@@ -148,19 +194,27 @@ Perceptron                                                              & +2    
 }
 \end{table}
 
-\subsection{Borda Fuse}
-The results using the Borda Fusion algorithm are listed in table \ref{borda-res}, with the optimal weight being $\lambda=0.6\pm0.05$.
-Similar to RRF, SVM with squared loss is the reranker that gives the best improvement. However, the results for Borda are lower
-than RRF by around 0.5\%.
+Similar to the linear combination method, SVM classifiers generally work best,
+although the top one now uses the squared loss instead of Precision@K loss (which takes fourth place instead).
+
+RRF, however, gives lower improvements, with the highest one being 4.75\%
+compared to 6\% for linear combination.
+This may be due to the fact that RRF loses some information by only using the ranks and not the actual scores. On the other hand, RRF
+is easier and more convenient to compute, since no score scaling is needed.
+
+
+\subsection{Borda Fusion Results}
+We show the results of the Borda fusion method (formula \ref{borda-formula}) in table \ref{borda-res}.
+The weight $\lambda$ is set to $0.6\pm 0.05$.
 
 % Please add the following required packages to your document preamble:
 % \usepackage{booktabs}
 % \usepackage{graphicx}
-\begin{table}[h]
+\begin{table}[h!]
 \centering
-\caption{Absolute P@10 improvement over the baseline, using weighted \textbf{Borda fusion} of the baseline BM25 scores and the classifier scores.}
+\caption{Weighted \textbf{Borda Fusion} --- absolute P@10 improvements.}
 \label{borda-res}
-\resizebox{\textwidth}{!}{%
+\resizebox{1.15\textwidth}{!}{%
 \begin{tabular}{@{}lllllll@{}}
 \toprule
                                        & Summaries 2014 & Descriptions 2014 & Summaries 2015 & Descriptions 2015 & Average       \\\midrule
@@ -187,83 +241,182 @@ Perceptron                                              & +1.33           & +2  
 }
 \end{table}
 
-\subsection{Weighting analysis}
+Again, SVM classifiers work best, the top one using the squared loss, like RRF. 
+However, the results for Borda are generally lower than for RRF by around 0.5\%. This is mostly due
+to poorer results for 2015 (1.83\% vs. 3.33\% for the top result).
+On the other hand, Borda works slightly better for 2014 (6.67\% vs 6.16\% for the top result).
 
-Figures \ref{interp-weight}, \ref{rrf-weight} and \ref{borda-weight} show how the improvement in P@10 behaves as the
-weight is varied between 0 and 1. A weight of 0 means only the classifier scores count and a weight of 1 means
-only the baseline BM25 counts.
+Overall, the results of the three fusion methods show that \[\textsf{Linear Combination} \gg \textsf{RRF} > \textsf{Borda}.\]
 
-The highest improvements happen in the [0.6, 0.8] interval, after which the P@10 starts to converge towards the baseline.
-We can also re-confirm that the 2014 improvements are much higher than the ones from 2015, and in some cases (e.g., Descriptions
-2014), the classifier alone is better than the baseline.
+\subsection{Relation between weight $\lambda$ and improvement}
+Let us now investigate the relation between the weight $\lambda$ and the improvement in P@10 for each of the three
+fusion methods, when using their best classifier (i.e., SVM with Precision@K loss for linear combination
+and SVM with squared loss for RRF and Borda).
+Recall from formulas \ref{interp-formula}, \ref{rrf-formula} and \ref{borda-formula} that the weight $\lambda$ is the 
+weight of the baseline BM25 score and $1-\lambda$ is the weight of the classifier score.
 
-Even though linear combination is the best on average, RRF and Borda are better for 2014. However, the weight for which they are
-best for 2014 (around 0.4) would make 2015 worse than the baseline.
+Figure \ref{lambda-vary} shows for each of the three methods
+how the improvement in P@10 behaves as the weight $\lambda$ is varied between 0 and 1 in steps of 0.01.
 
-% \begin{figure}
-% \centerline{
-%   \includegraphics[scale=0.22]{../../ranking/plots/interpolation/all/all.SVMPerf.04.0.001.hedges.png}
-%   }
+\begin{figure}[h!]
+
+\begin{subfigure}[b]{\textwidth}
+ \centerline {
+  \includegraphics[scale=0.22]{../../ranking/plots/interpolation/all/all.SVMPerf.04.0.001.hedges.png}
+  }
+%   \vspace{-0.1cm}
 %   \caption{P@10 improvements using linear combination and SVM with Precision@K loss function.}
-%   \label{interp-weight}
-% \end{figure}
-% 
-% \begin{figure}
-% \centerline{
-%   \includegraphics[scale=0.22]{../../ranking/plots/rrf/all/all.SGDClassifier.squared_loss.elasticnet.hedges.png}
-%   }
+  \label{interp-weight}
+\end{subfigure}
+%  \vspace{0.5cm}
+\begin{subfigure}[b]{\textwidth}
+\centerline{
+  \includegraphics[scale=0.22]{../../ranking/plots/rrf/all/all.SGDClassifier.squared_loss.elasticnet.hedges.png}
+  }
 %   \caption{P@10 improvements using RRF and SVM with squared loss function.}
-%   \label{rrf-weight}
-% \end{figure}
-% 
-% \begin{figure}
-% \centerline{
-%   \includegraphics[scale=0.22]{../../ranking/plots/borda/all/all.SGDClassifier.squared_loss.elasticnet.hedges.png}
-%   }
+  \label{rrf-weight}
+\end{subfigure}
+% \vspace{0.2cm}
+\begin{subfigure}[b]{\textwidth}
+\centerline{
+  \includegraphics[scale=0.22]{../../ranking/plots/borda/all/all.SGDClassifier.squared_loss.elasticnet.hedges.png}
+  }
 %   \caption{P@10 improvements using Borda fusion and SVM with squared loss function.}
-%   \label{borda-weight}
-% \end{figure}
+  \label{borda-weight}
+\end{subfigure}
+ 
+ \caption{Relation between weight $\lambda$ and improvement}
+ \label{lambda-vary}
+ 
+\end{figure}
 
-\subsubsection{Effect of the keyword counter}
-% \begin{figure}[h!]
-% \centerline{
-%   \includegraphics[scale=0.22]{../../ranking/plots/basic-vs-non-basic.png}
-%   }
-%   \caption{Effect of using the keyword counter.}
-%   \label{basic-effect-plot}
-% \end{figure}
+The first thing we see in Figure \ref{lambda-vary} is that the improvements generally happen for $\lambda \in [0.5, 0.8]$.
+As also reflected in tables \ref{interpolation-res}, \ref{rrf-res} and \ref{borda-res}, the 2014 improvements are much higher than
+the 2015 ones. 
+
+\paragraph{Observation} Intrestingly, for Descriptions 2014, using $\lambda = 0$ gives better results
+than using $\lambda=1$. This does not mean, however, that for 2014, using the classifier scores 
+works better than using the BM25 scores, but rather that
+\emph{re-sorting} the top 100 BM25 results by their classifier scores is better. 
+We still need the BM25 retrieval step to work as a ``filter'',
+since otherwise the top retrieved documents would be the ones with the highest classifier scores out of the whole document collection, 
+regardless of whether
+they have any \emph{textual} similarity to the query --- this is also discussed in Chapter \ref{meth}.
+In any case,  however, this peculiarity only happens for 2014; for 2015 the improvements happen only when $\lambda>0.5$,
+and even for 2014, the highest improvements happen also when $\lambda>0.5$.
+
+Moving forward with the analysis of Figure \ref{lambda-vary}, we see that
+the improvements for 2014 and 2015 are more correlated with each other when using linear combination than when using
+RRF or Borda. By this we mean that the two weights that give the peak average improvements for 2014 and 2015 are closer to each other
+when using linear combination (both around $0.7$) than they are when using RRF or Borda ($0.4$ vs $0.6$ for 2014 and 2015, respectively).
+This ``mismatch'' might also contribute to the lower average peak precision for RRF and Borda ($<4.8\%$) 
+vs. Linear Combination ($6\%$), despite the fact that they sometimes 
+give higher peak precisions for 2014 (e.g. peak Descriptions 2014 improvement 
+is $\sim10\%$ for Borda vs. only $\sim9\%$ for Linear combination). However, the 2015 improvements are always higher for
+Linear Combination.
+
+Looking beyond these granular differences and more at the overall picture, we can safely conclude
+that choosing any of the three unsupervised fusion methods and any weight $\lambda$ between 0.6 and 0.8 would give
+a solid improvement over the baseline.
+
+\subsection{Contribution of the Keyword Counter}
+Recall from formula \ref{clf-combine-formula} that the classifier score is actually 
+a linear combination of the machine learning classifier score (e.g., SVM) and the keyword counter score. The idea, 
+explained in Section \ref{intent-scoring}, 
+was that they keyword counter would double-check the classifier and maybe correct its predictions by
+increasing or lowering the scores depending on the frequency of certain keywords.
+
+Figure \ref{basic-effect-plot}
+confirms the fact that the keyword counter helps. The average improvement for linear combination is more than 1\% higher
+when using it than when not using it and the $\lambda$--P@10 curve is generally wider.
+
+For RRF and Borda the effect is less pronounced --- probably because they only use the ranks and not the scores ---
+but is still there nonetheless.
+
+\begin{figure}[h!]
+\centerline{
+  \includegraphics[scale=0.22]{../../ranking/plots/basic-vs-non-basic.png}
+  }
+  \caption{Contribution of using the Keyword Counter.}
+  \label{basic-effect-plot}
+\end{figure}
 
 \subsection{Improvement per query}
+We conclude our analysis of the unsupervised fusion methods by examining the improvement per query.
 
-Figures \ref{interp-query}, \ref{rrf-query}, \ref{borda-query} show the increase or decrease in P@10 for each query,
-using linear interpolation, RRF and Borda fuse, respectively. All four cases are shown (summaries and descriptions for 2014 and 2015).
+Figures \ref{interp-query}, \ref{rrf-query}, \ref{borda-query} show the change (increase or decrease) in P@10 for each query,
+using Linear Combination, RRF and Borda fusion, respectively. 
+We show the change for each of the four runs \{Summaries, Descriptions\} $\times$ \{2014, 2015\}.
 
-% \begin{figure}
-% \centerline{
-%   \includegraphics[scale=0.27]{../../ranking/plots/bar/all.SVMPerf.04.0.001.hedges.interpolation.png}
-%   }
-%   \caption{P@10 improvements per query using linear combination and SVM with Recall@K loss function.}
-%   \label{interp-query}
-% \end{figure}
+Table \ref{change-per-query-table} shows a summary of the number of queries that got better or worse after the reranking.
 
-For the linear interpolation method, 16, 18, 14 and 10 queries have increased and 3, 1, 6 and 4 have decreased
-for the four cases, respectively. For 2015, the highest overall increase was by fat for treatment queries (21 to 30).
-% 
-% \begin{figure}
-% \centerline{
-%   \includegraphics[scale=0.27]{../../ranking/plots/bar/all.SGDClassifier.squared_loss.elasticnet.hedges.rrf.png}
-%   }
-%   \caption{P@10 improvements per query using RRF and SVM with squared loss function.}
-%   \label{rrf-query}
-% \end{figure}
-% 
-% \begin{figure}
-% \centerline{
-%   \includegraphics[scale=0.27]{../../ranking/plots/bar/all.SGDClassifier.squared_loss.elasticnet.hedges.borda.png}
-%   }
-%   \caption{P@10 improvements per query using Borda fusion and SVM with Squared loss function.}
-%   \label{borda-query}
-% \end{figure}
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+% \usepackage{graphicx}
+\begin{table}[h!]
+\centering
+\caption{Number of better/worse queries.}
+\label{change-per-query-table}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lllll@{}}
+\toprule
+			& \textbf{Better 2014} & \textbf{Worse 2014} & \textbf{Better 2015} & \textbf{Worse 2015} \\ \midrule
+Linear Combination 	& 34                   & 4                   & 24                   & 10                  \\
+Reciprocal Rank Fusion  & 27                   & 3                   & 22                   & 10                  \\
+Borda fusion       	& 30                   & 9                   & 24                   & 20                  \\ \bottomrule
+\end{tabular}%
+}
+\end{table}
+
+This reinforces the idea that $\textsf{Linear Combination} \gg \textsf{RRF} > \textsf{Borda}$
+and that 2014 is easier to rerank than 2015.
+
+Looking more closely at figures \ref{interp-query}, \ref{rrf-query}, \ref{borda-query}, it is clear that
+the treatment queries (21-30) fared better than the diagnosis queries (1-10) which fared better than the test queries (11-20).
+Table \ref{change-per-query-table-lincomb} lists this distribution of query changes per intent
+type for Linear Combination.
+
+% Please add the following required packages to your document preamble:
+% \usepackage{booktabs}
+% \usepackage{graphicx}
+\begin{table}[h!]
+\centering
+\caption{Linear Combination - Number of better/worse queries per intent type.}
+\label{change-per-query-table-lincomb}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}lllll@{}}
+\toprule
+                  & \textbf{Better 2014} & \textbf{Worse 2014} & \textbf{Better 2015} & \textbf{Worse 2015} \\ \midrule
+Treatment Queries & 15                   & 0                   & 10                   & 1                   \\ 
+Diagnosis Queries & 10                   & 2                   & 8                    & 5                   \\
+Test Queries      & 9                    & 2                   & 6                    & 4                   \\\bottomrule
+\end{tabular}%
+}
+\end{table}
+
+\begin{figure}[h!]
+\centerline{
+  \includegraphics[scale=0.27]{../../ranking/plots/bar/all.SVMPerf.04.0.001.hedges.interpolation.png}
+  }
+  \caption{Linear Combination - P@10 change per query.}
+  \label{interp-query}
+\end{figure}
+
+\begin{figure}
+\centerline{
+  \includegraphics[scale=0.27]{../../ranking/plots/bar/all.SGDClassifier.squared_loss.elasticnet.hedges.rrf.png}
+  }
+  \caption{RRF - P@10 change per query.}
+  \label{rrf-query}
+\end{figure}
+
+\begin{figure}
+\centerline{
+  \includegraphics[scale=0.27]{../../ranking/plots/bar/all.SGDClassifier.squared_loss.elasticnet.hedges.borda.png}
+  }
+  \caption{Borda Fusion - P@10 change per query.}
+  \label{borda-query}
+\end{figure}
 
 
 \section{Supervised reranking}
