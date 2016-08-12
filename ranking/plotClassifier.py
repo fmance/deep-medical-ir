@@ -33,9 +33,11 @@ else:
 	EXP = ""
 	
 if opts.fusion == "interpolation":
-	FUSION_STR = "LIN. COMB."
+	FUSION_STR = "Lin Comb"
+elif opts.fusion == "rrf":
+	FUSION_STR = "RRF"
 else:
-	FUSION_STR = opts.fusion.upper()
+	FUSION_STR = "Borda"
 
 WEIGHT_RANGE = np.linspace(0.0, 1.0, 51)
 	
@@ -102,8 +104,8 @@ def plotDiffs(diffs, labels, title, texts):
 	axes.set_ylim([-4, 12])
 	
 	plt.xlabel("BM25 Weight")
-	plt.ylabel("Precision@10", rotation=0)
-	axes.yaxis.set_label_coords(0.065,1.04)
+	plt.ylabel("P@10", rotation=0)
+	axes.yaxis.set_label_coords(-0.02,1.04)
 
 	baseline, = plt.plot(WEIGHT_RANGE, [0] * len(diffs[0]), linewidth=3.0, color="black", label="Baseline", zorder=10)
 	
@@ -128,7 +130,7 @@ def plotDiffs(diffs, labels, title, texts):
 	
 	axes.get_xaxis().grid(False)
 	
-	plt.title(title, loc="left", y=1.11,x=-0.05, fontweight="bold")
+	plt.title(title + " (" + FUSION_STR + ")", loc="left", y=1.11,x=-0.07, fontweight="bold")
 
 def pickleDiffBasicNoBasic(withBasicList, noBasicList):
 	meanOvrWithBasic = np.mean(withBasicList, axis=0)
@@ -265,21 +267,21 @@ def plotSumDescAllYears(classId, sum2014, sum2015, desc2014, desc2015):
 	
 	plotDiffs([diffSum2014, diffSum2015],
 				["Summaries 2014", "Summaries 2015"],
-				"Summaries Precision@10 improvements",
+				"Summaries P@10 improvements",
 				sumTexts
 				)
 	
 	subplot(132)
 	plotDiffs([diffDesc2014, diffDesc2015],
 				["Descriptions 2014", "Descriptions 2015"],
-				"Descriptions Precision@10 improvements",
+				"Descriptions P@10 improvements",
 				descTexts
 				)
 	
 	subplot(133)
 	plotDiffs([diffMean2014, diffMean2015, diffMeanOvr],
 				["Mean 2014", "Mean 2015", "Mean 2014 & 2015"],
-				"Mean Precision@10 improvements",
+				"Mean P@10 improvements",
 				meanTexts
 				)
 

@@ -15,6 +15,7 @@ trecEval = "../eval/trec_eval.9.0/trec_eval"
 
 CLASS_ID = sys.argv[1]
 CLASSIFIER = sys.argv[2]
+FUSION_STR = " ".join(sys.argv[3:])
 
 if CLASS_ID == "all" or CLASS_ID == "regression":
 	QUERY_RANGE = range(1, 31)
@@ -130,7 +131,7 @@ def run(target):
 
 def barPlot(baselinePrecs, rerankedPrecs, title):
 	print "Plotting", title
-
+	
 	diffPerQuery = np.array([(reranked-base) for reranked,base in zip(rerankedPrecs, baselinePrecs)])
 	positiveDiffs = [diff if diff > 0 else 0 for diff in diffPerQuery]
 	negativeDiffs = [diff if diff < 0 else 0 for diff in diffPerQuery]
@@ -145,9 +146,14 @@ def barPlot(baselinePrecs, rerankedPrecs, title):
 	marker2 = lines.Line2D([], [], marker="s", markersize=25, linewidth=0, color="#99B6CF", markeredgewidth=0)
 	marker3 = lines.Line2D([], [], marker="s", markersize=25, linewidth=0, color="#CCB4B5", markeredgewidth=0)
 							
-	plt.title(title, loc="left", fontsize="large")
+	plt.title(FUSION_STR + u" \u2014 " + title , loc="left", fontsize="large", fontweight="bold", y=1.19,x=-0.0335)
 
 	ax = plt.gca()
+	
+	plt.xlabel("Query")
+	plt.ylabel("P@10", rotation=0)
+	ax.yaxis.set_label_coords(-0.008,1.07)
+	
 	ax.set_xticks(QUERY_RANGE_NP)
 	ax.set_xticklabels(QUERY_RANGE_NP)
 	
@@ -177,21 +183,21 @@ def plot():
 	baseSum2015, rrSum2015, _, _ = run("2015-sum")
 	baseDesc2015, rrDesc2015, _, _ = run("2015-desc")
 	
-	titleExt = "P@10 increase/decrease per query (mean increase: "
+	titleExt = "P@10 change per query (mean change "
 	
 	ax = plt.subplot(411)
-	barPlot(baseSum2014, rrSum2014, "Summaries 2014: " + titleExt + "%.2f%%)" % (np.mean(rrSum2014)-np.mean(baseSum2014)))
+	barPlot(baseSum2014, rrSum2014, "Summaries 2014 " + titleExt + "%+.2f)" % (np.mean(rrSum2014)-np.mean(baseSum2014)))
 
 	ax = plt.subplot(412)
-	barPlot(baseDesc2014, rrDesc2014, "Descriptions 2014: " + titleExt + "%.2f%%)" % (np.mean(rrDesc2014)-np.mean(baseDesc2014)))
+	barPlot(baseDesc2014, rrDesc2014, "Descriptions 2014 " + titleExt + "%+.2f)" % (np.mean(rrDesc2014)-np.mean(baseDesc2014)))
 	
 	ax = plt.subplot(413)
-	barPlot(baseSum2015, rrSum2015, "Summaries 2015: " + titleExt + "%.2f%%)" % (np.mean(rrSum2015)-np.mean(baseSum2015)))
+	barPlot(baseSum2015, rrSum2015, "Summaries 2015 " + titleExt + "%+.2f)" % (np.mean(rrSum2015)-np.mean(baseSum2015)))
 	
 	ax = plt.subplot(414)
-	barPlot(baseDesc2015, rrDesc2015, "Descriptions 2015: " + titleExt + "%.2f%%)" % (np.mean(rrDesc2015)-np.mean(baseDesc2015)))
+	barPlot(baseDesc2015, rrDesc2015, "Descriptions 2015 " + titleExt + "%+.2f)" % (np.mean(rrDesc2015)-np.mean(baseDesc2015)))
 
-	plt.subplots_adjust(hspace=0.3)
+	plt.subplots_adjust(hspace=0.6)
 	
 	matplotlib.rcParams.update({'font.size': 25})
 	fig = matplotlib.pyplot.gcf()
