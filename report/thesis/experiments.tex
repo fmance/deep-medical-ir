@@ -173,7 +173,7 @@ The weight $\lambda$ is set to $0.6\pm 0.02$ and $k$ is set to 60.
                                     & \textbf{Summaries 2014} & \textbf{Descriptions 2014} & \textbf{Summaries 2015} & \textbf{Descriptions 2015} & \textbf{Average} \\ \midrule
 Baseline                                   & 31.67                   & 25                         & 38.67                   & 35                         &   32.59               \\ \midrule
 
-SVM (with Squared loss)                               & +5                       & +7.33                       & +3.67                    & +\textbf{3}                          & +\textbf{4.75}             \\ 
+SVM (with Squared loss)                               & +5                       & +7.33                       & +\textbf{3.67}                    & +\textbf{3}                          & +\textbf{4.75}             \\ 
 SVM (with Rec@K loss)                                                                      & +5                       & +\textbf{7.67}                       & +{3}              & +2                          & +{4.42}    \\ 
 Passive Aggressive                                       & +\textbf{5.33}           & +5.67              & +2.33                    & +2.67                       & +4                \\ 
 SVM (with Precision@K loss)                                                                 & +3.67                    & +7                          & +3.33                    & +{1.67}              & +3.92             \\ 
@@ -246,7 +246,7 @@ However, the results for Borda are generally lower than for RRF by around 0.5\%.
 to poorer results for 2015 (1.83\% vs. 3.33\% for the top result).
 On the other hand, Borda works slightly better for 2014 (6.67\% vs 6.16\% for the top result).
 
-Overall, the results of the three fusion methods show that \[\textsf{Linear Combination} \gg \textsf{RRF} > \textsf{Borda}.\]
+Overall, the results of the three fusion methods indicate that \[\textsf{Linear Combination} \gg \textsf{RRF} > \textsf{Borda}.\]
 
 \subsection{Relation between weight $\lambda$ and improvement}
 Let us now investigate the relation between the weight $\lambda$ and the improvement in P@10 for each of the three
@@ -341,14 +341,15 @@ but is still there nonetheless.
   \label{basic-effect-plot}
 \end{figure}
 
-\subsection{Improvement per query}
-We conclude our analysis of the unsupervised fusion methods by examining the improvement per query.
+\subsection{Improvement per query and intent type}
+We conclude our analysis of the unsupervised fusion methods by examining the improvement per query and intent type.
 
 Figures \ref{interp-query}, \ref{rrf-query}, \ref{borda-query} show the change (increase or decrease) in P@10 for each query,
-using Linear Combination, RRF and Borda fusion, respectively. 
-We show the change for each of the four runs \{Summaries, Descriptions\} $\times$ \{2014, 2015\}.
+using Linear Combination, RRF and Borda fusion, respectively, using the best classifier for each method (SVM with
+Precision@K and squared losses, respectively) and for each of the four runs, \{Summaries, Descriptions\} $\times$ \{2014, 2015\}.
 
-Table \ref{change-per-query-table} shows a summary of the number of queries that got better or worse after the reranking.
+We summarize the findings in Table \ref{change-per-query-table}, which counts
+how many queries got better or worse after the reranking.
 
 % Please add the following required packages to your document preamble:
 % \usepackage{booktabs}
@@ -371,30 +372,43 @@ Borda fusion       	& 30                   & 9                   & 24           
 This reinforces the idea that $\textsf{Linear Combination} \gg \textsf{RRF} > \textsf{Borda}$
 and that 2014 is easier to rerank than 2015.
 
-Looking more closely at figures \ref{interp-query}, \ref{rrf-query}, \ref{borda-query}, it is clear that
-the treatment queries (21-30) fared better than the diagnosis queries (1-10) which fared better than the test queries (11-20).
-Table \ref{change-per-query-table-lincomb} lists this distribution of query changes per intent
-type for Linear Combination.
+Looking more closely at figures \ref{interp-query}, \ref{rrf-query}, \ref{borda-query} 
+it is clear that
+the treatment queries (21-30) fared \emph{much} better than the diagnosis queries (1-10) 
+which fared \emph{slightly} better than the test queries (11-20).
+This may be due to having only about 1000 positive samples for training the diagnosis classifier vs. 8000 positive samples
+for training the treatment classifier. Moreover, we did not have any training samples for the test classifier,
+so we had to use the diagnosis samples instead.
+
+We summarize these findings in Table \ref{change-per-query-table-lincomb},
+where we list the improvements in P@10 for each intent type using the Linear Combination method with SVM--Precision@K
+classifier.
+
+% Table \ref{change-per-query-table-lincomb} lists this distribution of query changes per intent
+% type for Linear Combination.
 
 % Please add the following required packages to your document preamble:
 % \usepackage{booktabs}
 % \usepackage{graphicx}
 \begin{table}[h!]
 \centering
-\caption{Linear Combination - Number of better/worse queries per intent type.}
+\caption{Linear Combination - Change in P@10 per intent type.}
 \label{change-per-query-table-lincomb}
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{@{}lllll@{}}
+
+\begin{tabular}{@{}llllll@{}}
 \toprule
-                  & \textbf{Better 2014} & \textbf{Worse 2014} & \textbf{Better 2015} & \textbf{Worse 2015} \\ \midrule
-Treatment Queries & 15                   & 0                   & 10                   & 1                   \\ 
-Diagnosis Queries & 10                   & 2                   & 8                    & 5                   \\
-Test Queries      & 9                    & 2                   & 6                    & 4                   \\\bottomrule
+          & \textbf{Summaries 2014} & \textbf{Descriptions 2014} & \textbf{Summaries 2015} & \textbf{Descriptions 2015} & \textbf{Average} \\\midrule
+Diagnosis & +4                      & +11                        & +2                      & +3                         & \textbf{+5}               \\
+Test      & +10                     & +4                         & +2                      & +3                         & \textbf{+4.75}            \\
+Treatment & +10                     & +12                        & +8                      & +4                         & \textbf{+8.5}             \\\midrule
+Average   & +8                      & +9                         & +4                      & +3.33                      & \textbf{+6.08}           \\\bottomrule
 \end{tabular}%
+
 }
 \end{table}
 
-\begin{figure}[h!]
+\begin{figure}
 \centerline{
   \includegraphics[scale=0.27]{../../ranking/plots/bar/all.SVMPerf.04.0.001.hedges.interpolation.png}
   }
@@ -419,18 +433,24 @@ Test Queries      & 9                    & 2                   & 6              
 \end{figure}
 
 
-\section{Supervised reranking}
+\section{Supervised Fusion Results}
+Let us now move on to the supervised learning results. As mentioned in Sections \ref{sup-fusion} and \ref{impl-sup}, we use several
+learning to rank algorithms which we train on the queries from one year and test on the queries from another year.
 
-We now present the results of the supervised reranking strategies. We use several learning to rank algorithms, we present the ones that have the best results.
-As described earlier, when reranking the 2014 queries, we use the 2015 ones as training set and vice versa.
+The features that we use are the baseline BM25 similarity scores and the classifier scores, computed by the SVM 
+classifier with Precision@K loss function --- the best one according to the unsupervised linear combination method.
+
+Since the learning to rank algorithms have several parameters, we performed a search for the ones that give the best
+results (for example we varied the number of iterations or the number of trees from 5 to 500 in steps of 10).
+The best parameters found are listed in Table \ref{l2r-params}.
 
 % Please add the following required packages to your document preamble:
 % \usepackage{booktabs}
 % \usepackage{graphicx}
 \begin{table}[h!]
 \centering
-\caption{Parameters}
-\label{my-label}
+\caption{Learning to Rank Parameters}
+\label{l2r-params}
 \resizebox{\textwidth}{!}{%
 \begin{tabular}{@{}l|l@{}}
 \toprule
@@ -446,13 +466,25 @@ Linear Regression & Regularization parameter: $10^{-10}$      				\\\bottomrule
 }
 \end{table}
 
-Here are the overall results:
+Table \ref{l2r-res} lists the final results, with the first and second lines 
+specifying the training and test sets used. For example, for test queries \emph{Summaries 2014},
+either the \emph{Summaries 2015} or the \emph{Descriptions 2015} training sets can be used. 
+We list the results for both training sets as two columns.
+
+The \emph{Best Average} column shows the \emph{best} average of the four test query runs.
+That is, for each run, we use the training set (either \emph{Summaries} or \emph{Descriptions}) that gives the highest
+improvement. For example, the best average for \emph{Linear Regression} uses the \emph{Summaries 2015} training set for the
+\emph{Summaries 2014} and \emph{Descriptions 2014} test set, 
+the \emph{Summaries 2014} training set for the \emph{Summaries 2015} test set, and 
+the \emph{Descriptions 2014} training set for the \emph{Descriptions 2015} test set.
+
+For convenience, we \textit{italicize} the results contributing to the Best Average column.
 
 % Please add the following required packages to your document preamble:
 % \usepackage{booktabs}
 % \usepackage{graphicx}
 \begin{table}[h!]
-\caption{Learning to Rank results.}
+\caption{Supervised fusion (learning to rank) results.}
 \label{l2r-res}
 \resizebox{1.2\textwidth}{!}{%
 \begin{tabular}{@{}l|ll|ll|ll|ll|l@{}}
@@ -462,80 +494,252 @@ Training Queries  & Summ. 2015 & Desc. 2015 & Summ. 2015   & Desc. 2015  & Summ.
 Test Queries      & \multicolumn{2}{c|}{Summaries 2014} & \multicolumn{2}{c|}{Descriptions 2014} & \multicolumn{2}{c|}{Summaries 2015} & \multicolumn{2}{c|}{Descriptions 2015} & Best Average \\ \midrule
 Baseline          & \multicolumn{2}{c|}{31.67}          & \multicolumn{2}{c|}{25}              & \multicolumn{2}{c|}{38.67}     & \multicolumn{2}{c|}{35}     &32.59         \\ \midrule
 
-Linear Regression & \textbf{+7}       & +6.67             & \textbf{+8.33}   & +7.67              & +2.67       & +1.67    	& +1          & \textbf{+2.33}    & +\textbf{5.08}  \\
-AdaRank           & +6.33             & +3.33             & +8               & +6.67              & \textbf{+3} & +1.67         & +1.33       & \textbf{+2.33}    & +4.91  \\
-RankNet           & +6.33             & +7.33             & +6               & +6                 & -3.67       & +1.67         & -2.33       & +1.67             & +4.16  \\
-Coordinate Ascent & +6.33             & +6                & +8               & +5.33              & -3.67       & +1            & -3          & -0.3              & +3.75  \\
-Lambda MART	  & +4		      & +2.33		  & +4		     & +6		  & -7.33	& -1.33		& -5.33	      & -0.3		  & +2.34  \\		
-MART	 	  & +5.67	      & +2		  & +6.33	     & +2.33		  & -4.33	& -4		& -6.77	      & -5		  & +0.75 \\			
-RankBoost	  & +4.67	      & +3		  & +4		     & +5		  & -5.67	& -3		& -7	      & -4.67		  & +0.67 \\
-% Random Forests    & +5.33             & -1.67             & +5.33            & +3.67              & -5          & -1.67         & -5.33       & -2.33             & 1.67  \\
-
+Linear Regression & \textit{\textbf{+7}} & +6.67             & \textit{\textbf{+8.33}}   & +7.67              	& \textit{+2.67}       	& +1.67    		& +1          & \textit{\textbf{+2.33}}   & +\textbf{5.08}  \\
+AdaRank           & \textit{+6.33}       & +3.33             & \textit{+8}               & +6.67              	& \textit{\textbf{+3}}	& +1.67         	& +1.33       & \textit{\textbf{+2.33}}   & +4.92  \\
+RankNet           & +6.33             	 & \textit{+6.67}    & \textit{+6}               & +6                 	& -3.67       		& \textit{+1.67}        & -2.33       & \textit{+1.67}            & +4  \\
+Coordinate Ascent & \textit{+6.33}       & +6                & \textit{+8}               & +5.33              	& -3.67      		& \textit{+1}           & -3          & \textit{-0.3}             & +3.75  \\
+Lambda MART	  & \textit{+4}		 & +2.33	     & +4		         & \textit{+6}	   	& -7.33			& \textit{-1.33}	& -5.33	      & \textit{-0.3}		  & +2.09  \\		
+MART	 	  & \textit{+5.67}	 & +2		     & \textit{+6.33}	         & +2.33		& -4.33			& \textit{-4}		& -6.77	      & \textit{-5}		  & +0.75 \\			
+RankBoost	  & \textit{+3.67}	 & +3		     & +4		         & \textit{+5}		& -5.67			& \textit{-3}		& -7	      & \textit{-4.67}		  & +0.25 \\
+% % Random Forests    & +5.33             & -1.67             & +5.33            & +3.67              & -5          & -1.67         & -5.33       & -2.33             & 1.67  \\
 
 \bottomrule
 \end{tabular}%
 }
 \end{table}
 
+Let us now analyze the results. We can definitely say that Linear Regression and AdaRank (around \%5 improvement)
+outperform the other five methods. Linear Regression is the best for 2014 overall (+7.67\%) and 
+AdaRank is the best for 2015 overall (+2.67\%).
+
+The next two methods, RankNet and Coordinate Ascent, give similarly good
+improvements for 2014 (+6.33\% and +7.17\% respectively), but their performance is somewhat lower
+for 2015 (only +1.67\% and +0.7\% respectively).
+
+The bottom three methods, Lambda MART, MART and RankBoost, do not even give an improvement for 2015, being worse
+than the baselines by around 0.8\%, 4.5\% and 3.8\%, respectively. However, their 2014 improvements are enough to compensate
+for this, so they all have positive overall improvemenets.
+
+One potential reason for the lower performance of these methods might be the fact that they generate high
+numbers of unjudged documents in top 10. Even though some of these documents \emph{might} be relevant,
+they are by default considered irrelevant.
+Figure \ref{unjudged-fig} shows for each learning to rank algorithm
+the correlation between the average P@10 improvments and the average 
+percentage of unjudged documents in Top 10. The top four methods
+have substantially lower percentages of unjudged documents (below 8.25\%) than the bottom
+three methods (above 11.25\%), which \emph{might} explain \emph{some} of the decreased precision. 
+Of course, we cannot
+be sure if this is indeed the cause, or if these methods are simply less suited for the task at hand.
+
+\begin{figure}[h!]
+\centerline{
+  \includegraphics[scale=0.3]{../../ranking/plots/unjudged.png}
+  }
+  \caption{P@10 improvements vs. unjudged documents in Top 10.}
+  \label{unjudged-fig}
+\end{figure}
+
+Let us now decide which training sets were better.
+Looking at Table \ref{l2r-res}, we see that for both Summaries 2014 and Descriptions 2015, the best
+training set was \emph{generally} Summaries 2015. 
+For Summaries 2015, the best training set 
+was Summaries 2014 for the top two methods and Descriptions 2014 for the other five,
+while for Descriptions 2015, the best training set was \emph{always} Descriptions 2014.
+For the top two methods, therefore, summaries made better training sets than descriptions in all
+four cases except Descriptions 2015.
+
+Let us conclude the analysis of the supervised fusion results with a look at the P@10 improvement per query
+and intent type
+for the best method --- Linear Regression. Figure \ref{regression-query} and Table 
+\ref{change-per-query-table-regression} show the change in P@10
+per query and per intent type, respectively, for each of the four runs.
+
+We can see that, similar to the unsupervised fusion methods,
+Treatment queries fared better than Diagnosis and Test queries, especially for Summaries 2014 and 2015.
+In addition, 2014 seems much easier to improve than 2015, especially the Diagnosis and Test queries.
+As discussed for the unsupervised methods, this may be due to the much lower number of training
+documents for Diagnosis and Test (1000 positive samples) vs Treatment (8000 positive samples).
 
 \begin{table}[h!]
-\caption{Learning to Rank Percentage of unjudged documents in Top 10.}
-\label{l2r-res}
-\resizebox{1.2\textwidth}{!}{%
-\begin{tabular}{@{}l|ll|ll|ll|ll|l@{}}
+\centering
+\caption{Linear Regression - Change in P@10 per intent type.}
+\label{change-per-query-table-regression}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{@{}llllll@{}}
 \toprule
-Training Queries  & Summ. 2015 & Desc. 2015 & Summ. 2015   & Desc. 2015  & Summ. 2014 & Desc. 2014 & Summ. 2014   & Desc. 2014  \\ \midrule
-
-Test Queries      & \multicolumn{2}{c|}{Summaries 2014} & \multicolumn{2}{c|}{Descriptions 2014} & \multicolumn{2}{c|}{Summaries 2015} & \multicolumn{2}{c|}{Descriptions 2015} & Best Average \\ \midrule
-
-Linear Regression & 4              & 5                 & 10               & 12                 & 4              & 1                 & 8                & 7        & 6.25          \\
-AdaRank           & 4              & 4                 & 12               & 10                 & 1              & 1                 & 9                & 7        & 6         \\
-RankNet           & 9              & 8                 & 17               & 17                 & 9              & 1                 & 11               & 7        & 8.25         \\
-Coordinate Ascent & 4              & 7                 & 12               & 16                 & 9              & 5                 & 12               & 8        & 7.25         \\
-Lambda MART       & 11             & 9                 & 17               & 19                 & 11             & 4                 & 16               & 11       & 11.25         \\
-MART              & 9              & 1                 & 15               & 19                 & 9              & 8                 & 14               & 15       & 11.75       \\
-RankBoost         & 11             & 12                & 19               & 20                 & 11             & 8                 & 16               & 13       & 13       \\
+          & \textbf{Summaries 2014} & \textbf{Descriptions 2014} & \textbf{Summaries 2015} & \textbf{Descriptions 2015} & \textbf{Average} \\ \midrule
+Diagnosis & +5                      & +11                        & +1                      & +1                         & \textbf{+4.5}             \\
+Test      & +7                      & +3                         & 0                       & +3                         & \textbf{+3.25}            \\
+Treatment & +9                      & +11                        & +7                      & +3                         & \textbf{+7.5}             \\ \midrule
+Average   & +7		 	    & +8.33			 & +2.67		   & +2.33			& \textbf{+5.08}	 \\			
 
 \bottomrule
 \end{tabular}%
 }
 \end{table}
 
-% 
-% \begin{figure}[h!]
-% \centerline{
-%   \includegraphics[scale=0.3]{../../ranking/plots/unjudged.png}
-%   }
-%   \caption{Unjudged docs.}
-%   \label{unjudged-fig}
-% \end{figure}
-% 
-% \begin{figure}
-% \centerline{
-%   \includegraphics[scale=0.27]{../../ranking/plots/bar/regression.regression.png}
-%   }
-%   \caption{P@10 improvements per query using linear regression for reranking.}
-%   \label{regression-query}
-% \end{figure}
+\begin{figure}[h!]
+\centerline{
+  \includegraphics[scale=0.27]{../../ranking/plots/bar/regression.regression.png}
+  }
+  \caption{Linear Regression - P@10 change per query.}
+  \label{regression-query}
+\end{figure}
 
-\subsection{Comparison with prev. paper}
+\section{Overall comparison between fusion methods}
+Let us now finally do an overall comparison between the best fusion methods: 
+the three unsupervised ones (Linear Combination, RRF and Borda)
+and the top three supervised ones (Linear Regression, AdaRank and RankNet).
+Since for Linear Combination both SVM classifiers with Precision@K and Recall@K
+losses give improvements of at least $6\%$, we list both of them in the comparison
+(Table \ref{fusion-comp}).
+
+\begin{table}[h!]
+\centering
+\caption{Comparison between best fusion methods.}
+\label{fusion-comp}
+\resizebox{\textwidth}{!}{%
+
+\begin{tabular}{@{}llllll@{}}
+\toprule
+  & \textbf{Summaries 2014} & \textbf{Descriptions 2014} & \textbf{Summaries 2015} & \textbf{Descriptions 2015} & \textbf{Average} 	\\\midrule
+Baseline                 	& 31.67     	& 25  		& 38.67          	& 35        	&   32.59      		\\ \midrule
+Lin Comb - Prec@K		& +8          	& +9     	& \textbf{+4}		& \textbf{+3.33}& \textbf{+6.08}    	\\ 
+Lin Comb - Rec@K		& \textbf{+8.33}& \textbf{+10}	& +3			& +2.67		& \textbf{+6}		\\
+Lin Regression			& +7		& +8.33		& +2.67		   	& +2.33		& \textbf{+5.08}	 \\			
+AdaRank				& +6.33		& +8		& +3		   	& +2.33		& \textbf{+4.92}	 \\			
+RRF                             & +5         	& +7.33    	& +3.67            	& +3  		& \textbf{+4.75}        \\ 
+Borda				& +4.67  	& +8.67     	& +2.33           	& +1.33    	& +\textbf{4.25} 	\\
+RankNet				& +6.67		& +6		& +1.67			& +1.67		& \textbf{+4}		\\
+\bottomrule
+\end{tabular}
+}
+\end{table}
+
+The best method overall is therefore Linear Combination using an SVM classifier. For 2014, the best loss function
+is Recall@K, while for 2015 the best loss function is Precision@K.
+
+Compared to the unsupervised fusion methods, both Linear Regression and AdaRank sit somewhere in between
+Linear Combination (+6\%) and RRF (+4.75\%). Of course, one advantage of the learning to rank algorithms
+is that we do not need to manually search for the best weight $\lambda$ between the two features, 
+since it is automatically determined
+from the training data. 
+We do need, however, to search for the best hyper-parameters, such as number of iterations, regularization
+parameters and so on. Thus, there are tradeoffs for each approach (supervised vs. unsupervised), 
+but nevertheless they each give solid average improvements of at least 4-5\% over the baseline.
+
+% \begin{table}[h!]
+% \caption{Learning to Rank Percentage of unjudged documents in Top 10.}
+% \label{l2r-res}
+% \resizebox{1.2\textwidth}{!}{%
+% \begin{tabular}{@{}l|ll|ll|ll|ll|l@{}}
+% \toprule
+% Training Queries  & Summ. 2015 & Desc. 2015 & Summ. 2015   & Desc. 2015  & Summ. 2014 & Desc. 2014 & Summ. 2014   & Desc. 2014  \\ \midrule
+% 
+% Test Queries      & \multicolumn{2}{c|}{Summaries 2014} & \multicolumn{2}{c|}{Descriptions 2014} & \multicolumn{2}{c|}{Summaries 2015} & \multicolumn{2}{c|}{Descriptions 2015} & Best Average \\ \midrule
+% 
+% Linear Regression & 4              & 5                 & 10               & 12                 & 4              & 1                 & 8                & 7        & 6.25          \\
+% AdaRank           & 4              & 4                 & 12               & 10                 & 1              & 1                 & 9                & 7        & 6         \\
+% RankNet           & 9              & 8                 & 17               & 17                 & 9              & 1                 & 11               & 7        & 8.25         \\
+% Coordinate Ascent & 4              & 7                 & 12               & 16                 & 9              & 5                 & 12               & 8        & 7.25         \\
+% Lambda MART       & 11             & 9                 & 17               & 19                 & 11             & 4                 & 16               & 11       & 11.25         \\
+% MART              & 9              & 1                 & 15               & 19                 & 9              & 8                 & 14               & 15       & 11.75       \\
+% RankBoost         & 11             & 12                & 19               & 20                 & 11             & 8                 & 16               & 13       & 13       \\
+% 
+% \bottomrule
+% \end{tabular}%
+% }
+% \end{table}
+
+\section{Comparison with previous research}
+We conclude this section by doing a comparison with previous research in the TREC CDS area. 
+As discussed in Section \ref{related}, the best previous reseach using the query intent type for reranking
+was done by \cite{choi}. However, they did not write a paper for 2015, which means we can only compare the 2014 results.
+
+Recall that \cite{choi} uses a similar idea like us, namely fusing baseline scores and
+classifier scores. They also use the Clinical Hedges Database for training and SVM for classification.
+However their SVM uses ROC-area loss and their fusion uses Borda with a weight $\lambda=0.5$.
+Similar to us, they also use the diagnosis samples for the test classifier.
+The runs that they re-rank are the \emph{ExternalQE} runs, where 
+they also use externally-tagged knowledge-based query expansion in addition to the baseline similarity score
+(runs \emph{Baseline}).
+
+Let us now list the runs that we will compare:
+\begin{itemize}
+ \item from \cite{choi}, runs \emph{SNUMedinfo1} and \emph{SNUMedinfo4} for Summaries 2014 and Descriptions 2014, respectively.
+  In these runs --- like in our system --- all queries are reranked;
+ \item from \cite{choi}, runs \emph{SNUMedinfo3} and \emph{SNUMedinfo6} where the Diagnosis queries are \emph{not} re-ranked;
+ \item our results using the approach from \cite{choi} --- Borda Fusion, SVM classifier with ROC-Area loss and $\lambda=0.5$;
+ \item our results using the best unsupervised fusion --- Linear Combination, SVM classifier with Recall@K loss and $\lambda=0.7$;
+ \item our results using the best supervised fusion --- Linear Regression trained on Summaries from 2015.
+\end{itemize}
+
+Table \ref{choi-comp} summarizes the results of the comparison.
+Before delving into the discussion, let us mention that since we and \cite{choi} have different baselines, 
+we cannot do a real, unequivocal comparison. Different baselines means different potentials for improvement, and
+not even having the same P@10 is enough, as exemplified by the difference in improvements for Summaries
+2014 vs. Descriptions 2014 for \cite{choi} (both baselines are 32\%, but the improvements are different).
+We nevertheless do the comparison in order to see if we can recommend other approaches that \emph{seems}
+to perform better than the ones in \cite{choi}.
+
 % Please add the following required packages to your document preamble:
 % \usepackage{booktabs}
 % \usepackage{graphicx}
 \begin{table}[h!]
 \centering
-\caption{Comparison with prev. paper}
-\label{my-label}
+\caption{Comparison with previous research --- 2014}
+\label{choi-comp}
 \resizebox{\textwidth}{!}{%
-\begin{tabular}{@{}llll@{}}
+\begin{tabular}{@{}lll@{}}
 \toprule
-                  & \textbf{Results prev. paper results} & \textbf{Prev. paper method, our results} & \textbf{Our best method} \\\midrule
-Summaries 2014    & 33.67\tablefootnote{Without re-ranking diagnosis queries, results is 34.67} (32 + 1.67)                   & 36.33 (31.67 +4.67)                      & 40 (31.67 +8.33)         \\
-Descriptions 2014 & 33.00\tablefootnote{Without re-ranking diagnosis queries, results is 36.33} (32 + 1)                      & 32.00 (25 + 7)                           & 35 (25+10)              \\
-\bottomrule
+                          & \textbf{Summaries 2014} & \textbf{Descriptions 2014} \\\midrule
+Baseline from \cite{choi}     			& 32     			& 32                         \\\midrule
+Improvements from \cite{choi} 
+- diagnosis reranked  				& +1.67  			& +1                          \\
+Improvements from \cite{choi}
+- diagnosis not reranked 			& +2.67   			& +4.67                       \\\midrule
+%                           &                         &                            \\
+Our baseline             			& 31.67                   	& 25                         \\\midrule
+Our improvements - method from \cite{choi} 	& +4.67                    	& +7                          \\
+Our improvements - best unsupervised fusion 	& +8.33                    	& +10                         \\
+Our improvements - best supervised fusion     	& +7                       	& +8.33                      \\\bottomrule
 \end{tabular}%
 }
 \end{table}
+
+First, let us observe that the our and \cite{choi}'s Summaries baselines have almost equal P@10 (32\% and 31.67\%),
+but the Descriptions baselines are very different (ours is 25\% and \cite{choi}'s is 32\%).
+This might be due to the fact that they also did externally-tagged knowledge-based query expansion
+and possibly different data pre-processing for the
+run that we consider as baseline.
+
+Second, for \cite{choi}, re-ranking the Diagnosis queries is worse than \emph{not} re-ranking them, which means that
+their system did not work well for the Diagnosis queries and made them worse.
+Our system, however, improves all three types of queries 
+(see Tables \ref{change-per-query-table-lincomb} and \ref{change-per-query-table-regression}),
+even though the Diagnosis and Test improvements are indeed lower than the Treatment ones.
+
+Third, the absolute improvements are higher when using our methods. 
+While the maximum improvement
+in \cite{choi} is +2.67\% for Summaries and +4.67\% for Descriptions (both in the runs not reranking Diagnosis queries), 
+our improvements are consistently
+higher than that --- at least +7\% for Summaries and at least +8.33\% for Descriptions. 
+
+As a result, our best P@10s for Summaries are 40\% and 38.67\%
+(unsupervised and supervised, respectively) compared to the best Summaries from \cite{choi}, namely 34.67\%.
+
+For Descriptions, it is more difficult to compare, since our baseline has a much lower P@10. 
+Still, our reranked P@10s for Descriptions are 35\% and 33.33\% (unsupervised and supervised, respectively)
+which is better than \cite{choi}'s P@10 of 33\% when reranking all three categories. 
+Our Descriptions P@10s are, however, slightly worse
+than \cite{choi}'s P@10 of 36.67\% when reranking only the Test and Treatment queries, but keep in mind that
+we started with a baseline 7\% worse than theirs --- the absolute improvements themselves are much higher, +10\% and +8.33\%
+vs +4.67\%.
+
+To sum up all of the above, we can safely recommend our best supervised and unsupervised fusion methods
+(Linear Regression and Linear Combination) as well the next-best ones (RRF and AdaRank)
+as solid alternatives to previous approaches from the TREC Clinical Decision Support.
+
 
 
 

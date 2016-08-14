@@ -145,7 +145,7 @@ score of every document in the top 100 of the baseline of that query with its ty
 and re-sort the resulting scores in decreasing order.
 We then decide, based on experiments, which weights yield the highest improvement for each fusion method.
 
-\subsubsection{Supervised fusion}
+\subsubsection{Supervised fusion}\label{impl-sup}
 For the supervised fusion, we need to set aside a subset of the queries as training data, and test on the remaining ones.
 Since we have queries from two years, we can use the queries from 2014 as training data and the queries from
 the 2015 as test data, and vice-versa.
