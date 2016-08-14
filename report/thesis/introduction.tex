@@ -1,44 +1,108 @@
 \chapter{Introduction}
-The purpose of TREC's Clinical Decision Support track is to help physicians with their clinical information needs. The track concentrates
-on answering questions based on medical case reports from patients, containing their medical history, current symptoms, any test results and other
-patient information.
-Given the medical record, the physician can ask for three generic clinical questions: 
-\begin{enumerate}[label=\arabic*)]
- \item what is the patient's diagnosis?
- \item what test should be performed?
- \item how to treat the patient?
-\end{enumerate}
+The purpose of Clinical Decision Support is to help physicians with their clinical information and decision-making needs.
+This being a very active area of research, the Text Retrieval Conference (TREC)
+introduced in 2014 the \emph{Clinical Decision Support} (CDS) track,
+whose goal is to simulate real-world case scenarios and to gather world-wide, state-of-the-art, research in the area.
 
-The systems should answer clinical queries by retrieving documents that are relevant to both the medical case report
-containted in the query, as well as the query intent type (for example, if the physician is interested in 
+The TREC CDS track focuses on situations where physicians have the \emph{case report} of a patient 
+--- containing their medical history, current symptoms, test results and any other relevant information --- 
+and need assistance with either one of these three generic
+\emph{clinical questions}: 
+\begin{itemize}[noitemsep,nolistsep]
+ \item what is the patient's diagnosis ?
+ \item what test should be performed ?
+ \item how should the patient be treated ?\end{itemize}
 
-Recall that our idea is to make use of both the medical case report as well as the query intent type, and retrieve documents
-that are relevant to both the medical case 
+The purpose of the track is to build an \emph{information retrieval} (IR) system that
+retrieves \emph{medical articles} relevant to both the medical
+case report as well as to the generic clinical question the physician is interested in.
 
-This type of medical ir featured in the cds track at TREC 2014 and 2015.
-However, most participants did not dive/delve too deeply into the matter of using the intent types, mostly used the query text only.
-Tried other approaches like QE, PRF, etc did not really make use of
-the query intent type.
-The few participants that did either tried naive approaches, adding synomnyms or if they looked into the classifiers, they only used one particular setting.
-Probably due to lack of data, 2014, no prior queries and 2015 only 30 queries, never tried supervised, learning 2 rank methods.
-This is discussed in more detail the related work more deeply in the next section.
+In more formal, IR, terms, we are asked to retrieve \emph{documents} for \emph{queries} that have two components:
+\begin{itemize}[noitemsep, nolistsep]
+ \item a \emph{textual} component --- the medical case report;
+ \item an \emph{intent type} component --- one of the three clinical questions above.
+\end{itemize}
 
-This paper, we pick up on the idea of using classifiers + fusion, but now we have more data, and relevance judgements. 
-this enables us to explore a much wider array of approaches than previous teams.
-Various classifiers (svm, logreg, nn)
-various fusion methods (unsupervised, supervised - l2r)
-Can also choose supervised ones, using one year as training data. Somtething that couldn't have been done earlier.
-The fact that we have relevance judgements for 60 queries already enables us to more confidently evaluate all approaches.
+Both query components are taken into account when evaluating document \emph{relevance}.
+The \emph{challenge} is, therefore, not only retrieving medical articles for queries written in a highly-specialized and technical
+vocabulary, but also taking into account the \emph{intent} of the queries. 
+In other words, it 
+is not enough to only use the medical case report (query text)
+for retrieval, as the documents might not conform the generic clinical question (query type).
 
-We design and implement a framework to combine these classifiers and fusion methods and also analyze their performance in detail.
 
-The goal is to see how well each of these differnt methods work on the trec 2014/15 use case, and try to
-give a recommendation on what direction would pay off to pursue in this area.
-We asses the pros and cons of each approach
-We discuss and examine in detail the effect of the approaches. such as improvements per query, movements etc.
+However, most participants from the 2014 and 2015 editions of TREC CDS did not focus their efforts on using the intent types for retrieval,
+and used only the query text instead. Most of their efforts were concentrated on making the query more meaningful by using techniques
+such as query expansion, pseudo-relevance feedback, expansion using medical terms from UMLS, MeSH or MetaMap and tweaking
+the scoring function of their IR systems.
 
-After tryin a multitude of combinations, we are confident we can make a recommendation.
-Improved 2014 by 8-9 percent and 2015 by 3-4\%. Can make a recommendation on which config is the best.
+A few participants did, nevertheless, try to incorporate the intent type in the retrieval process. Most of them
+tried to expand the query using terms and synonyms of the intent types (i.e., diagnosis, test, treatment and their synonyms).
+The best systems, however, used a machine-learning \emph{classifier} to categorize the retrieved documents according
+to the three intent types and, together with the textual similarity score, use it to improve the overall retrieval performance.
+The approach proved successful in some cases, leading to improvements compared to only using the textual similarity.
+
+However, the full potential of the approach has not yet been explored enough,
+since most participants have only ``scratched the surface'', that is, they only tried a single configuration of
+the classifier and the fusion method, without delving any deeper into the realm of other possibilities.
+
+In this paper, we pick up on the idea of incorporating the intent type relevance into the retrieval system,
+but we explore a \emph{much wider array of strategies and algorithms} than in previous research. Specifically,
+we use several varieties of machine-learning classifiers, ranging from classical ones, like Support Vector Machines or
+Logistic Regression, to more modern, deep-learning ones, like Convolutional Neural Networks or Multilayer Perceptrons.
+For the fusion of textual and intent type similarities,
+we examine both unsupervised fusion methods, such as Weighted Linear Combination, Reciprocal Rank Fusion and Borda Fusion,
+as well as supervised methods based
+on Learning-to-Rank algorithms such as AdaRank, RankNet, Regression, Lambda MART and RankBoost.
+
+Our goal is to design and implement a framework that allows us
+to explore this idea as much as possible, try out all of the methods above, 
+analyze their performance in detail,
+determine which ones work best and compare them with existing research.
+For each approach, we want to analyze its advantages, disadvantages and trade-offs,
+and, in the end, be confident enough to be to make a recommendation on what we think is the best one.
+
+The most significant advantage that we have compared to previous participants in the TREC CDS editions is 
+that we have \emph{more data}. Previous participants from 2014 had no prior data, while the ones from 2015
+only had the 2014 data. This limitation hampered their ability to properly train and evaluate their models, since they
+had too little data to make a definitive judgement. 
+
+We, however, have both the 2014 and 2015 data, which means that
+we have more queries and more relevance judgements.
+Even so, we still do not have as many as we would like in order to be able to give an unequivocal answer.
+For example, we will find during the results' analysis
+that some parameters that work very well for 2014 are bad for 2015 and vice-versa. Having two
+years to evaluate our models allows us to choose configurations that work better \emph{on average}, but we
+may still be a certain way off the optimal configuration.
+
+Having data from two years also allows us to use one year for training and another one for testing.
+This enables us to use supervised learning-to-rank algorithms,
+something that none of the previous participants could have tried.
+
+The main contribution of our work is, therefore, studying a very broad range of methods of incorporating
+the intent type information into the retrival process, 
+facilitated by us having more data than previous research to confidently evaluate the resulting models.
+
+We evaluate our systems on both the 2014 and the 2015 queries; we use textual similarity
+as a \emph{baseline} and then look at how much each of our approaches can potentially \emph{improve} upon this baseline.
+We investigate what the best parameters are, how each method behaves for the three
+intent types and what the improvements for each query are.
+
+After investigating all of these approaches and performing an in-depth analysis of their results,
+we are confident that we can make a recommendation.
+Our best approaches improve the 2014 baseline by at least 8\%, yielding a score better than all the other systems from TREC 2014,
+and the 2015 baseline by 3-4\%, yielding a score better than all the other systems from TREC 2015 that tried to incorporate the intent
+type into the retrieval process.
+
+Let us now briefly discuss the overall structure of the paper. In Section \ref{related} we go over the previous work
+in the CDS domain, with a strong focus on the papers from the TREC CDS track. 
+In Section \ref{meth} we give the formal definition of our retrieval system, discussing how we classify documents
+and how we incorporate the intent type scores. 
+In Section \ref{impl} we present the practical realization of the retrieval system, including any external libraries
+and frameworks that we use.
+In Section \ref{exp} we apply our system to the TREC 2014 and 2015 data, and evaluate each of our models.
+We conclude by doing a comparison between our best methods and previous research.
+
 
 
 

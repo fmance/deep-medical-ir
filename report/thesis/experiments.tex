@@ -1,4 +1,4 @@
-\chapter{Experimental Results}
+\chapter{Experimental Results}\label{exp}
 
 Let us now present the experimental results of applying our system formally defined in Chapter \ref{meth} and implemented in Chapter 
 \ref{impl}
@@ -520,16 +520,16 @@ The bottom three methods, Lambda MART, MART and RankBoost, do not even give an i
 than the baselines by around 0.8\%, 4.5\% and 3.8\%, respectively. However, their 2014 improvements are enough to compensate
 for this, so they all have positive overall improvemenets.
 
-One potential reason for the lower performance of these methods might be the fact that they generate high
-numbers of unjudged documents in top 10. Even though some of these documents \emph{might} be relevant,
+One potential reason for the lower performance of the latter three methods might be the fact that they generate high
+numbers of unjudged documents in the top 10. Even though some of these documents \emph{might} be relevant,
 they are by default considered irrelevant.
 Figure \ref{unjudged-fig} shows for each learning to rank algorithm
-the correlation between the average P@10 improvments and the average 
+the relation between the average P@10 improvments and the average 
 percentage of unjudged documents in Top 10. The top four methods
 have substantially lower percentages of unjudged documents (below 8.25\%) than the bottom
-three methods (above 11.25\%), which \emph{might} explain \emph{some} of the decreased precision. 
+three methods (above 11.25\%), which \emph{might} explain \emph{some} of performance degradation.
 Of course, we cannot
-be sure if this is indeed the cause, or if these methods are simply less suited for the task at hand.
+be sure if this is indeed the cause, or if simply these methods are less suited for the task at hand.
 
 \begin{figure}[h!]
 \centerline{
@@ -556,9 +556,9 @@ per query and per intent type, respectively, for each of the four runs.
 
 We can see that, similar to the unsupervised fusion methods,
 Treatment queries fared better than Diagnosis and Test queries, especially for Summaries 2014 and 2015.
-In addition, 2014 seems much easier to improve than 2015, especially the Diagnosis and Test queries.
-As discussed for the unsupervised methods, this may be due to the much lower number of training
+As discussed for the unsupervised fusion methods, this may be due to the much lower number of training
 documents for Diagnosis and Test (1000 positive samples) vs Treatment (8000 positive samples).
+In addition, 2014 seems much easier to improve than 2015, especially the Diagnosis and Test queries.
 
 \begin{table}[h!]
 \centering
@@ -730,15 +730,16 @@ As a result, our best P@10s for Summaries are 40\% and 38.67\%
 
 For Descriptions, it is more difficult to compare, since our baseline has a much lower P@10. 
 Still, our reranked P@10s for Descriptions are 35\% and 33.33\% (unsupervised and supervised, respectively)
-which is better than \cite{choi}'s P@10 of 33\% when reranking all three categories. 
+ --- better than \cite{choi}'s P@10 of 33\% when reranking all three categories. 
 Our Descriptions P@10s are, however, slightly worse
 than \cite{choi}'s P@10 of 36.67\% when reranking only the Test and Treatment queries, but keep in mind that
-we started with a baseline 7\% worse than theirs --- the absolute improvements themselves are much higher, +10\% and +8.33\%
-vs +4.67\%.
+1) we started with a baseline 7\% worse than theirs --- the absolute improvements themselves being much higher, +10\% and +8.33\%
+vs +4.67\%, and 2) we have 13\% percent unjudged documents in the top 10 using Linear Combination,
+some of which \emph{may} potentially be relevant.
 
-To sum up all of the above, we can safely recommend our best supervised and unsupervised fusion methods
-(Linear Regression and Linear Combination) as well the next-best ones (RRF and AdaRank)
-as solid alternatives to previous approaches from the TREC Clinical Decision Support.
+To sum up all of the above, we can safely recommend our best supervised and unsupervised methods
+(Linear Regression and Linear Combination) as well as the next-best ones (AdaRank and RRF)
+as solid alternatives to previous approaches to the TREC Clinical Decision Support track.
 
 
 
