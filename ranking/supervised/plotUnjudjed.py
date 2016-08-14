@@ -3,7 +3,7 @@ import matplotlib
 
 labels = ["Linear\nRegression", "AdaRank", "RankNet", "Coord\nAscent", "LambdaMART", "MART", "RankBoost"]
 X=[0.5 + x for x in range(0,len(labels))]
-perf = [5.08, 4.91, 4.16, 3.75, 2.34, 0.75, 0.67]
+perf = [5.08, 4.92, 4.00, 3.75, 2.09, 0.75, 0.25]
 unjudged = [6.25, 6, 8.25, 7.25, 11.25, 11.75, 13]
 
 plt.style.use("ggplot")
