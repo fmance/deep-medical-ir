@@ -2,14 +2,14 @@
 
 In this chapter we discuss the implementation of the system formally defined in the previous section. We first
 introduce the data we are working on, then move on to implementing the similarity and type classifier scoring functions,
-and finish by implementing the various usupervised and supervised fusion methods.
+and finish by implementing the various unsupervised and supervised fusion methods.
 
 \section{Data}
 For our use case, we use the data from the TREC 2014 and 2015 Clinical Decision support track \cite{trec}, which provides:
 \begin{itemize}
  \item the list of queries;
  \item the document collection;
- \item relevance judgements (\emph{qrels}) for several query-document pairs.
+ \item relevance judgments (\emph{qrels}) for several query-document pairs.
 \end{itemize}
 
 \subsection{Queries}
@@ -47,9 +47,9 @@ We are provided with around 733,100 medical articles from the Open Access subset
 and contain the title, abstract (if any) and the full text. However, some documents (around 50,000) do not include the full text
 as NXML but as a scanned PDF image. For these documents, we use the Open Access FTP Service \cite{oa-ftp} to fetch the plaintext contents.
 
-\subsection{Relevance judgements}\label{qrels}
-We have relevance judgements for around 38,000 query-document pairs for 2014 and 2015 each, with around 10\% of them
-being positive (relevant). The relevance judgements were assigned by medical experts after each edition of TREC CDS.
+\subsection{Relevance judgments}\label{qrels}
+We have relevance judgments for around 38,000 query-document pairs for 2014 and 2015 each, with around 10\% of them
+being positive (relevant). The relevance judgments were assigned by medical experts after each edition of TREC CDS.
 
 Since not all $733100\times 60$ query-document pairs could possibly be evaluated, it frequently happens that our system retrieves documents
 that are not judged, and by default considered non-relevant. This \emph{may} negatively impact the performance evaluation of
@@ -150,10 +150,10 @@ For the supervised fusion, we need to set aside a subset of the queries as train
 Since we have queries from two years, we can use the queries from 2014 as training data and the queries from
 the 2015 as test data, and vice-versa.
 
-The training data itself consists of (query, document, relevance, features) tuples. Since the relevance judgements are only available
+The training data itself consists of (query, document, relevance, features) tuples. Since the relevance judgments are only available
 for the query-document pairs in the \emph{qrels}, we can only use those for training. As features, we use the 
 similarity scores and the type classifier scores, as discussed in \ref{sup-fusion}. To sum up, for each
-query-document pair in the \emph{qrels}, we compute the two scores and together with the relevance judgement, we add them
+query-document pair in the \emph{qrels}, we compute the two scores and together with the relevance judgment, we add them
 to the training set.
 
 For the test data, we take each query-document pair in the baseline results, compute the two feature scores and add them

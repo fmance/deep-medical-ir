@@ -28,15 +28,15 @@ To evaluate the quality of our rankings, we use the precision at 10 (P@10) metri
 relevant results from the top 10 retrieved results. For example, if 4 documents of the top 10 retrieved results are relevant,
 then P@10 is equal to 40\%. The P@10 is then averaged over all queries in a run.
 
-As discussed in Section \ref{qrels}, the ground truths --- relevance judgements --- are provided by medical experts
+As discussed in Section \ref{qrels}, the ground truths --- relevance judgments --- are provided by medical experts
 and stored in the (\emph{qrels}) files.
 
 \section{Classifier Parameters}
 Table \ref{params} lists the 17 classifiers we use and their configurations. 
 We empirically determine
 the 
-parameters by varying them in a cerain range (for example, the regularization parameters
-in the $[10^{-4},\cdots,10^4]$ in steps of powers of 10) and choosing the ones
+parameters by varying them in a certain range (for example, the regularization parameters
+in the $[10^{-4},\cdots,10^4]$ range, in steps of powers of 10) and choosing the ones
 that give the
 best P@10 improvement averaged over all four categories.
 
@@ -45,7 +45,7 @@ For the Multilayer Perceptron classifier, we achieved the best results by using 
 
 For the Convolutional Neural Networks classifier, we achieved the best results by
 using 100 convolution filters of size 3, 4 and 5, respectively and 50 nodes in last hidden layer; the word-embedding size is 100
-(we ranged the number of filters from 50 to 150 and the number of nodes in the last hidden layer from 0, i.e., no hidden layer, to 75).
+(we varied the number of filters from 50 to 150 and the number of nodes in the last hidden layer from 0, i.e., no hidden layer, to 75).
 
 The weight $\alpha$ of the Keyword Counter score to the overall classifier score (formula \ref{clf-combine-formula}) is set to 0.4 and
 the \textsf{cutoff} is set to 4.
@@ -294,7 +294,7 @@ The first thing we see in Figure \ref{lambda-vary} is that the improvements gene
 As also reflected in tables \ref{interpolation-res}, \ref{rrf-res} and \ref{borda-res}, the 2014 improvements are much higher than
 the 2015 ones. 
 
-\paragraph{Observation} Intrestingly, for Descriptions 2014, using $\lambda = 0$ gives better results
+\paragraph{Observation} Interestingly, for Descriptions 2014, using $\lambda = 0$ gives better results
 than using $\lambda=1$. This does not mean, however, that for 2014, using the classifier scores 
 works better than using the BM25 scores, but rather that
 \emph{re-sorting} the top 100 BM25 results by their classifier scores is better. 
@@ -323,7 +323,7 @@ a solid improvement over the baseline.
 Recall from formula \ref{clf-combine-formula} that the classifier score is actually 
 a linear combination of the machine learning classifier score (e.g., SVM) and the keyword counter score. The idea, 
 explained in Section \ref{intent-scoring}, 
-was that they keyword counter would double-check the classifier and maybe correct its predictions by
+was that the keyword counter would double-check the classifier and maybe correct its predictions by
 increasing or lowering the scores depending on the frequency of certain keywords.
 
 Figure \ref{basic-effect-plot}
@@ -457,7 +457,7 @@ The best parameters found are listed in Table \ref{l2r-params}.
 Algorithm         & \textbf{Parameters}                                                             \\\midrule
 RankNet           & 40 iterations, 1 hidden layer, 10 nodes/layer                                   \\
 RankBoost         & 40 iterations                                                                   \\
-AdaRank           & 10 iterations, max number of times a feauture can be consecutively selected: 2  \\
+AdaRank           & 10 iterations, max number of times a feature can be consecutively selected: 2  \\
 Coordinate Ascent      & 20 iterations, Regularization parameter: $10^{-3}$                  \\
 MART              & 100 trees, 10 leaves                                                            \\
 Lambda MART       & 60 trees, 10 leaves                                                             \\
@@ -508,7 +508,7 @@ RankBoost	  & \textit{+3.67}	 & +3		     & +4		         & \textit{+5}		& -5.67		
 }
 \end{table}
 
-Let us now analyze the results. We can definitely say that Linear Regression and AdaRank (around \%5 improvement)
+Let us now analyze the results. We can definitely say that Linear Regression and AdaRank (around 5\% improvement)
 outperform the other five methods. Linear Regression is the best for 2014 overall (+7.67\%) and 
 AdaRank is the best for 2015 overall (+2.67\%).
 
@@ -518,16 +518,16 @@ for 2015 (only +1.67\% and +0.7\% respectively).
 
 The bottom three methods, Lambda MART, MART and RankBoost, do not even give an improvement for 2015, being worse
 than the baselines by around 0.8\%, 4.5\% and 3.8\%, respectively. However, their 2014 improvements are enough to compensate
-for this, so they all have positive overall improvemenets.
+for this, so they all have positive overall improvements.
 
 One potential reason for the lower performance of the latter three methods might be the fact that they generate high
 numbers of unjudged documents in the top 10. Even though some of these documents \emph{might} be relevant,
 they are by default considered irrelevant.
 Figure \ref{unjudged-fig} shows for each learning to rank algorithm
-the relation between the average P@10 improvments and the average 
+the relation between the average P@10 improvements and the average 
 percentage of unjudged documents in Top 10. The top four methods
 have substantially lower percentages of unjudged documents (below 8.25\%) than the bottom
-three methods (above 11.25\%), which \emph{might} explain \emph{some} of performance degradation.
+three methods (above 11.25\%), which \emph{might} explain \emph{some} of the performance degradation.
 Of course, we cannot
 be sure if this is indeed the cause, or if simply these methods are less suited for the task at hand.
 
@@ -625,7 +625,7 @@ is that we do not need to manually search for the best weight $\lambda$ between 
 since it is automatically determined
 from the training data. 
 We do need, however, to search for the best hyper-parameters, such as number of iterations, regularization
-parameters and so on. Thus, there are tradeoffs for each approach (supervised vs. unsupervised), 
+parameters and so on. Thus, there are trade-offs for each approach (supervised vs. unsupervised), 
 but nevertheless they each give solid average improvements of at least 4-5\% over the baseline.
 
 % \begin{table}[h!]
@@ -653,7 +653,7 @@ but nevertheless they each give solid average improvements of at least 4-5\% ove
 
 \section{Comparison with previous research}
 We conclude this section by doing a comparison with previous research in the TREC CDS area. 
-As discussed in Section \ref{related}, the best previous reseach using the query intent type for reranking
+As discussed in Section \ref{related}, the best previous research using the query intent type for reranking
 was done by \cite{choi}. However, they did not write a paper for 2015, which means we can only compare the 2014 results.
 
 Recall that \cite{choi} uses a similar idea like us, namely fusing baseline scores and
@@ -679,7 +679,7 @@ Before delving into the discussion, let us mention that since we and \cite{choi}
 we cannot do a real, unequivocal comparison. Different baselines means different potentials for improvement, and
 not even having the same P@10 is enough, as exemplified by the difference in improvements for Summaries
 2014 vs. Descriptions 2014 for \cite{choi} (both baselines are 32\%, but the improvements are different).
-We nevertheless do the comparison in order to see if we can recommend other approaches that \emph{seems}
+We nevertheless do the comparison in order to see if we can recommend other approaches that \emph{seem}
 to perform better than the ones in \cite{choi}.
 
 % Please add the following required packages to your document preamble:

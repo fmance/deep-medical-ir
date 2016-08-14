@@ -97,7 +97,7 @@ where $\alpha\in (0,1)$.
 The purpose of the keyword counter is to ``double-check'' the classifier predictions and potentially correct its mistakes.
 This would be the case, for instance,
 if a document with many diagnosis-related words is misclassified as a non-diagnosis document,
-or, vice-versa, if a document with no diagnosis-related words is misclassied as a diagnosis document.
+or, vice-versa, if a document with no diagnosis-related words is misclassified as a diagnosis document.
 In these cases, the keyword counter would either increase or decrease the overall score, moving it closer to the truth.
 
 
@@ -179,7 +179,7 @@ Let us now briefly list the various supervised fusion methods that we use:
 These algorithms are called \textbf{Learning to Rank} algorithms --
 they take as input a list of features for each query-document pair $(Q,D)$ in the training set
 and learn how to rank documents based on the
-relevance judgements of those pairs. At test time, they apply the learned model to rerank other query-document pairs.
+relevance judgments of those pairs. At test time, they apply the learned model to rerank other query-document pairs.
 
 In our case, we use the $\textsf{SimilarityScore}(Q_{\text{text}},D)$ and $\textsf{TypeClassifierScore}(Q_{\text{type}}, D)$ 
 as features for each $(Q,D)$-pair.
