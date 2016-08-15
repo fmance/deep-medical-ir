@@ -4,8 +4,8 @@ This being a very active area of research, the Text Retrieval Conference (TREC)
 introduced in 2014 the \emph{Clinical Decision Support} (CDS) track,
 whose goal is to simulate real-world case scenarios and to gather world-wide, state-of-the-art, research in the area.
 
-The TREC CDS track focuses on situations where physicians have the \emph{case report} of a patient 
---- containing their medical history, current symptoms, test results and any other relevant information --- 
+The TREC CDS track focuses on situations where the physicians have the \emph{case report} of a patient 
+--- containing their medical history, current symptoms, test results and any other medical information --- 
 and need assistance with either one of these three generic
 \emph{clinical questions}: 
 \begin{itemize}[noitemsep,nolistsep]
@@ -24,35 +24,45 @@ In more formal, IR, terms, we are asked to retrieve \emph{documents} for \emph{q
 \end{itemize}
 
 Both query components are taken into account when evaluating document \emph{relevance}.
+This means that it is not enough to only use the medical case report
+for retrieval, since the document might not answer the generic clinical question posed by the physician.
 The \emph{challenge} is, therefore, not only retrieving medical articles for queries written in a highly-specialized and technical
-vocabulary, but also taking into account their \emph{intent}.
-In other words, it 
-is not enough to only use the medical case report (query text)
-for retrieval, since the document might not answer the generic clinical question (query type) posed by the physician.
+vocabulary, but also finding ways of incorporating the \emph{intent type} information into the process.
 
-
-However, most participants from the 2014 and 2015 editions of TREC CDS did not focus their efforts on using the intent types for retrieval,
-and used only the query text instead. Most of their efforts were concentrated on making the query more meaningful by using techniques
-such as query expansion, pseudo-relevance feedback, expansion using medical terms from UMLS, MeSH or MetaMap and tweaking
+Yet, most participants from the 2014 and 2015 editions of TREC CDS ignored the intent types,
+and only used the query text for retrieval. 
+Most of their efforts revolved around making the query more meaningful, with techniques
+such as query expansion, pseudo-relevance feedback, expansion using medical terms from the UMLS, MeSH or MetaMap databases and tweaking
 the scoring function of their IR systems.
 
-A few participants did, nevertheless, try to incorporate the intent type in the retrieval process. Most of them
-tried to expand the query using terms and synonyms of the intent types (i.e., diagnosis, test, treatment and their synonyms).
-The best systems, however, used a machine-learning \emph{classifier} to categorize the retrieved documents according
-to the three intent types and, together with the textual similarity score, use it to improve the overall retrieval performance.
+A few participants did, nonetheless, incorporate the intent type information into the retrieval process. Most of them
+ expanded the query using synonyms of words such as diagnosis, test and treatment, depending on the query type.
+
+A more elaborate idea was using a machine-learning \emph{classifier} to categorize the retrieved documents according
+to the three intent types and \emph{fuse} the classification scores
+with the textual similarity scores in order to improve the overall retrieval performance.
 The approach proved successful in some cases, leading to improvements compared to only using the textual similarity.
 
-However, the full potential of the approach has not yet been explored in depth,
-since most participants have only ``scratched the surface'', that is, they only tried a single configuration of
-the classifier and the fusion method, without delving any deeper into the realm of other possibilities.
+However, TREC generally limits the number of submissions per team, which, in turn, restricts
+the number of configurations that participants can choose for their systems. 
+Indeed, as it turned out to be the case for systems using this approach,
+they only tried one type of classifier (e.g., Support Vector Machines)
+and one type of fusion method (e.g., Borda).
 
-In this paper, we pick up on the idea of incorporating the intent type relevance into the retrieval system,
-but we explore a \emph{much wider array of strategies and algorithms} than in previous research. Specifically,
-we use several varieties of machine-learning classifiers, ranging from classical ones, like Support Vector Machines,
+This means that even though the idea of using classification and fusion 
+in retrieving medical articles for Clinical Decision Support looks promising, 
+the amount of research carried out so far has been rather fragmentary and limited.
+
+The goal of this paper is, therefore, to
+explore this idea in a much more extensive and systematic way, both in breadth --- by experimenting
+with a wider range of machine-learning classifiers and fusion methods,
+and in depth --- by performing a more comprehensive analysis of the resulting models.
+
+In order to do this, we use a variety of classifiers, ranging from classical ones, like Support Vector Machines,
 Logistic Regression, Ridge, Passive Aggressive, Naive Bayes, Perceptron,
 to more modern, deep-learning ones, like Convolutional Neural Networks and Multilayer Perceptrons.
 For the fusion of textual and intent type similarities,
-we examine both unsupervised fusion methods, such as Weighted Linear Combination, Reciprocal Rank Fusion and Borda Fusion,
+we experiment with both unsupervised fusion methods, such as Weighted Linear Combination, Reciprocal Rank Fusion and Borda Fusion,
 as well as supervised methods based
 on Learning-to-Rank algorithms such as AdaRank, RankNet, Regression, Coordinate Ascent, MART, Lambda MART and RankBoost.
 
@@ -60,8 +70,8 @@ Our goal is to design and implement a framework that allows us
 to explore this idea as much as possible, try out all of the methods above, 
 analyze their performance in detail,
 determine which ones work best and compare them with existing research.
-For each approach, we want to analyze its advantages, disadvantages, trade-offs,
-and, in the end, be confident enough to be to make a recommendation on what we think is the best one.
+We want to analyze each approach in depth, determine its advantages, disadvantages, trade-offs,
+and, in the end, be confident enough to make a recommendation on what we think is the best one.
 
 The most significant advantage that we have compared to previous participants in the TREC CDS editions is 
 that we have \emph{more data}. Previous participants from 2014 had no prior data, while the ones from 2015
@@ -74,15 +84,16 @@ Even so, we still do not have as many as we would like in order to be able to gi
 For example, we will find during the results' analysis
 that some parameters that work very well for 2014 are bad for 2015 and vice-versa. Having two
 years to evaluate our models allows us to choose configurations that work better \emph{on average}, but we
-may still be a certain way off the optimal configuration.
+may still be a certain way off from the optimal configuration.
 
-Having data from two years also allows us to use one year for training and another one for testing.
-This enables us to use supervised learning-to-rank algorithms,
+Having data from two years also
+enables us to use supervised learning-to-rank algorithms,
+since we can use one of the years for training and the other year for testing,
 something that none of the previous participants could have tried.
 
 The main contribution of our work is, therefore, investigating a very broad range of methods of incorporating
 the intent type information into the retrieval process, 
-facilitated by more data enabling us to evaluate the resulting models better and more confidently.
+facilitated by us having more data that enables us to evaluate the resulting models better and more confidently.
 
 We evaluate our systems on both the 2014 and the 2015 queries; we use textual similarity
 as a \emph{baseline} and then look at how much each of our approaches can potentially \emph{improve} upon this baseline.
@@ -91,17 +102,19 @@ intent types and what the improvements for each query are.
 
 After implementing all of these approaches and performing an in-depth analysis of their results,
 we are confident that we can make a recommendation.
-Our best approaches improve the 2014 baseline by up to 10\%, yielding a score better than all the other systems from TREC 2014,
-and the 2015 baseline by up to 4\%, yielding a score better than all the other systems from TREC 2015 that tried to incorporate the intent
+Our best approaches improve the 2014 baseline Precision@10 by up to 10\%, yielding an overall 
+score better than all of the other systems from TREC 2014,
+and the 2015 baseline by up to 4\%, yielding a score better than all of the other systems from TREC 2015 that tried to incorporate the intent
 type into the retrieval process.
 
-Let us now briefly discuss the overall structure of the paper. In Section \ref{related} we go over the previous work
-from the CDS area, with a strong focus on the papers from the TREC CDS track. 
-In Section \ref{meth} we give the formal definition of our retrieval system, discussing all the ways in which we classify documents
+The next chapters tell the story of how we build our system and evaluate our results. 
+We begin by researching the previous work from the CDS area in Chapter \ref{related},
+with a strong focus on the papers from the TREC CDS track. 
+In Chapter \ref{meth} we give the formal definition of our retrieval system, discussing all the ways in which we classify documents
 and incorporate the intent type scores. 
-In Section \ref{impl} we present the practical realization of our retrieval system, including any external libraries
+In Chapter \ref{impl} we present the practical realization of our retrieval system, including any external libraries
 and frameworks that we use.
-In Section \ref{exp} we apply our system to the TREC 2014 and 2015 data, and evaluate each of our models.
+In Chapter \ref{exp} we apply our system to the TREC 2014 and 2015 data, and evaluate each of our models.
 We conclude by making a comparison between our best methods and previous research.
 
 
