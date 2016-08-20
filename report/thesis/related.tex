@@ -1,19 +1,19 @@
 \chapter{Related Work} \label{related}
 
-Medical information retrieval is a highly active area of research that has extensively improved over time. 
+Medical information retrieval is a highly active area of research that has extensively improved over time.
 In this paper, we mainly focus on the Clinical Decision Support (CDS) area, which aims to help
 physicians with their clinical information needs.
 
 In the previous chapter, we defined our goal to be
 an information retrieval system addressing a specific type of medical query,
 containing both a textual component (the patient record), as well as an intent component
-(the generic clinical question the physician is interested in 
+(the generic clinical question the physician is interested in
 --- what the diagnosis is, what tests should be performed, how the patient should be treated).
 
 Since this type of medical questions was featured prominently in the TREC CDS tracks from 2014 and 2015,
 we focus our attention on the work carried out by the participants in these tracks, as well as in
  their associated research.
- 
+
 We mentioned in the introductory chapter that, even though the retrieved documents should be
 relevant to both the queries' text as well as to their intent types, the majority of participants
 did not actually take the latter into account, focusing instead on adapting existing
@@ -22,12 +22,12 @@ popular approaches that were investigated, although very briefly, since we want 
 tried to incorporate the intent types into the retrieval process.
 
 Most participants used existing IR systems such as
-Lucene \cite{ucla, goodwin2014utd, jiang2016clinical, oh2014kisti, novasearch, CSEIITV, wei2014atigeo}, 
+Lucene \cite{ucla, goodwin2014utd, jiang2016clinical, oh2014kisti, novasearch, CSEIITV, wei2014atigeo},
 Terrier \cite{dinh2014crp, snomeddawit, bitem, waterloo, song2015ecnu, mutrec, sankhavara2014fusing, cuhk},
 Indri \cite{ir.cs.sfsu, choi, duth, wei2014atigeo, wsuir},
 Solr \cite{waterloo},
 or Elasticsearch \cite{lamda2015},
-together with a variety of ranking models, such as 
+together with a variety of ranking models, such as
 BM25 \cite{dinh2014crp, snomeddawit, bitem, goodwin2014utd, novasearch, song2015ecnu},
 TFIDF \cite{dinh2014crp, ucla, novasearch},
 unigram language models \cite{ir.cs.sfsu, choi, ucla, oh2014kisti, novasearch},
@@ -39,9 +39,9 @@ To improve retrieval performance, several techniques such as
 query expansion \cite{mutrec, sankhavara2014fusing, cuhk, CSEIITV, ucla, udel, duth, ir.cs.sfsu, goodwin2014utd, oh2014kisti},
 concept extraction \cite{ir.cs.sfsu, ucla, bitem, goodwin2014utd, oh2014kisti}
 and pseudo-relevance feedback \cite{novasearch, waterloo, mutrec, oh2014kisti, choi, dinh2014crp}
-were also used with varying degrees of success. 
+were also used with varying degrees of success.
 Some participants tried expanding the queries with medical concepts
-from the UMLS, MeSH or MetaMap databases \cite{lamda2015, ucla, udel, bitem, novasearch}, 
+from the UMLS, MeSH or MetaMap databases \cite{lamda2015, ucla, udel, bitem, novasearch},
 or used negation detection to differentiate the negated terms in the query
 \cite{wing2014query, wei2014atigeo, ucla, oh2014kisti}.
 Others searched only certain sections of the documents, such as the abstracts, in order to make the search more focused
@@ -54,9 +54,9 @@ such as BB2 and PL2 \cite{song2015ecnu}.
 Let us now turn our attention to the systems that tried to use the query intent types to improve retrieval performance.
 Most of them used the intent types either for query expansion or for document classification.
 
-\section{Using the intent types for query expansion}
+\section{Using Intent Types for Query Expansion}
 
-The most popular approach was using the intent types for query expansion. 
+The most popular approach was using the intent types for query expansion.
 For example, Wan et al.\ \cite{cuhk} used WordNet to expand the query with noun synonyms
 of \emph{diagnosis}, \emph{test} and \emph{treatment} such as \emph{designation} and \emph{identification}.
 % to the query, but unfortunately this approach proved detrimental, as their Precision@10
@@ -68,19 +68,19 @@ for each of the three query types.
 
 Garcia-Gathright et al.\ \cite{ucla} also expanded the query with synonyms of the intent types, such as \emph{test}, \emph{evaluate},
 \emph{diagnose}, \emph{examination}, as well as with UMLS semantic types such as \emph{Diagnostic Procedure}
-or \emph{Laboratory Procedure}. 
+or \emph{Laboratory Procedure}.
 % Their highest P@10 was around 25\%, although we cannot know what the contribution
 % of the query expansion is, since they do not provide a baseline without it.
 
 UMLS semantic types were also used by Wang et al.\ \cite{udel} who expanded the query
 with types such as \emph{is\_finding\_of\_disease}, \emph{treated\_by} or
 \emph{may\_be\_prevented\_by} together with terms extracted from the Cases Database to weigh certain keywords
-based on the query intent type. 
-% This improved their P@10 from 28.67\% to 31.67\%. 
+based on the query intent type.
+% This improved their P@10 from 28.67\% to 31.67\%.
 
-A similar approach was taken by Gobeill et al.\ \cite{bitem}, who boosted documents based on the 
+A similar approach was taken by Gobeill et al.\ \cite{bitem}, who boosted documents based on the
 frequencies of certain MeSH
-concepts associated with the query intent type (such as \emph{MeSHtargetDiagnosis}). 
+concepts associated with the query intent type (such as \emph{MeSHtargetDiagnosis}).
 % This improved their P@10 from 18.67\% to 20.33\%.
 
 Drosatos et al.\ \cite{duth} added synonyms from the UMLS Metathesaurus for each intent type, for example
@@ -96,41 +96,41 @@ A similar approach was taken by Mourao et al.\ \cite{novasearch}, who selected M
 terms for each of the three intent types and assigned a weight to each
 document based on how many of these terms it contained.
 % This proved to be detrimental, as their P@10 decreased from 39\% to 36.67\%.
-% 
+%
 % We have now examined the previous research that used keywords related to the query intent types for improving
 % retrieval. As we have seen, the approach met with varying degrees of success, depending on the actual
 % strategy that was used. When not carefully designed, it backfired, such as in \cite{novasearch}, \cite{cuhk},
 % \cite{CSEIITV}, \cite{ir.cs.sfsu}  or \cite{duth}. However, it was also successful for \cite{bitem} and \cite{udel}.
 
-\section{Using the intent types for document classification}
+\section{Using Intent Types for Document Classification}
 Let us now explore the strategies that used machine-learning classifiers to
 incorporate intent types into the retrieval process.
 
 Soldaini et al.\ \cite{soldani} used a supervised SVM classifier trained on four hundred medical articles
-labeled by medical experts into the three intent types. The retrieved documents were classified 
+labeled by medical experts into the three intent types. The retrieved documents were classified
 and grouped into clusters using the affinity propagation algorithm and ranked in the order of their relevance
-to the query intent type. 
+to the query intent type.
 % Unfortunately, this run had the lowest P@10, 18\%, out of their five submissions.
 
 D’hondt et al.\ \cite{limsi2015} trained a classifier on ten thousand documents from PubMed Central
 for each query intent type. They used the Winnow algorithm from the Linguistic Classification System
 for classification and the weighted Borda Fusion method for combining the original retrieval scores
-with the classifier scores, the latter receiving a weight of 0.2. 
+with the classifier scores, the latter receiving a weight of 0.2.
 % Their best run had a P@10 of 37.67\%,
 % but it is unclear how much the classifier itself helped, since they do not provide a baseline without it.
 
 A similar approach was taken by Choi et al.\ \cite{choi},
-who trained their classifier on the Clinical Hedges Database (CHD) \cite{chd}. 
-The database contains approximately 50,000 documents categorized 
-intro eight classes, including diagnosis and treatment. 
+who trained their classifier on the Clinical Hedges Database (CHD) \cite{chd}.
+The database contains approximately 50,000 documents categorized
+intro eight classes, including diagnosis and treatment.
 It does not contain, however, any documents for the test type, so Choi et al.\ used the diagnosis documents instead,
 since the two intent types are relatively similar.
-They used Support Vector Machines with ROC-Area loss for classification, 
-and Borda Fusion for combining the baseline retrieval 
+They used Support Vector Machines with ROC-Area loss for classification,
+and Borda Fusion for combining the baseline retrieval
 scores with the classifier scores, as in their previous related research \cite{choi-prev}.
 % Their P@10 improvements range from 32\% to 33.67\% when using
 % the short form of the queries (the summaries) and from 32\% to 33\% when using the long form of the queries
-% (the descriptions). 
+% (the descriptions).
 % However, they have better results when \emph{not} reranking the diagnosis queries: 34.67\% and 36.33\%,
 % which means that their diagnosis classifier did not work as expected and worsened the original, baseline, rankings.
 
@@ -140,7 +140,7 @@ You et al.\ \cite{FDUMedSearch} also used the CHD for trainnig a classifier, but
 % neither do they provide a baseline without the classifier, meaning that we cannot determine its contribution.
 
 \section{Conclusions}
-Now that we have studied the previous research in 
+Now that we have studied the previous research in
 using intent types for Clinical Decision Support, we can draw two main conclusions:
 \begin{enumerate}
  \item the classification and fusion approach yielded some promising results;
@@ -151,7 +151,7 @@ using intent types for Clinical Decision Support, we can draw two main conclusio
 In the introductory chapter, we stated that our over-arching goal was to
 explore this idea in a more extensive and systematic way by investigating
 many more classifiers and fusion methods than the previous participants did, and in the end,
-be able to make a better recommendation based on our comprehensive and extensive study. 
+be able to make a better recommendation based on our comprehensive and extensive study.
 
 In order to do this, let us proceed to the first step --- formally defining our system.
 

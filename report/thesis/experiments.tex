@@ -486,10 +486,10 @@ For convenience, we \textit{italicize} the results contributing to the Best Aver
 \begin{table}[h!]
 \caption{Supervised fusion (learning to rank) results.}
 \label{l2r-res}
-\resizebox{1.2\textwidth}{!}{%
+\resizebox{1\textwidth}{!}{%
 \begin{tabular}{@{}l|ll|ll|ll|ll|l@{}}
 \toprule
-Training Queries  & Summ. 2015 & Desc. 2015 & Summ. 2015   & Desc. 2015  & Summ. 2014 & Desc. 2014 & Summ. 2014   & Desc. 2014  \\ \midrule
+Training Queries  & S 2015 & D 2015 & S 2015   & D 2015  & S 2014 & D 2014 & S 2014   & D 2014  \\ \midrule
 
 Test Queries      & \multicolumn{2}{c|}{Summaries 2014} & \multicolumn{2}{c|}{Descriptions 2014} & \multicolumn{2}{c|}{Summaries 2015} & \multicolumn{2}{c|}{Descriptions 2015} & Best Average \\ \midrule
 Baseline          & \multicolumn{2}{c|}{31.67}          & \multicolumn{2}{c|}{25}              & \multicolumn{2}{c|}{38.67}     & \multicolumn{2}{c|}{35}     &32.59         \\ \midrule
@@ -740,6 +740,25 @@ some of which \emph{may} potentially be relevant.
 To sum up all of the above, we can safely recommend our best supervised and unsupervised methods
 (Linear Regression and Linear Combination) as well as the next-best ones (AdaRank and RRF)
 as solid alternatives to previous approaches to the TREC Clinical Decision Support track.
+
+\section{Random clf}
+32.78 (31.58 25.59 38.91 35.05)
++0.19 (-0.09 +0.59 +0.24 +0.05)
+
+% \begin{verbatim}
+%  >>> y=[1,0,0,1,0,0,1,0,0,1]
+% >>> stats.ttest_rel(x,y)
+% Ttest_relResult(statistic=-2.4494897427831783, pvalue=0.036787497879786128)
+% >>> y=[1,0,0,1,0,0,3,0,0,1]
+% >>> stats.ttest_rel(x,y)
+% Ttest_relResult(statistic=-1.9639610121239315, pvalue=0.081126188845840497)
+% >>> y=[1,0,0,1,0,0,5,0,0,1]
+% >>> stats.ttest_rel(x,y)
+% Ttest_relResult(statistic=-1.6329931618554521, pvalue=0.13690412558075216)
+% 
+% \end{verbatim}
+
+
 
 
 
