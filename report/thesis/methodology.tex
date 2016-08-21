@@ -38,7 +38,8 @@ Our scoring function is therefore a \emph{fusion} of two other scoring functions
 \centerline{
   \includegraphics[scale=0.25]{diagram.png}
   }
-  \caption{Components of the scoring function.}
+  \caption{The three main components of the scoring function:
+  \emph{relevance}, intent type \emph{classification} and score \emph{fusion}.}
   \label{diagram}
 \end{figure}
 
@@ -125,8 +126,7 @@ ones, like neural networks. Let us give a short overview:
 % In this paper,
 we use multiple loss functions, such as hinge loss,
 squared hinge loss, $\epsilon$-insensitive loss, squared loss, zero/one loss and error-rate loss.
-We also use SVM classifiers developed in \cite{svmperf3}, \cite{svmperf1} and
-\cite{svmperf2}, which use multivariate,
+We also use SVM classifiers developed in \cite{svmperf3, svmperf1, svmperf2}, which use multivariate,
 nonlinear loss functions such as $F_1$ loss, Precision@K loss, Recall@K loss and ROC-Area loss;
 \item \textbf{Ridge} \cite{scikit} --- similar to SVM with squared loss;
 \item \textbf{Logistic regression} \cite{scikit} --- similar to SVM with the logistic function loss;
@@ -139,13 +139,13 @@ nonlinear loss functions such as $F_1$ loss, Precision@K loss, Recall@K loss and
 hidden layer before the last (fully connected) layer and using fixed, \texttt{word2vec}-learned word embeddings \cite{w2v}.
 \end{itemize}
 
-\section{Fusion of Relevance and Intent Type Scores}
+\section{Fusion of Relevance and Intent Type Scores}\label{fusion-theory}
 Now that we computed the relevance scores and the intent type scores, we need to fuse them to produce the final score.
 We employ two main methods of fusion: unsupervised and supervised.
 
 \subsection{Unsupervised Fusion}\label{unsup-fusion-theory}
 Let $Q$ be a query and let $\textsf{Top}_Q$ be the top $N$ documents retrieved by the \textsf{Relevance}
-scoring function (Formula \ref{bm25-formula}) for query $Q$.
+scoring function for query $Q$ (Formula \ref{bm25-formula}).
 
 Let
 \[R_Q = [\textsf{Relevance}(Q_{\text{text}}, D) \,|\, D\in \textsf{Top}_Q]\]
@@ -156,9 +156,9 @@ be the lists of \textsf{Relevance} and
 for the $\textsf{Top}_Q$ documents, respectively.
 
 Both $R_Q$ and $C_Q$ are sorted in descending order and normalized
-(of course, before normalizing the \textsf{TypeClassifier} scores, we first normalize its
+(before normalizing the \textsf{TypeClassifier} scores, the
 two components from Formula \ref{clf-combine-formula} --- the
-$\textsf{MLClassifier}$ and the \textsf{KeywordCounter} scores).
+$\textsf{MLClassifier}$ and the \textsf{KeywordCounter} scores --- are normalized).
 
 Now, for a document $D\in L$, let $s_R$ and $s_C$ be its \textsf{Relevance} and \textsf{TypeClassifier}
 scores from $R_Q$ and $C_Q$, respectively,
@@ -202,9 +202,10 @@ Let us now briefly list the various supervised fusion methods that we use:
 \end{itemize}
 
 These algorithms are called \textbf{Learning-to-Rank} algorithms --
-they take as input a list of features for each query-document pair $(Q,D)$ in the training set
-and learn how to rank documents based on the
-relevance judgments of those pairs. At test time, they apply the learned model to rerank other query-document pairs.
+they take as input a list of features for each query-document pair $(Q,D)$ in the training
+set and learn how to rank documents based on the
+relevance judgments of those pairs.\footnote{We discuss in Chapter \ref{impl} where the training set and relevance judgments come from.}
+At test time, they apply the learned model to rerank other query-document pairs.
 
 In our case, we use the $\textsf{Relevance}(Q_{\text{text}},D)$ and $\textsf{TypeClassifier}(Q_{\text{type}}, D)$
 scores as features for each $(Q,D)$-pair.
@@ -221,7 +222,8 @@ Figure \ref{diagram2} shows the entire system architecture with all the main com
 \centerline{
   \includegraphics[scale=0.25]{diagram2.png}
   }
-  \caption{System architecture.}
+  \caption{System architecture, showing the strategies and algorithms that we use for each of the
+  three main components of the scoring function (relevance scoring, intent type classification, score fusion).}
   \label{diagram2}
 \end{figure}
 
