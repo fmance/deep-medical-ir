@@ -1,3 +1,39 @@
 \chapter{Conclusion}
 
-TODO
+% Let us now summarize the main contribution of the paper to the Clinical Decision Support area.
+
+In this paper, we focused on Clinical Decision Support systems addressing
+a specific type of medical query, containing both a \emph{textual} component
+(describing the patient's symptoms, clinical history, any test results)
+as well as an \emph{intent type} component (the generic clinical question the physician is interested in
+--- what the \emph{diagnosis} is, what \emph{tests} should be performed, how the patient should be \emph{treated}).
+
+To incorporate intent types into the document retrieval process, we used
+\emph{machine-learning classifiers} to categorize documents by their intent types,
+and \emph{score fusion} methods to combine the classification scores with the query text relevance scores.
+
+Our main contribution was investigating this approach in a much more comprehensive and systematic way
+than previous research.
+We examined a wide range of \emph{machine-learning classifiers}
+% (Support Vector Machines, Logistic Regression, Ridge, Passive Aggressive, Naive Bayes, Perceptrons,
+% Convolutional Neural Networks, Multilayer Perceptrons),
+as well as several supervised and unsupervised \emph{score fusion} methods.
+% : unsupervised
+% (Linear Combination, Reciprocal Rank Fusion and Borda Fusion),
+% and supervised (AdaRank, RankNet, Regression, Coordinate Ascent, MART, Lambda MART and RankBoost).
+We applied our retrieval system on the TREC CDS tracks from 2014 and 2015 and analyzed
+the performance and behavior of each of our models in detail.
+
+The results clearly show that using intent types leads to consistent improvements in retrieval performance
+compared to only using textual relevance.
+The best results were obtained using SVM with Precison@K loss for classification,
+and Linear Combination for score fusion.
+For TREC CDS 2014, this yielded an 8\% absolute improvement in Precision@10 over the baseline of 31.67\%,
+and for TREC CDS 2015, it yielded a 4\% absolute improvement in Precision@10 over the baseline of 38.67\%.
+
+Several interesting directions for future work are:
+1) using the TREC CDS 2016 data to train the supervised fusion methods and enhance system's robustness,
+and 2) investigating other training sets for the
+intent type classifiers, containing medical articles whose full text is available for download
+(possibly from the Open Access subset of PubMed Central).
+

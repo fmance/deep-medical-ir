@@ -1,5 +1,49 @@
 \begin{abstract}
+The amount of medical literature is continuously expanding,
+making it increasingly demanding for physicians to locate medical information
+relevant to their patients' cases. Clinical Decision Support (CDS) addresses part
+of this problem by using artificial intelligence to help physicians with their clinical
+decision-making needs.
 
-TODO	
+In this paper, we focus on CDS scenarios where physicians have the medical case report of a patient
+and need assistance with one of the following generic clinical tasks:
+making a \emph{diagnosis}, performing medical \emph{tests}, or
+determining the course of \emph{treatment}.
+The goal is to build an information retrieval system that
+retrieves bio-medical articles relevant to the medical case report, i.e., the \emph{query text},
+as well as to the generic clinical question posed by the physician, i.e., the \emph{query
+intent type} (diagnosis, test or treatment).
+% Our goal is to determine whether incorporating intent type along with textual relevance, into the retrieval process
+% leads to an improvement in precision compared to only using textual relevance.
+
+% Building information retrieval systems addressing this particular type of clinical need
+% % containing both a textual component (the medical case report) and an intent type component (diagnosis, test or treatment),
+% has been the goal of TREC's CDS track,
+% where the retrieved biomedical articles must be relevant to both the medical case report, i.e., the \emph{query text},
+% as well as to the generic clinical question posed by the physician, i.e., the \emph{query
+% intent type} (diagnosis, test or treatment).
+
+% The few participating systems that used both components of the queries for retrieval involved a machine-learning
+% \emph{classifier} to categorize documents by their intent types,
+% and a \emph{score fusion} method to combine the classification scores with the query text relevance scores.
+% Due to the limited number of submissions allowed by TREC, however, these systems only tried one type of classifier and one type
+% of fusion method, and did not investigate any further approaches.
+
+Our approach is to use \emph{machine-learning classifiers} to compute the relevance of documents to the queries' intent types,
+and \emph{score fusion} to combine the classification scores with textual relevance scores (computed by BM25).
+We experiment with a wide range of classifiers,
+such as Support Vectors, Logistic Regression, Ridge Classification,
+Neural Networks, Multilayer Perceptrons,
+as well as with several supervised and unsupervised fusion methods, such as Linear Combination, Reciprocal Rank Fusion,
+Borda Fusion, Linear Regression, AdaRank, RankNet, LambdaMART.
+
+We analyze and compare each of these
+approaches in detail, by applying our retrieval system on the TREC CDS tracks from 2014 and 2015.
+Our results show that incorporating intent type information into the retrieval process leads
+to solid improvements in Precision@10 compared to only using textual relevance:
+up to 8\% absolute improvement for 2014 and up to 4\% absolute improvement for 2015.
+% Our best method outperforms the best participating system
+% from TREC 2014 in terms of Precision@10,
+% and also the best system from TREC 2015 that used classifiers and fusion for incorporating intent types into the retrieval.
 
 \end{abstract}
