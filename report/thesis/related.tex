@@ -58,13 +58,14 @@ Most of them used the intent types either for query expansion or for document cl
 
 The most popular approach was using the intent types for query expansion.
 For example, Wan et al.\ \cite{cuhk} used WordNet to expand the query with noun synonyms
-of \emph{diagnosis}, \emph{test} and \emph{treatment} such as \emph{designation} and \emph{identification}.
+of \emph{diagnosis}, \emph{test} and \emph{treatment} such as \emph{designation} and \emph{identification},
+but the approach proved detrimental overall.
 % to the query, but unfortunately this approach proved detrimental, as their Precision@10
 % (P@10) declined from 27\% to 23\%.
 
-A similar approach was taken by Singh et al.\ \cite{CSEIITV}, who expanded the queries with hand-crafted synonyms
-for each of the three query types.
-% , but their results were very poor, with a P@10 of less than 6\%.
+A similar idea was used by Singh et al.\ \cite{CSEIITV}, who expanded the queries with hand-crafted synonyms
+for each of the three query types, but their results were generally poor.
+% , with a P@10 of less than 6\%.
 
 Garcia-Gathright et al.\ \cite{ucla} also expanded the query with synonyms of the intent types, such as \emph{test}, \emph{evaluate},
 \emph{diagnose}, \emph{examination}, as well as with UMLS semantic types such as \emph{Diagnostic Procedure}
@@ -75,26 +76,27 @@ or \emph{Laboratory Procedure}.
 UMLS semantic types were also used by Wang et al.\ \cite{udel} who expanded the query
 with types such as \emph{is\_finding\_of\_disease}, \emph{treated\_by} or
 \emph{may\_be\_prevented\_by} together with terms extracted from the Cases Database to weigh certain keywords
-based on the query intent type.
+based on the query intent type. The approach was successful, improving their overall retrieval precision.
 % This improved their P@10 from 28.67\% to 31.67\%.
 
-A similar approach was taken by Gobeill et al.\ \cite{bitem}, who boosted documents based on the
+A similarly successful approach was taken by Gobeill et al.\ \cite{bitem}, who boosted documents based on the
 frequencies of certain MeSH
 concepts associated with the query intent type (such as \emph{MeSHtargetDiagnosis}).
 % This improved their P@10 from 18.67\% to 20.33\%.
 
 Drosatos et al.\ \cite{duth} added synonyms from the UMLS Metathesaurus for each intent type, for example
-\emph{treat, treatment, treating, therapy, management}.
+\emph{treat, treatment, treating, therapy, management}. This, however, decreased their overall precision.
 % however their P@10 decreased by 1.33\% compared to the baseline.
 
 Bhandari et al.\ \cite{ir.cs.sfsu} assigned a score to each document based on
 its textual similarity to a list of several hundred test and treatment terms from a database,
-and used these scores to boost the retrieved test and treatment documents.
-% but obtained poor results with a P@10 of 18.67\%.
+and used these scores to boost the retrieved test and treatment documents, but obtained poor results.
+% with a P@10 of 18.67\%.
 
 A similar approach was taken by Mourao et al.\ \cite{novasearch}, who selected MeSH
 terms for each of the three intent types and assigned a weight to each
-document based on how many of these terms it contained.
+document based on how many of these terms it contained. Unfortunately, this approach proved detrimental to
+the overall performance.
 % This proved to be detrimental, as their P@10 decreased from 39\% to 36.67\%.
 %
 % We have now examined the previous research that used keywords related to the query intent types for improving
@@ -109,15 +111,15 @@ incorporate intent types into the retrieval process.
 Soldaini et al.\ \cite{soldani} used a supervised SVM classifier trained on four hundred medical articles
 labeled by medical experts into the three intent types. The retrieved documents were classified
 and grouped into clusters using the affinity propagation algorithm and ranked in the order of their relevance
-to the query intent type.
+to the query intent type. However, this run had the lowest precision out of their five submissions.
 % Unfortunately, this run had the lowest P@10, 18\%, out of their five submissions.
 
 D’hondt et al.\ \cite{limsi2015} trained a classifier on ten thousand documents from PubMed Central
 for each query intent type. They used the Winnow algorithm from the Linguistic Classification System
 for classification and the weighted Borda Fusion method for combining the original retrieval scores
-with the classifier scores, the latter receiving a weight of 0.2.
+with the classifier scores, the latter receiving a weight of 0.2. However, it is
+unclear how much the classifier itself helped, since they do not provide a baseline without it.
 % Their best run had a P@10 of 37.67\%,
-% but it is unclear how much the classifier itself helped, since they do not provide a baseline without it.
 
 A similar approach was taken by Choi et al.\ \cite{choi},
 who trained their classifier on the Clinical Hedges Database (CHD) \cite{chd}.
@@ -128,6 +130,7 @@ since the two intent types are relatively similar.
 They used Support Vector Machines with ROC-Area loss for classification,
 and Borda Fusion for combining the baseline retrieval
 scores with the classifier scores, as in their previous related research \cite{choi-prev}.
+This improved their baseline precision, however, they obtained better results when \emph{not} reranking the diagnosis queries.
 % Their P@10 improvements range from 32\% to 33.67\% when using
 % the short form of the queries (the summaries) and from 32\% to 33\% when using the long form of the queries
 % (the descriptions).
@@ -136,8 +139,8 @@ scores with the classifier scores, as in their previous related research \cite{c
 
 You et al.\ \cite{FDUMedSearch} also used the CHD for training a classifier, but only for the treatment type.
 % Their best P@10 was 39.33\%, but
-% they do not disclose how their classifier and fusion method are implemented
-% neither do they provide a baseline without the classifier, meaning that we cannot determine its contribution.
+They do not disclose how their classifier and fusion method are implemented
+neither do they provide a baseline without the classifier, meaning that we cannot determine its contribution.
 
 \section{Conclusions}
 Now that we have studied the previous research in

@@ -39,7 +39,7 @@ Our scoring function is therefore a \emph{fusion} of two other scoring functions
   \includegraphics[scale=0.25]{diagram.png}
   }
   \caption{The three main components of the scoring function:
-  \emph{relevance}, intent type \emph{classification} and score \emph{fusion}.}
+  relevance, intent type classification and score fusion.}
   \label{diagram}
 \end{figure}
 
@@ -53,8 +53,7 @@ In other words, we want to see \emph{if} and \emph{how} using the query intent t
 $\textsf{TypeClassifier}$) together with the \emph{baseline} \textsf{Relevance} scores
 leads to an improvement in precision compared to only using the \textsf{Relevance} scores.
 
-\paragraph{Observation} It is important to note at this point that, even though scoring Formula \ref{fusion} does
-compute the final scores,
+It is important to note at this point that, even though the final scores are computed by Formula \ref{fusion},
 the actual retrieval is performed in two steps:
 \begin{enumerate}
  \item we first retrieve the top $N$ documents according to their \textsf{Relevance} scores \emph{only};
@@ -63,13 +62,13 @@ the actual retrieval is performed in two steps:
 \end{enumerate}
 This helps us avoid cases where documents with little textual similarity to the query text
 have high \textsf{Fused} scores due to very high \textsf{TypeClassifier} scores masking out potentially low \textsf{Relevance} scores.
-We therefore use Step 1 from above as a \emph{filter} to make sure the re-scored documents are still the ones that had high textual
+We therefore use Step 1 from above as a \emph{filter} to make sure the re-scored documents are still ones that had high textual
 similarity to begin with.
 
 Let us now study each of the three components in Formula \ref{fusion} individually.
 
 \section{Relevance Scoring}
-For computing the relevance of a document $D\in\mathcal{D}$ to a query $Q\in\mathcal{Q}$,
+For computing the textual relevance of a document $D\in\mathcal{D}$ to a query $Q\in\mathcal{Q}$,
 we use the well-known BM25 relevance scoring function \cite{bm25}:
 \begin{equation}\label{bm25-formula}
 \textsf{BM25}(Q_{\text{text}},D)
@@ -90,22 +89,24 @@ Intent type scoring should indicate whether a particular document is useful for 
 (diagnosis, test or treatment). There are various approaches to this, but in this paper we mainly investigate
 binary classification and keyword-counting.
 
-For each intent type $T$ we construct a machine-learning classifier and a keyword-counter in the following way:
+For each intent type $T\in\{\textsf{diagnosis}, \textsf{test}, \textsf{treatment}\}$,
+we construct a machine-learning classifier and a keyword-counter in the following way:
 \begin{itemize}
  \item the machine-learning classifier computes an $\textsf{MLClassifier}(T,D)$ score which measures how much document $D$ conforms to type $T$;
- \item the keyword counter computes a score which measures the frequency of certain keywords related to type $T$ in document $D$:
+ \item the keyword counter computes a score which measures the frequency of certain \emph{keywords} related to type $T$ in document $D$:
  \begin{equation}\label{basic-formula}
   \textsf{KeywordCounter}(T,D) = \min\left(1,\,\, \displaystyle\frac{\displaystyle\mathlarger{\sum}_{w\in \textsf{Keywords}(T)} \textsf{count}(w,D)}{\textsf{cutoff}}\right),
  \end{equation}
-  where $\textsf{cutoff} > 0$ is determined empirically.
+  where $\textsf{cutoff} > 0$ is determined empirically (the \textsf{min} and \textsf{cutoff} operations are used to
+  limit the $\textsf{KeywordCounter}$ scores that are above a certain threshold).
 \end{itemize}
 
 The final intent type score is a linear combination of the two scores\footnote{The \textsf{MLClassifier} and \textsf{KeywordCounter}
-scores are first normalized as explained in Section \ref{unsup-fusion-theory}.}:
+scores are normalized before performing the combination, as described in Section \ref{unsup-fusion-theory}.}:
 \begin{equation}\label{clf-combine-formula}
  \textsf{TypeClassifier} = \alpha\cdot\textsf{MLClassifier} + (1-\alpha)\cdot\textsf{KeywordCounter},
 \end{equation}
-where $\alpha\in (0,1)$.
+where $\alpha\in (0,1)$ is determined empirically.
 
 The purpose of the keyword counter is to \emph{double-check} the classifier predictions and potentially correct its mistakes.
 This would be the case, for instance,
@@ -136,11 +137,11 @@ nonlinear loss functions such as $F_1$ loss, Precision@K loss, Recall@K loss and
 \item \textbf{Naive Bayes} \cite{ir-intro};
 \item \textbf{Multilayer Perceptron} \cite{scikit};
 \item \textbf{Convolutional Neural Networks} --- based on the construction from \cite{cnn}, but using an additional
-hidden layer before the last (fully connected) layer and using fixed, \texttt{word2vec}-learned word embeddings \cite{w2v}.
+hidden layer before the last (fully connected) layer and using fixed, \texttt{word2vec}-learned word embeddings~\cite{w2v}.
 \end{itemize}
 
 \section{Fusion of Relevance and Intent Type Scores}\label{fusion-theory}
-Now that we computed the relevance scores and the intent type scores, we need to fuse them to produce the final score.
+Now that we have computed the relevance and intent type scores, we need to fuse them together to produce the final score.
 We employ two main methods of fusion: unsupervised and supervised.
 
 \subsection{Unsupervised Fusion}\label{unsup-fusion-theory}
@@ -156,36 +157,38 @@ be the lists of \textsf{Relevance} and
 for the $\textsf{Top}_Q$ documents, respectively.
 
 Both $R_Q$ and $C_Q$ are sorted in descending order and normalized
-(before normalizing the \textsf{TypeClassifier} scores, the
-two components from Formula \ref{clf-combine-formula} --- the
-$\textsf{MLClassifier}$ and the \textsf{KeywordCounter} scores --- are normalized).
+(before the \textsf{TypeClassifier} scores in $C_Q$ are computed according to Formula \ref{clf-combine-formula}, the
+$\textsf{MLClassifier}$ and \textsf{KeywordCounter} scores for the documents in $\textsf{Top}_Q$ are normalized).
 
-Now, for a document $D\in \textsf{Top}_Q$, let $s_R$ and $s_C$ be its \textsf{Relevance} and \textsf{TypeClassifier}
+Now, for a document $D\in \textsf{Top}_Q$, let $s_{\text{rel}}$ and $s_{\text{clf}}$ be its \textsf{Relevance} and \textsf{TypeClassifier}
 scores from $R_Q$ and $C_Q$, respectively,
 and let
-$r_R$ and $r_C$ be its \textsf{Relevance} and \textsf{TypeClassifier} ranks in $R_Q$ and $C_Q$, respectively.
+$r_{\text{rel}}$ and $r_{\text{clf}}$ be its \textsf{Relevance} and \textsf{TypeClassifier} ranks in $R_Q$ and $C_Q$, respectively.
 
 We separately investigate three unsupervised fusion methods:
 \begin{itemize}
 
  \item \textbf{Weighted Linear Combination} --- the fused score is given by:
  \begin{equation} \label{interp-formula}
- \textsf{LinComb}(s_R, s_C) = \lambda s_R + (1-\lambda) s_C, \text{ where } \lambda \in (0,1);
+ \textsf{LinComb}(s_{\text{rel}}, s_{\text{clf}}) =
+	      \lambda s_{\text{rel}} + (1-\lambda) s_{\text{clf}}, \text{ where } \lambda \in (0,1);
  \end{equation}
 
-\item \textbf{Weighted Reciprocal Rank Fusion} \cite{rrf} --- the fused score is given by:
+\item \textbf{Weighted Reciprocal Rank Fusion (RRF)} \cite{rrf} --- the fused score is given by:
  \begin{equation}\label{rrf-formula}
-  \textsf{RRF}(r_R, r_C) =  \displaystyle\frac{\lambda}{k + r_R} + \displaystyle\frac{1- \lambda}{k + r_C},  \text{ where } \lambda \in (0,1)
+  \textsf{RRF}(r_{\text{rel}}, r_{\text{clf}}) =
+	      \displaystyle\frac{\lambda}{k + r_{\text{rel}}} + \displaystyle\frac{1- \lambda}{k + r_{\text{clf}}},  \text{ where } \lambda \in (0,1)
   \text{ and } k>0;
  \end{equation}
 
  \item \textbf{Weighted Borda Fusion} \cite{borda} ---  the fused score is given by:
  \begin{equation}\label{borda-formula}
-   \textsf{Borda}(r_R, r_C) =  \displaystyle\frac{1}{\lambda \cdot r_R + (1-\lambda)\cdot r_C},  \text{ where } \lambda \in (0,1).
+   \textsf{Borda}(r_{\text{rel}}, r_{\text{clf}}) =
+	    \displaystyle\frac{1}{\lambda \cdot r_{\text{rel}} + (1-\lambda)\cdot r_{\text{clf}}},  \text{ where } \lambda \in (0,1).
  \end{equation}
   \end{itemize}
 
-The weight $\lambda$ measures the contribution of the baseline \textsf{Relevance} score or rank and
+The weight $\lambda$ measures the contribution of the baseline \textsf{Relevance} score (or rank) and
 is determined empirically for each of the three methods. For $\lambda=1$, the fused score is equal to the baseline score,
 while for $\lambda=0$, the fused score is equal to the type classifier score.
 
@@ -201,10 +204,10 @@ Let us now briefly list the various supervised fusion methods that we use:
   \item {Linear Regression}.
 \end{itemize}
 
-These algorithms are called \textbf{Learning-to-Rank} algorithms --
+These algorithms are called \textbf{Learning-to-Rank} algorithms ---
 they take as input a list of features for each query-document pair $(Q,D)$ in the training
 set and learn how to rank documents based on the
-relevance judgments of those pairs.\footnote{We discuss in Chapter \ref{impl} where the training set and relevance judgments come from.}
+relevance judgments of those pairs.\footnote{We discuss in Chapter \ref{impl} how we choose the training set and relevance judgments.}
 At test time, they apply the learned model to rerank other query-document pairs.
 
 In our case, we use the $\textsf{Relevance}(Q_{\text{text}},D)$ and $\textsf{TypeClassifier}(Q_{\text{type}}, D)$
@@ -223,7 +226,7 @@ Figure \ref{diagram2} shows the entire system architecture with all the main com
   \includegraphics[scale=0.25]{diagram2.png}
   }
   \caption{System architecture, showing the strategies and algorithms that we use for each of the
-  three main components of the scoring function (relevance scoring, intent type classification, score fusion).}
+  three main components of the scoring function (relevance, intent type classification, score fusion).}
   \label{diagram2}
 \end{figure}
 

@@ -24,9 +24,9 @@ A TREC CDS \emph{topic} consists of an $(\textsf{ID}, \textsf{Description}, \tex
 \end{itemize}
 
 We have 30 topics from TREC 2014 CDS track and 30 topics from TREC 2015 CDS track.
-In both years, 2014 and 2015, topics 1--10 have type \emph{diagnosis}, queries 11--20 have type \emph{test}
-and queries 21--30 have type \emph{treatment}.
-Topics are provided in XML format, such as this topic from 2014:
+In both years, 2014 and 2015, topics 1--10 have type \emph{diagnosis}, topics 11--20 have type \emph{test}
+and topics 21--30 have type \emph{treatment}.
+Topics are provided in XML format, for example:
 
 \begin{Verbatim}[fontsize=\small]
   <topic number="1" type="diagnosis">
@@ -55,13 +55,13 @@ The articles are in NXML format
 and contain the article's title, abstract (if any) and full text.
 However, some articles ($\sim$ 50,000) do not include the full text
 as NXML but as a scanned PDF image.
-For these articles, we use the Open Access FTP Service \cite{oa-ftp} to fetch the plain text contents.
+For these articles, we use the Open Access FTP Service \cite{oa-ftp} to fetch their plain text contents.
 
 \subsection{Relevance Judgments}\label{qrels}
 We have relevance judgments for approximately 38,000 topic-document pairs for 2014 and 2015 each, with about 10\% of them
 being positive (relevant). The relevance judgments were assigned by medical experts after each edition of TREC CDS.
 
-Since not all 733,100 $\times$ 60 topic-document pairs could possibly be evaluated, it frequently happens that our system retrieves documents
+Since not all 733,100 $\times$ 60 topic-document pairs could have possibly been evaluated, it sometimes happens that our system retrieves documents
 that are not judged, and by default are considered non-relevant. This \emph{may} negatively impact the performance evaluation of
 the system, since part of these documents may actually be relevant.
 
@@ -70,7 +70,7 @@ We now present the implementation of the scoring Function \ref{fusion}. Recall t
 the baseline relevance score, the type classifier score and the fusion of scores.
 
 \subsection{Computing Relevance Scores}\label{sim-impl}
-As discussed in \ref{bm25-formula}, we use the \textsf{BM25} scoring function to compute relevance scores between the query
+As discussed in Section \ref{bm25-formula}, we use the \textsf{BM25} scoring function to compute relevance scores between the query
 text and documents. To this end, we employ the Lucene information retrieval system \cite{lucene}, which works in two main stages:
 \begin{enumerate*}[label=\arabic*)]
  \item \emph{indexing} the document collection;
@@ -106,21 +106,23 @@ Recall from Formula \ref{clf-combine-formula} that the final type classifier sco
 machine-learning classifier score and the keyword-counter score. Let us now discuss their implementation.
 
 \subsubsection{Keyword Counter}
-For the keyword counter, we use Formula \ref{basic-formula} with the following keywords sets per type:
+For the keyword counter, we use Formula \ref{basic-formula}, with the following keywords sets per intent type:
 \begin{itemize}
  \item for diagnosis, we use \{\emph{diag}\} --- the stem of terms like \emph{diagnosis}, \emph{diagnostic}, \emph{diagnose} etc;
- \item for test, we use \{\emph{diag}, \emph{test}\} -- the stem of terms like \emph{test}, \emph{testing} etc;
+ \item for test, we use \{\emph{diag}, \emph{test}\} --- the stems of terms like \emph{diagnosis}, \emph{diagnostic}, \emph{diagnose} and
+ \emph{test}, \emph{testing} etc;
  \item for treatment, we use \{\emph{treat}\} --- the stem of terms like \emph{treat}, \emph{treatment}, \emph{treated} etc.
 \end{itemize}
 
 \subsubsection{Machine-Learning Classifier}
 \paragraph{Training Data}
-For the machine-learning classifier, we need training data for each of the three intent types. For this, we use the Clinical Hedges Database (CHD)
+For the machine-learning classifier, we need training data for each of the three intent types (diagnosis, test and treatment).
+For this, we use the Clinical Hedges Database (CHD)
 \cite{chd},
 which has diagnosis labels for around 1100 documents, and treatment labels for around 8000 documents. It does
 not have any test labels, but we can use the diagnosis labels for test, since the two intent types are relatively similar
 (this was also the approach taken by \cite{choi}).
-The CHD also has 37000 documents of other types, which we use as \emph{negative} samples.
+The CHD also has 37,000 documents of other types, which we use as \emph{negative} samples.
 One drawback of the CHD, however, is that the training documents are not part of the Open-Access subset, so their full text is not
 available for (programmatic) download. Therefore, we only use the titles and the abstracts for training.
 
@@ -130,7 +132,7 @@ squared hinge, $\epsilon$-insensitive and squared losses, as well as for the Rid
 Passive Aggressive, Naive Bayes and Multilayer Perceptron classifiers.
 We also use \texttt{scikit-learn} to compute the TFIDF-based document features.
 
-We use \texttt{SVM-perf} (\cite{svmperf3}, \cite{svmperf1}, \cite{svmperf2})
+We use \texttt{SVM-perf} \cite{svmperf3,svmperf1,svmperf2}
 for the SVM-based classifiers with zero/one, error-rate, $F_1$, Precision@K, Recall@K and ROC-area losses.
 
 For the convolutional neural networks, we use the \texttt{gensim} package \cite{gensim} to learn the \texttt{word2vec}
@@ -138,11 +140,11 @@ word embeddings (trained over the entire document collection)
 and the \texttt{tensorflow} package \cite{tf} for training the neural networks, based on the construction
 from \cite{cnn} and \cite{cnn-code}, with an additional hidden layer before the last (fully connected) layer.
 
-The classifier scores are given by the (confidence) values of the decision function, or the probabilities, when available (e.g.,
-for Logistic Regression or Naive Bayes).
+The classifier scores are given by the (confidence) values of the decision function, or the predicted probabilities,
+when available (e.g., for Naive Bayes).
 
-\subsection{Fusion of Relevance and Classifier Scores}
-Now that we have computed the relevance and classifier scores, we can finally fuse them together,
+\subsection{Fusing Relevance and Type Classifier Scores}
+Now that we have computed the relevance and type classifier scores, we can finally fuse them together,
 as described in Section \ref{fusion-theory}.
 % we investigate both unsupervised as well as supervised fusion methods.
 % Before doing that, however, we normalize them to the $[0,1]$ interval, as described in Section \ref{unsup-fusion-theory}.
@@ -165,7 +167,7 @@ and for testing, we use the query-document pairs from the baseline results of th
 
 The features are the BM25 relevance scores and the type classifier scores, as discussed in Section \ref{sup-fusion}.
 
-Now that our system is fully implemented, we move forward to the Experiments Chapter.
+Now that our system is fully implemented, we move forward to the Experimental Results Chapter.
 
 
 
