@@ -2,13 +2,14 @@
 
 Let us now present the experimental results of applying our system formally defined in Chapter \ref{meth} and implemented in Chapter
 \ref{impl}
-to the TREC 2014 and 2015 Clinical Decision Support track.
+to the TREC 2014 and 2015 Clinical Decision Support tracks.
 We first discuss the evaluation metric and the classifier parameters,
-then we move on to discussing the results for the unsupervised fusion methods (Linear Combination, RRF and Borda)
-and then the results for the supervised fusion methods (Learning to Rank). We then conduct an overall comparison between the best results from each strategy
-and, finally, we compare our overall best with the results from \cite{choi}.
+and then proceed to
+the results of the unsupervised (Linear Combination, RRF and Borda)
+and supervised (Learning to Rank) fusion methods. We then conduct an overall comparison between the best results from each strategy
+and, finally, we compare our best results overall with the results from \cite{choi}.
 
-\section{Query Runs}\label{runs} Before we begin, let us recall that we have four \emph{runs} with 30 queries each:
+\section{Query Runs}\label{runs} Before we begin, let us recall from Section \ref{sim-impl} that we have four \emph{runs} with 30 queries each:
 \begin{itemize}
  \item using the query \emph{summaries} from \emph{2014};
  \item using the query \emph{descriptions} from \emph{2014};
@@ -24,9 +25,9 @@ We present a set of results for each of these runs and also three \emph{mean res
 \end{itemize}
 
 \section{Evaluation Metric}
-To evaluate the quality of our rankings, we use the precision at 10 (P@10) metric, which counts for each query the percentage of
-relevant results from the top 10 retrieved results. For example, if 4 documents of the top 10 retrieved results are relevant,
-then P@10 is equal to 40\%. The P@10 is then averaged over all queries in a run.
+To evaluate the quality of the rankings produced by our scoring function, we use the Precision@10 metric (P@10), which counts for each query the percentage of
+relevant results from the top 10 retrieved results (for example, if 4 documents out of the top 10 retrieved are relevant,
+then P@10 equals 40\%). The P@10 is then averaged over all queries in a run.
 
 As discussed in Section \ref{qrels}, the ground truths --- relevance judgments --- are provided by medical experts
 and stored in the (\emph{qrels}) files.
@@ -40,15 +41,17 @@ in the $[10^{-4},\cdots,10^4]$ range, in steps of powers of 10) and choosing the
 that give the
 best P@10 improvement averaged over all four categories.
 
-For the Multilayer Perceptron classifier, we achieved the best results by using two layers of size 50 and 5 respectively
-(we ranged the layer sizes from 5 to 100 and the number of layers from 1 to 3).
+For the Multilayer Perceptron classifier, we achieved the best results using two layers of size 50 and 5 respectively
+(we varied the layer sizes from 5 to 100 and the number of layers from 1 to 3).
 
-For the Convolutional Neural Networks classifier, we achieved the best results by
+For the Convolutional Neural Networks classifier, we achieved the best results
 using 100 convolution filters of size 3, 4 and 5, respectively and 50 nodes in last hidden layer; the word-embedding size is 100
 (we varied the number of filters from 50 to 150 and the number of nodes in the last hidden layer from 0, i.e., no hidden layer, to 75).
 
-The weight $\alpha$ of the Keyword Counter score to the overall classifier score (Formula \ref{clf-combine-formula}) is set to 0.4 and
-the \textsf{cutoff} is set to 4.
+For Formula \ref{clf-combine-formula}, we achieved the best results using
+$\alpha=0.4$ and $\textsf{cutoff}=4$ (we varied $\alpha$  between 0 and 1 and \textsf{cutoff} between 1 and 10).
+
+All classifier parameters not listed in table \ref{params} (e.g., tolerance) are set to their default values (from \texttt{scikit-learn} or \texttt{SVM-perf}).
 
 \begin{table}[h!]
 \centering
@@ -59,7 +62,7 @@ the \textsf{cutoff} is set to 4.
 \toprule
 \textbf{Classifier}             & \textbf{Loss function}  & \textbf{Penalty} & \textbf{Regularization parameter}                             &  &  \\ \midrule
 SVM               		& Precision@K		 & L2               & $10^{-3}$                                                 &  &  \\
-SVM               		& Recall @K		 & L2               & $10^{-3}$                                               &  &  \\
+SVM               		& Recall@K		 & L2               & $10^{-3}$                                               &  &  \\
 SVM           			& ROC area		 & L2               & $10^{-3}$                                                &  &  \\
 SVM           			& Error-rate		& L2               & $1$                                                     &  &  \\
 SVM                 		& F1			& L2               & $1$                                                     &  &  \\
@@ -80,20 +83,20 @@ Naive Bayes                    	& 			 &              & $10^{-3}$ (Laplace smooth
 \end{table}
 
 \section{Unsupervised Fusion Results}
-Let us now present the results for the unsupervised fusion methods.
+Let us now present the results of the three unsupervised fusion methods (Linear Combination, RRF and Borda).
 
 For each of the four runs listed in Section \ref{runs} and for each of the seventeen classifiers listed in Table \ref{params}, we perform a fusion of scores
 between the baseline BM25 similarity scores and the classifier scores.
 We therefore produce seventeen sets of results for each of the four runs,
 one set of results per classifier.
 We then average for each classifier the results of the corresponding four runs, producing seventeen \emph{average results}.
-This shows which classifier leads to the highest P@10 improvement for that fusion method.
+This shows which classifier leads to the highest average P@10 improvement for that fusion method.
 
 Furthermore, we inspect the contribution of the keyword counter towards the overall P@10 improvement. More precisely,
 we look at what the improvement is \emph{with} (default) versus \emph{without} using the keyword counter, that is, using $\alpha=0.4$
 versus using $\alpha=0$, respectively, in Formula \ref{clf-combine-formula}.
 
-Lastly, using the best classifier, we show for each run the improvement for the 30 queries individually.
+Lastly, using the best classifier, we show for each run the improvement for each of the 30 queries individually.
 
 \subsection{Linear Combination Results}
 We begin by showing the results of the Linear Combination fusion method (Formula \ref{interp-formula}) in Table \ref{interpolation-res}.
@@ -134,9 +137,9 @@ Naive Bayes                        	& +3                       & +4             
 }
 \end{table}
 
-The best rerankers are the ones using SVM classifiers, with the top one giving an overall improvement of over 6 percentage
-points in P@10. For 2014, the best classifier was SVM with Rec@K loss (8.33\% and 10\% improvements),
-and for 2015 they were SVM with Precision@K loss and Ridge (4\% improvements).
+The best rerankers are the ones using SVM classifiers, with the top one giving an average improvement in P@10 of over 6 percentage
+points. For 2014, the best classifier was SVM with Recall@K loss (8.33\% and 10\% improvements),
+and for 2015, they were SVM with Precision@K loss and Ridge (4\% improvements).
 
 In particular, for summaries 2014, the top reranked result is $31.67\%+8.33\% = 40\%$, which is better than the top automatic submission
 from TREC 2014 (39\%).
@@ -153,7 +156,7 @@ while the Perceptron and Bayes classifiers are too naive for this task.
 Nevertheless, they still give some moderate improvements for 2014 and Summaries 2015.
 
 \subsection{Reciprocal Rank Fusion Results}
-Let us now show the results of the Reciprocal Rank fusion method (Formula \ref{rrf-formula}) in Table \ref{rrf-res}.
+Let us now show the results of the Reciprocal Rank Fusion (RRF) method (Formula \ref{rrf-formula}) in Table \ref{rrf-res}.
 The weight $\lambda$ is set to $0.6\pm 0.02$ and $k$ is set to 60.
 
 \begin{table}[h!]
@@ -193,9 +196,9 @@ Similar to the linear combination method, SVM classifiers generally work best,
 although the top one now uses the squared loss instead of Precision@K loss (which takes fourth place instead).
 
 RRF, however, gives lower improvements, with the highest one being 4.75\%
-compared to 6\% for linear combination.
-This may be due to the fact that RRF loses some information by only using the ranks and not the actual scores. On the other hand, RRF
-is easier and more convenient to compute, since no score scaling is needed.
+(compared to 6\% for linear combination).
+This may be due to the fact that RRF loses some information by only using document ranks instead of raw scores. On the other hand, RRF
+is easier and more convenient to compute, since no score normalization is needed for \textsf{Relevance} and \textsf{TypeClassifier}.
 
 
 \subsection{Borda Fusion Results}
@@ -214,8 +217,8 @@ for fusing the baseline relevance scores with the classifier scores.}
                                     & \textbf{Summ. 2014} & \textbf{Desc. 2014} & \textbf{Summ. 2015} & \textbf{Desc. 2015} & \textbf{Average} \\ \midrule
 Baseline                                   & 31.67                   & 25                         & 38.67                   & 35                         &   32.59               \\ \midrule
 
-SVM (with Squared loss)                               & +\textbf{4.67}  & +\textbf{8.67}     & +2.33           & +\textbf{1.33}     & +\textbf{4.25} \\
-SVM (with Precision@K loss)                            & +4              & +9                 & +1.67           & +\textbf{1.33}     & +4             \\
+SVM (with Squared loss)                               & +\textbf{4.67}  & +8.67     & +2.33           & +\textbf{1.33}     & +\textbf{4.25} \\
+SVM (with Precision@K loss)                            & +4              & +\textbf{9}                 & +1.67           & +\textbf{1.33}     & +4             \\
 SVM (with Rec@K loss)                                 & +4.33           & +7.67              & +3.33           & +0.67              & +4             \\
 Logistic Regression                                    & +4.33           & +8                 & +2              & +\textbf{1.33}     & +3.92          \\
 SVM (with Error-rate loss)                             & +4.33           & +6                 & +3.33           & +1                 & +3.67          \\
@@ -243,11 +246,11 @@ On the other hand, Borda works slightly better for 2014 (6.67\% vs 6.16\% for th
 Overall, the results of the three fusion methods indicate that \[\textsf{Linear Combination} \gg \textsf{RRF} > \textsf{Borda}.\]
 
 \subsection{Relation between Weight $\lambda$ and Improvement}
-Let us now investigate the relation between the weight $\lambda$ and the improvement in P@10 for each of the three
+Let us now investigate the relation between weight $\lambda$ and the improvement in P@10 for each of the three unsupervised
 fusion methods, when using their best classifier (i.e., SVM with Precision@K loss for linear combination
 and SVM with squared loss for RRF and Borda).
 Recall from Formulas \ref{interp-formula}, \ref{rrf-formula} and \ref{borda-formula} that the weight $\lambda$ is the
-weight of the baseline BM25 score and $1-\lambda$ is the weight of the classifier score.
+weight of the baseline \textsf{Relevance} score (or rank) and $1-\lambda$ is the weight of the \textsf{TypeClassifier} score (or rank).
 
 Figure \ref{lambda-vary} shows for each of the three methods
 how the improvement in P@10 behaves as the weight $\lambda$ is varied between 0 and 1 in steps of 0.01.
@@ -286,11 +289,11 @@ and \ref{borda-res}, respectively).}
 
 \end{figure}
 
-The first observation to make in Figure \ref{lambda-vary} is that the improvements generally happen for $\lambda \in [0.5, 0.8]$.
+The first observation to make in Figure \ref{lambda-vary} is that the highest improvements generally happen for $\lambda \in [0.6, 0.8]$.
 As also reflected in Tables \ref{interpolation-res}, \ref{rrf-res} and \ref{borda-res}, the 2014 improvements are much higher than
 the 2015 ones.
 
-\paragraph{Observation} Interestingly, for Descriptions 2014, using $\lambda = 0$ gives better results
+Interestingly, for Descriptions 2014, using $\lambda = 0$ gives better results
 than using $\lambda=1$. This does not mean, however, that for 2014, using the classifier scores
 works better than using the BM25 scores, but rather that
 \emph{re-sorting} the top 100 BM25 results by their classifier scores is better.
@@ -299,7 +302,7 @@ since otherwise the top retrieved documents would be the ones with the highest c
 regardless of whether
 they have any \emph{textual} similarity to the query --- this is also discussed in Chapter \ref{meth}.
 In any case,  however, this peculiarity only happens for 2014; for 2015 the improvements happen only when $\lambda>0.5$,
-and even for 2014, the highest improvements happen also when $\lambda>0.5$.
+and even for 2014, the highest improvements happen when $\lambda>0.3$.
 
 Moving forward with the analysis of Figure \ref{lambda-vary}, we see that
 the improvements for 2014 and 2015 are more correlated with each other when using linear combination than when using
@@ -312,7 +315,7 @@ is $\sim10\%$ for Borda vs. only $\sim9\%$ for Linear combination). However, the
 Linear Combination.
 
 Looking beyond these granular differences and more at the overall picture, we can safely conclude
-that choosing any of the three unsupervised fusion methods and any weight $\lambda$ between 0.6 and 0.8 would give
+that choosing any of the three unsupervised fusion methods and any weight $\lambda$ between 0.6 and 0.8 gives
 a solid improvement over the baseline.
 
 \subsection{Contribution of the Keyword Counter}
@@ -323,17 +326,17 @@ was that the keyword counter would double-check the classifier and maybe correct
 increasing or lowering the scores depending on the frequency of certain keywords.
 
 Figure \ref{basic-effect-plot}
-confirms the fact that the keyword counter helps. The average improvement for linear combination is more than 1\% higher
+confirms the fact that the keyword counter helps. The average P@10 improvement for linear combination is more than 1\% higher
 when using it than when not using it and the $\lambda$--P@10 curve is generally wider.
 
-For RRF and Borda the effect is less pronounced --- probably because they only use the ranks and not the scores ---
+For RRF and Borda the effect is less pronounced --- probably because they use ranks instead of scores ---
 but is still there nonetheless.
 
 \begin{figure}[h!]
 \centerline{
   \includegraphics[scale=0.22]{../../ranking/plots/basic-vs-non-basic.png}
   }
-  \caption{Contribution of the Keyword Counter towards the absolute P@10 improvement for each of the three unsupervised
+  \caption{Contribution of the Keyword Counter towards the average absolute P@10 improvement for each of the three unsupervised
   fusion methods --- Linear Combination, RRF and Borda --- using their best classifier (Tables \ref{interpolation-res}, \ref{rrf-res}
 and \ref{borda-res}, respectively).}
   \label{basic-effect-plot}
@@ -427,15 +430,15 @@ Average   & +8                      & +9                         & +4           
 
 
 \section{Supervised Fusion Results}
-Let us now move on to the supervised learning results. As mentioned in Sections \ref{sup-fusion} and \ref{impl-sup}, we use several
-learning to rank algorithms which we train on the queries from one year and test on the queries from another year.
+Let us now proceed to the supervised learning results. As mentioned in Sections \ref{sup-fusion} and \ref{impl-sup}, we use several
+learning-to-rank algorithms which we train on the queries from one year and test on the queries from the other year.
 
-The features that we use are the baseline BM25 similarity scores and the classifier scores, computed by the SVM
-classifier with Precision@K loss function --- the best one according to the unsupervised linear combination method.
+The features that we use are the baseline BM25 relevance scores and the classifier scores, computed by the SVM
+classifier with Precision@K loss function (the best according to the unsupervised linear combination method).
 
-Since the learning to rank algorithms have several parameters, we performed a search for the ones that give the best
+Since the learning-to-rank algorithms have several parameters, we performed a search for the ones that give the best
 results (for example we varied the number of iterations or the number of trees from 5 to 500 in steps of 10).
-The best parameters found are listed in Table \ref{l2r-params}.
+The best parameters found are listed in Table \ref{l2r-params}. All other parameters are set to their default values from \texttt{RankLib}.
 
 \begin{table}[h!]
 \centering
@@ -463,8 +466,8 @@ We list the results for both training sets as two columns.
 
 The \emph{Best Average} column shows the \emph{best} average of the four test query runs.
 That is, for each run, we use the training set (either \emph{Summaries} or \emph{Descriptions}) that gives the highest
-improvement. For example, the best average for \emph{Linear Regression} uses the \emph{Summaries 2015} training set for the
-\emph{Summaries 2014} and \emph{Descriptions 2014} test set,
+improvement. For example, the best average improvement for \emph{Linear Regression} uses the \emph{Summaries 2015} training set for the
+\emph{Summaries 2014} and \emph{Descriptions 2014} test sets,
 the \emph{Summaries 2014} training set for the \emph{Summaries 2015} test set, and
 the \emph{Descriptions 2014} training set for the \emph{Descriptions 2015} test set.
 
@@ -532,9 +535,9 @@ The next two methods, RankNet and Coordinate Ascent, give similarly good
 improvements for 2014 (+6.33\% and +7.17\% respectively), but their performance is somewhat lower
 for 2015 (only +1.67\% and +0.7\% respectively).
 
-The bottom three methods, Lambda MART, MART and RankBoost, do not even give an improvement for 2015, being worse
-than the baselines by around 0.8\%, 4.5\% and 3.8\%, respectively. However, their 2014 improvements are enough to compensate
-for this, so they all have positive overall improvements.
+The bottom three methods, Lambda MART, MART and RankBoost, do not give an improvement for 2015, being worse
+than the baselines by around 0.8\%, 4.5\% and 3.8\%, respectively. However, their 2014 improvements are high enough to compensate
+for this, so they all give positive overall improvements.
 
 One potential reason for the lower performance of the latter three methods might be the fact that they generate high
 numbers of unjudged documents in the top 10. Even though some of these documents \emph{might} be relevant,
@@ -564,7 +567,7 @@ while for Descriptions 2015, the best training set was \emph{always} Description
 For the top two methods, therefore, summaries made better training sets than descriptions in all
 four cases except Descriptions 2015.
 
-Let us conclude the analysis of the supervised fusion results with a look at the P@10 improvement per query
+Let us conclude the analysis of the supervised fusion results with examining the P@10 improvement per query
 and intent type
 for the best method --- Linear Regression. Figure \ref{regression-query} and Table
 \ref{change-per-query-table-regression} show the change in P@10
@@ -609,7 +612,7 @@ Average   & +7		 	    & +8.33			 & +2.67		   & +2.33			& \textbf{+5.08}	 \\
 Let us now finally conduct an overall comparison between the best fusion methods:
 the three unsupervised ones (Linear Combination, RRF and Borda)
 and the top three supervised ones (Linear Regression, AdaRank and RankNet).
-Since for Linear Combination both SVM classifiers with Precision@K and Recall@K
+Since for Linear Combination, both SVM classifiers with Precision@K and Recall@K
 losses give improvements of at least $6\%$, we list both of them in the comparison
 (Table \ref{fusion-comp}).
 
@@ -639,12 +642,12 @@ RankNet				& +6.67		& +6		& +1.67			& +1.67		& \textbf{+4}		\\
 The best method overall is therefore Linear Combination using an SVM classifier. For 2014, the best loss function
 is Recall@K, while for 2015 the best loss function is Precision@K.
 
-Compared to the unsupervised fusion methods, both Linear Regression and AdaRank sit somewhere in between
+Compared to the unsupervised fusion methods, both Linear Regression (+5.08\%) and AdaRank (+4.92\%) sit somewhere in between
 Linear Combination (+6\%) and RRF (+4.75\%). Of course, one advantage of the learning-to-rank algorithms
 is that we do not need to manually search for the best weight $\lambda$ between the two features,
 since it is automatically determined
 from the training data.
-We do need, however, to search for the best hyper-parameters, such as number of iterations, regularization
+We do need, however, training data and to search for the best hyper-parameters, such as number of iterations, regularization
 parameters and so on. Thus, there are trade-offs for each approach (supervised vs. unsupervised),
 but nevertheless they each give solid average improvements of at least 4-5\% over the baseline.
 
@@ -673,25 +676,26 @@ but nevertheless they each give solid average improvements of at least 4-5\% ove
 
 \section{Comparison with Previous Research}
 We conclude this section by comparing our findings to previous research in the TREC CDS area.
-As discussed in Section \ref{related}, the best previous research using the query intent type for reranking
-was done by \cite{choi}. However, they did not write a paper for 2015, which means we can only compare the 2014 results.
+As discussed in Section \ref{related}, the most successful previous research using query intent types for reranking
+was conducted by Choi et al.~\cite{choi} for TREC 2014. However, they did not write a paper for TREC 2015,
+which means we can only compare the 2014 results.
 
-Recall that \cite{choi} uses a similar idea like us, namely fusing baseline scores and
+Recall that \cite{choi} uses a similar idea to ours, namely fusing baseline scores and
 classifier scores. They also use the Clinical Hedges Database for training and SVM for classification.
 However their SVM uses ROC-area loss and their fusion uses Borda with a weight $\lambda=0.5$.
-Similar to us, they also use the diagnosis samples for the test classifier.
+Like us, they also use the diagnosis samples for the test classifier.
 The runs that they re-rank are the \emph{ExternalQE} runs, where
 they also use externally-tagged knowledge-based query expansion in addition to the baseline similarity score
 (runs \emph{Baseline}).
 
-Let us now list the runs that we will compare:
+Let us now list the runs involved in the comparison:
 \begin{itemize}
  \item from \cite{choi}, runs \emph{SNUMedinfo1} and \emph{SNUMedinfo4} for Summaries 2014 and Descriptions 2014, respectively.
   In these runs --- like in our system --- all queries are reranked;
  \item from \cite{choi}, runs \emph{SNUMedinfo3} and \emph{SNUMedinfo6} where the Diagnosis queries are \emph{not} re-ranked;
  \item our results using the approach from \cite{choi} --- Borda Fusion, SVM classifier with ROC-Area loss and $\lambda=0.5$;
- \item our results using the best unsupervised fusion --- Linear Combination, SVM classifier with Recall@K loss and $\lambda=0.7$;
- \item our results using the best supervised fusion --- Linear Regression trained on Summaries from 2015.
+ \item our results using the best unsupervised fusion method for 2014 --- Linear Combination, SVM classifier with Recall@K loss and $\lambda=0.7$;
+ \item our results using the best supervised fusion method for 2014 --- Linear Regression trained on the Summaries 2015 queries.
 \end{itemize}
 
 Table \ref{choi-comp} summarizes the results of the comparison.
@@ -751,12 +755,13 @@ Still, our reranked P@10s for Descriptions are 35\% and 33.33\% (unsupervised an
 Our Descriptions P@10s are, however, slightly worse
 than \cite{choi}'s P@10 of 36.67\% when reranking only the Test and Treatment queries, but keep in mind that
 1) we started with a baseline 7\% worse than theirs --- the absolute improvements themselves being much higher, +10\% and +8.33\%
-vs +4.67\%, and 2) we have 13\% percent unjudged documents in the top 10 using Linear Combination,
+vs +4.67\% ---, and 2) 13\% percent of the documents in Top 10 are unjudged for Linear Combination,
 some of which \emph{may} potentially be relevant.
 
-To sum up all of the above, we can safely recommend our best supervised and unsupervised methods
-(Linear Regression and Linear Combination) as well as the next-best ones (AdaRank and RRF)
-as solid alternatives to previous approaches to the TREC Clinical Decision Support track.
+To sum up all of the above, we can safely recommend our best supervised and unsupervised fusion methods
+(Linear Regression and Linear Combination) as well as the next-best ones (AdaRank and RRF),
+together with SVM with Precision@K or Recall@K losses,
+as solid alternatives to previous approaches for the TREC Clinical Decision Support track.
 
 % \section{Random clf}
 % 32.78 (31.58 25.59 38.91 35.05)
