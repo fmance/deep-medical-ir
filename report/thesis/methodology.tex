@@ -62,7 +62,8 @@ leads to an improvement in precision compared to only using the \textsf{Relevanc
 It is important to note at this point that, even though the final scores are computed by Formula \ref{fusion},
 the actual retrieval is performed in two steps:
 \begin{enumerate}
- \item we first retrieve the top $N$ documents according to their \textsf{Relevance} scores \emph{only};
+ \item we first retrieve the top $N$ documents according to their \textsf{Relevance} scores \emph{only} --- these are called
+ \emph{baseline} results;
  \vspace{-0.2cm}
  \item we then \emph{re-score} these $N$ documents according to Formula \ref{fusion}.
 \end{enumerate}
@@ -74,7 +75,7 @@ similarity to begin with.
 Let us now study each of the three components in Formula \ref{fusion} individually.
 
 \section{Relevance Scoring}
-For computing the textual relevance of a document $D\in\mathcal{D}$ to a query $Q\in\mathcal{Q}$,
+To compute the textual relevance score of a document $D\in\mathcal{D}$ with respect to a query $Q\in\mathcal{Q}$,
 we use the well-known BM25 relevance scoring function \cite{bm25}:
 \begin{equation}\label{bm25-formula}
 \textsf{BM25}(Q_{\text{text}},D)
