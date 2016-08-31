@@ -17,9 +17,11 @@ Let us now define our scoring function.
 Recall that the medical queries we are interested in have two components:
 \begin{enumerate*}[label=\arabic*)]
  \item the \emph{query text}, containing the medical case report (patient history, current symptoms, any test results) and
- \item the \emph{query intent type}, that is, the generic clinical question the physician is interested in (diagnosis, test, or treatment).
+ \item the \emph{query intent type}, that is, the generic clinical question the physician is interested in
+ (what the \emph{diagnosis} is, what \emph{tests} should be performed, how the patient should be \emph{treated}).
 \end{enumerate*}
-We therefore represent a medical query $Q\in\mathcal{Q}$ as a tuple of text and intent type: \[Q = \left(Q_{\text{text}},\ Q_{\text{type}}\right).\]
+We therefore represent a medical query $Q\in\mathcal{Q}$ as a tuple of text and intent type: \[Q = \left(Q_{\text{text}},\ Q_{\text{type}}\right),\]
+where $Q_{\text{type}} \in \{\textsf{diagnosis}, \textsf{test}, \textsf{treatment}\}$.
 
 Given a query $Q$, the retrieval system computes a relevance score for each document $D\in\mathcal{D}$.
 The scoring process takes into account both the query text \emph{and} the query intent type.
@@ -31,7 +33,6 @@ The final score is given by:
 \begin{equation}\label{fusion}
   \textsf{FinalScore}(Q, D) = \textsf{Fusion}\left(\textsf{Relevance}(Q_{\text{text}}, D), \textsf{TypeClassifier}(Q_{\text{type}}, D)\right)
 \end{equation}
-
 Our scoring function is therefore a \emph{fusion} of two other scoring functions (Figure \ref{diagram}).
 
 \begin{figure}[h!]
@@ -43,10 +44,15 @@ Our scoring function is therefore a \emph{fusion} of two other scoring functions
   \label{diagram}
 \end{figure}
 
-In this paper, we study how to choose $\textsf{TypeClassifier}$ and $\textsf{Fusion}$ in order to maximize
-\[
- \mathcal{P}(\textsf{Fusion}(\textsf{Relevance}, \textsf{TypeClassifier})) - \mathcal{P}(\textsf{Relevance})
-\]
+In contrast to \cite{choi, limsi2015, FDUMedSearch}, which experimented with only one
+$\textsf{TypeClassifier}$ and $\textsf{Fusion}$ method
+(Section \ref{related-intent-type}),
+we explore a much wider range of $\textsf{TypeClassifiers}$ and $\textsf{Fusion}$ methods, in order to maximize
+the \emph{performance improvement}
+\begin{equation}\label{improvement-formula}
+   \mathcal{I}_{\mathcal{P}}(\textsf{TypeClassifier}, \textsf{Fusion})
+   =\mathcal{P}(\textsf{Fusion}(\textsf{Relevance}, \textsf{TypeClassifier})) - \mathcal{P}(\textsf{Relevance}),
+\end{equation}
 where $\mathcal{P}: f \rightarrow \mathbb{R}$ is the performance measure (e.g. Precision@10) of scoring function $f$.
 
 In other words, we want to see \emph{if} and \emph{how} using the query intent types (via the
@@ -62,7 +68,7 @@ the actual retrieval is performed in two steps:
 \end{enumerate}
 This helps us avoid cases where documents with little textual similarity to the query text
 have high \textsf{Fused} scores due to very high \textsf{TypeClassifier} scores masking out potentially low \textsf{Relevance} scores.
-We therefore use Step 1 from above as a \emph{filter} to make sure the re-scored documents are still ones that had high textual
+We therefore use Step 1 from above as a \emph{filter} to make sure the re-scored documents are still the ones that had high textual
 similarity to begin with.
 
 Let us now study each of the three components in Formula \ref{fusion} individually.

@@ -6,16 +6,16 @@ physicians with their clinical information needs.
 
 In the previous chapter, we defined our goal to be
 an information retrieval system addressing a specific type of medical query,
-containing both a textual component (the patient record), as well as an intent component
+containing both a \emph{textual} component (the patient record), as well as an \emph{intent} component
 (the generic clinical question the physician is interested in
---- what the diagnosis is, what tests should be performed, how the patient should be treated).
+--- what the \emph{diagnosis} is, what \emph{tests} should be performed, how the patient should be \emph{treated}).
 
 Since this type of medical questions was featured prominently in the TREC CDS tracks from 2014 and 2015,
 we focus our attention on the work carried out by the participants in these tracks, as well as in
  their associated research.
 
-We mentioned in the introductory chapter that, even though the retrieved documents should be
-relevant to both the queries' text as well as to their intent types, the majority of participants
+We mentioned in the introductory chapter that, even though the retrieved medical documents should be
+relevant to both the queries' text and to their intent types, the majority of participants
 did not actually take the latter into account, focusing instead on adapting existing
 IR techniques to the technical, specialized domain of medical queries. We list here some of the most
 popular approaches that were investigated, although very briefly, since we want to concentrate more on the systems that
@@ -69,9 +69,9 @@ for each of the three query types, but their results were generally poor.
 
 Garcia-Gathright et al.\ \cite{ucla} also expanded the query with synonyms of the intent types, such as \emph{test}, \emph{evaluate},
 \emph{diagnose}, \emph{examination}, as well as with UMLS semantic types such as \emph{Diagnostic Procedure}
-or \emph{Laboratory Procedure}.
-% Their highest P@10 was around 25\%, although we cannot know what the contribution
-% of the query expansion is, since they do not provide a baseline without it.
+or \emph{Laboratory Procedure}. However, we cannot know what the contribution
+of the query expansion is, since they do not provide a baseline without it.
+% Their highest P@10 was around 25\%,
 
 UMLS semantic types were also used by Wang et al.\ \cite{udel} who expanded the query
 with types such as \emph{is\_finding\_of\_disease}, \emph{treated\_by} or
@@ -89,7 +89,7 @@ Drosatos et al.\ \cite{duth} added synonyms from the UMLS Metathesaurus for each
 % however their P@10 decreased by 1.33\% compared to the baseline.
 
 Bhandari et al.\ \cite{ir.cs.sfsu} assigned a score to each document based on
-its textual similarity to a list of several hundred test and treatment terms from a database,
+its textual similarity to a list of several hundred test and treatment terms from a database\footnote{\url{rightdiagnosis.com}, \url{webmd.com}},
 and used these scores to boost the retrieved test and treatment documents, but obtained poor results.
 % with a P@10 of 18.67\%.
 
@@ -104,14 +104,14 @@ the overall performance.
 % strategy that was used. When not carefully designed, it backfired, such as in \cite{novasearch}, \cite{cuhk},
 % \cite{CSEIITV}, \cite{ir.cs.sfsu}  or \cite{duth}. However, it was also successful for \cite{bitem} and \cite{udel}.
 
-\section{Using Intent Types for Document Classification}
+\section{Using Intent Types for Document Classification}\label{related-intent-type}
 Let us now explore the strategies that used machine-learning classifiers to
 incorporate intent types into the retrieval process.
 
 Soldaini et al.\ \cite{soldani} used a supervised SVM classifier trained on four hundred medical articles
 labeled by medical experts into the three intent types. The retrieved documents were classified
 and grouped into clusters using the affinity propagation algorithm and ranked in the order of their relevance
-to the query intent type. However, this run had the lowest precision out of their five submissions.
+to the query intent type. However, this approach was unsuccessful, yielding the lowest precision out of their five submissions.
 % Unfortunately, this run had the lowest P@10, 18\%, out of their five submissions.
 
 D’hondt et al.\ \cite{limsi2015} trained a classifier on ten thousand documents from PubMed Central
@@ -129,15 +129,15 @@ It does not contain, however, any documents for the test type, so Choi et al.\ u
 since the two intent types are relatively similar.
 They used Support Vector Machines with ROC-Area loss for classification,
 and Borda Fusion for combining the baseline retrieval
-scores with the classifier scores, as in their previous related research \cite{choi-prev}.
-This improved their baseline precision, however, they obtained better results when \emph{not} reranking the diagnosis queries.
+scores with the classifier scores, as in their previous related research from \cite{choi-prev}.
+This approach improved their baseline precision, however, they obtained better results when \emph{not} reranking the diagnosis queries.
 % Their P@10 improvements range from 32\% to 33.67\% when using
 % the short form of the queries (the summaries) and from 32\% to 33\% when using the long form of the queries
 % (the descriptions).
 % However, they have better results when \emph{not} reranking the diagnosis queries: 34.67\% and 36.33\%,
 % which means that their diagnosis classifier did not work as expected and worsened the original, baseline, rankings.
 
-You et al.\ \cite{FDUMedSearch} also used the CHD for training a classifier, but only for the treatment type.
+You et al.\ \cite{FDUMedSearch} also used the Clinical Hedges Database for training a classifier, but only for the treatment type.
 % Their best P@10 was 39.33\%, but
 They do not disclose how their classifier and fusion method are implemented
 neither do they provide a baseline without the classifier, meaning that we cannot determine its contribution.
@@ -147,8 +147,8 @@ Now that we have studied the previous research in
 using intent types for Clinical Decision Support, we can draw two main conclusions:
 \begin{enumerate}
  \item the classification and fusion approach yielded some promising results;
- \item however, it has not yet been sufficiently explored --- \cite{choi}, \cite{FDUMedSearch}, \cite{soldani}, \cite{limsi2015}
- all used a single configuration for their classifier and fusion methods.
+ \item however, it has not yet been sufficiently explored --- \cite{choi, FDUMedSearch, soldani, limsi2015}
+ all used a single, fixed configuration for their classifier and fusion methods.
 \end{enumerate}
 
 In the introductory chapter, we stated that our over-arching goal was to

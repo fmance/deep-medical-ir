@@ -65,11 +65,11 @@ Since not all 733,100 $\times$ 60 topic-document pairs could have possibly been 
 that are not judged, and by default are considered non-relevant. This \emph{may} negatively impact the performance evaluation of
 the system, since part of these documents may actually be relevant.
 
-\section{Implementation of the Scoring Function}
+\section{Scoring Function Implementation}
 We now present the implementation of the scoring Function \ref{fusion}. Recall that the function has three components:
 the baseline relevance score, the type classifier score and the fusion of scores.
 
-\subsection{Computing Relevance Scores}\label{sim-impl}
+\subsection{Relevance Scoring Implementation}\label{sim-impl}
 As discussed in Section \ref{bm25-formula}, we use the \textsf{BM25} scoring function to compute relevance scores between the query
 text and documents. To this end, we employ the Lucene information retrieval system \cite{lucene}, which works in two main stages:
 \begin{enumerate*}[label=\arabic*)]
@@ -95,17 +95,17 @@ For each run, we retrieve the top $N=100$ results per query
 thereby producing four sets of \emph{baseline} relevance scores.
 These scores are then fused with the type classifier scores, discussed next.
 
-\subsection{Computing Type Classifier Scores}
-Computing type classifier scores involves only the document collection and the three query intent types (diagnosis, test and treatment);
+\subsection{Intent Type Scoring Implementation}
+Computing intent type scores involves only the document collection and the three query intent types (diagnosis, test and treatment);
 we do not need the queries' text for this part.
 
 Furthermore, we do not use the documents in their original form,
 but we tokenize, lowercase and stem them using Lucene's \texttt{EnglishAnalyzer}.
 
-Recall from Formula \ref{clf-combine-formula} that the final type classifier score is a linear combination of the
+Recall from Formula \ref{clf-combine-formula} that the final intent type classifier score is a linear combination of the
 machine-learning classifier score and the keyword-counter score. Let us now discuss their implementation.
 
-\subsubsection{Keyword Counter}
+\subsubsection{Keyword Counter Implementation}
 For the keyword counter, we use Formula \ref{basic-formula}, with the following keywords sets per intent type:
 \begin{itemize}
  \item for diagnosis, we use \{\emph{diag}\} --- the stem of terms like \emph{diagnosis}, \emph{diagnostic}, \emph{diagnose} etc;
@@ -114,7 +114,7 @@ For the keyword counter, we use Formula \ref{basic-formula}, with the following 
  \item for treatment, we use \{\emph{treat}\} --- the stem of terms like \emph{treat}, \emph{treatment}, \emph{treated} etc.
 \end{itemize}
 
-\subsubsection{Machine-Learning Classifier}
+\subsubsection{Machine-Learning Classifier Implementation}
 \paragraph{Training Data}
 For the machine-learning classifier, we need training data for each of the three intent types (diagnosis, test and treatment).
 For this, we use the Clinical Hedges Database (CHD)
@@ -143,7 +143,7 @@ from \cite{cnn} and \cite{cnn-code}, with an additional hidden layer before the 
 The classifier scores are given by the (confidence) values of the decision function, or the predicted probabilities,
 when available (e.g., for Naive Bayes).
 
-\subsection{Fusing Relevance and Type Classifier Scores}
+\subsection{Fusion of Relevance and Intent Type Scores}
 Now that we have computed the relevance and type classifier scores, we can finally fuse them together,
 as described in Section \ref{fusion-theory}.
 % we investigate both unsupervised as well as supervised fusion methods.
