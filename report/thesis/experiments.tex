@@ -33,15 +33,15 @@ then P@10 equals 40\%). The P@10 is then averaged over all queries in a run.
 As discussed in Section \ref{qrels}, the ground truths --- relevance judgments --- are provided by medical experts
 and stored in the (\emph{qrels}) files.
 
-\section{Baseline and Reranked Results}
+\section{Baseline and Re-ranked Results}
 For each of the four query runs listed in Section \ref{runs}, we compute:
 \begin{itemize}
  \item a \emph{baseline} P@10, using only \textsf{Relevance} scores (BM25) for retrieval;
- \item a \emph{reranked} P@10,
+ \item a \emph{re-ranked} P@10,
  using scoring Function \ref{fusion} for retrieval --- \textsf{Fusion} of \textsf{Relevance} and \textsf{TypeClassifier} scores ---
  as described in Chapters \ref{meth} and \ref{impl}.
 \end{itemize}
-The \emph{absolute improvement} in P@10 is the difference between the reranked P@10 and the baseline P@10 (Formula \ref{improvement-formula}).
+The \emph{absolute improvement} in P@10 is the difference between the re-ranked P@10 and the baseline P@10 (Formula \ref{improvement-formula}).
 
 \section{Classifier Parameters}
 Table \ref{params} lists the 17 classifiers we use and their configurations.
@@ -65,7 +65,7 @@ $\alpha=0.4$ and $\textsf{cutoff}=4$ (we varied $\alpha$  between 0 and 1 and \t
 
 All classifier parameters not listed in table \ref{params} (e.g., tolerance) are set to their default values (from \texttt{scikit-learn} or \texttt{SVM-perf}).
 
-\begin{table}[h!]
+\begin{table}
 \centering
 \caption{Best classifier parameters found (penalty and regularization).}
 \label{params}
@@ -120,7 +120,7 @@ The weight $\lambda$ is set to $0.7\pm 0.02$.
 The first line shows the \emph{baseline} P@10 for each of the four runs.
 The next lines show the \emph{absolute} P@10 \emph{improvements} for each classifier.
 
-\begin{table}[h!]
+\begin{table}
 \centering
 \caption{Absolute P@10 percent improvements per classifier for each of the four query runs
 (Summaries 2014, Descriptions 2014, Summaries 2015, Descriptions 2015), when using weighted \textbf{Linear Combination}
@@ -152,12 +152,12 @@ Naive Bayes                        	& +3                       & +4             
 }
 \end{table}
 
-The best rerankers are the ones using SVM classifiers, with the top two giving an average improvement in P@10 of at least 6 percentage
+The best re-rankers are the ones using SVM classifiers, with the top two giving an average improvement in P@10 of at least 6 percentage
 points. For Summaries and Descriptions 2014, the best classifier is SVM with Recall@K loss (8.33\% and 10\% improvements),
 for Summaries 2015, the best classifier is SVM with Precision@K loss (4\% improvement),
 and for Descriptions 2015, the best classifier is Ridge (4\% improvement).
 
-In particular, for Summaries 2014, the top reranked result is $31.67\%+8.33\% = 40\%$, which is better than the top automatic submission
+In particular, for Summaries 2014, the top re-ranked result is $31.67\%+8.33\% = 40\%$, which is better than the top automatic submission
 from TREC 2014 (39\%).
 
 Generally, the improvements for 2014 are at least
@@ -175,7 +175,7 @@ Nevertheless, they still give some moderate improvements for 2014 and Summaries 
 Let us now show the results of the Reciprocal Rank Fusion (RRF) method (Formula \ref{rrf-formula}) in Table \ref{rrf-res}.
 The weight $\lambda$ is set to $0.6\pm 0.02$ and $k$ is set to 60.
 
-\begin{table}[h!]
+\begin{table}
 \centering
 \caption{Absolute P@10 percent improvements per classifier for each of the four query runs
 (Summaries 2014, Descriptions 2014, Summaries 2015, Descriptions 2015), when using weighted \textbf{Reciprocal Rank Fusion}
@@ -221,7 +221,7 @@ is easier and more convenient to compute, since no score normalization is needed
 We show the results of the Borda fusion method (Formula \ref{borda-formula}) in Table \ref{borda-res}.
 The weight $\lambda$ is set to $0.6\pm 0.05$.
 
-\begin{table}[h!]
+\begin{table}
 \centering
 \caption{Absolute P@10 percent improvements per classifier for each of the four query runs
 (Summaries 2014, Descriptions 2014, Summaries 2015, Descriptions 2015), when using weighted \textbf{Borda Fusion}
@@ -271,11 +271,11 @@ weight of the baseline \textsf{Relevance} score (or rank) and $1-\lambda$ is the
 Figure \ref{lambda-vary} shows for each of the three methods
 how the improvement in P@10 behaves as the weight $\lambda$ is varied between 0 and 1 in steps of 0.01.
 
-\begin{figure}[h!]
+\begin{figure}
 
 \begin{subfigure}[b]{\textwidth}
  \centerline {
-  \includegraphics[scale=0.22]{../../ranking/plots/interpolation/all/all.SVMPerf.04.0.001.hedges.png}
+  \hspace*{1.5cm}\includegraphics[scale=0.22]{../../ranking/plots/interpolation/all/all.SVMPerf.04.0.001.hedges.png}
   }
 %   \vspace{-0.1cm}
 %   \caption{P@10 improvements using linear combination and SVM with Precision@K loss function.}
@@ -284,7 +284,7 @@ how the improvement in P@10 behaves as the weight $\lambda$ is varied between 0 
 %  \vspace{0.5cm}
 \begin{subfigure}[b]{\textwidth}
 \centerline{
-  \includegraphics[scale=0.22]{../../ranking/plots/rrf/all/all.SGDClassifier.squared_loss.elasticnet.hedges.png}
+  \hspace*{1.5cm}\includegraphics[scale=0.22]{../../ranking/plots/rrf/all/all.SGDClassifier.squared_loss.elasticnet.hedges.png}
   }
 %   \caption{P@10 improvements using RRF and SVM with squared loss function.}
   \label{rrf-weight}
@@ -292,7 +292,7 @@ how the improvement in P@10 behaves as the weight $\lambda$ is varied between 0 
 % \vspace{0.2cm}
 \begin{subfigure}[b]{\textwidth}
 \centerline{
-  \includegraphics[scale=0.22]{../../ranking/plots/borda/all/all.SGDClassifier.squared_loss.elasticnet.hedges.png}
+  \hspace*{1.5cm}\includegraphics[scale=0.22]{../../ranking/plots/borda/all/all.SGDClassifier.squared_loss.elasticnet.hedges.png}
   }
 %   \caption{P@10 improvements using Borda fusion and SVM with squared loss function.}
   \label{borda-weight}
@@ -348,9 +348,9 @@ when using it ($\alpha=0.4$ in Formula \ref{clf-combine-formula} --- default) th
 For RRF and Borda the effect is less pronounced --- probably because they use ranks instead of scores ---
 but is still there nonetheless.
 
-\begin{figure}[h!]
+\begin{figure}
 \centerline{
-  \includegraphics[scale=0.22]{../../ranking/plots/basic-vs-non-basic.png}
+  \hspace*{1.5cm}\includegraphics[scale=0.22]{../../ranking/plots/basic-vs-non-basic.png}
   }
   \caption{Contribution of the Keyword Counter towards the average absolute P@10 improvement for each of the three unsupervised
   fusion methods --- Linear Combination, RRF and Borda --- using their best classifier (Tables \ref{interpolation-res}, \ref{rrf-res}
@@ -366,9 +366,11 @@ using Linear Combination, RRF and Borda fusion, respectively, using the best cla
 Precision@K and squared losses, respectively) and for each of the four runs, \{Summaries, Descriptions\} $\times$ \{2014, 2015\}.
 
 We summarize the findings in Table \ref{change-per-query-table}, which counts
-how many queries are affected after the reranking.
+how many queries are affected after the re-ranking,
+and reinforces the idea that $\textsf{Linear Combination} \gg \textsf{RRF} > \textsf{Borda}$
+and that 2014 is easier to re-rank than 2015.
 
-\begin{table}[h!]
+\begin{table}
 \centering
 \caption{Number of positively/negatively affected queries for each of the three unsupervised fusion methods, using their best classifier (Tables \ref{interpolation-res}, \ref{rrf-res}
 and \ref{borda-res}, respectively).}
@@ -384,9 +386,6 @@ Borda Fusion       	& 30                   & 9                   & 24           
 }
 \end{table}
 
-This reinforces the idea that $\textsf{Linear Combination} \gg \textsf{RRF} > \textsf{Borda}$
-and that 2014 is easier to rerank than 2015.
-
 Looking more closely at Figures \ref{interp-query}, \ref{rrf-query}, \ref{borda-query},
 it is clear that
 treatment queries (21-30) fared \emph{much} better than the diagnosis queries (1-10)
@@ -399,7 +398,7 @@ We summarize these findings in Table \ref{change-per-query-table-lincomb},
 where we list the improvements in P@10 for each intent type using the Linear Combination method with SVM--Precision@K
 classifier.
 
-\begin{table}[h!]
+\begin{table}
 \centering
 \caption{Absolute P@10 percent improvements per intent type for each of the four query runs
 (Summaries 2014, Descriptions 2014, Summaries 2015, Descriptions 2015), when using weighted \textbf{Linear Combination}
@@ -457,7 +456,7 @@ Since the learning-to-rank algorithms have several parameters, we performed a se
 results (for example, we varied the number of iterations or the number of trees from 5 to 500 in steps of 10).
 The best parameters found are listed in Table \ref{l2r-params}. All other parameters are set to their default values from \texttt{RankLib}.
 
-\begin{table}[h!]
+\begin{table}
 \centering
 \caption{Best parameters found for the learning-to-rank algorithms.}
 \label{l2r-params}
@@ -490,7 +489,7 @@ the \emph{Descriptions 2014} training set for the \emph{Descriptions 2015} test 
 
 For convenience, we \textit{italicize} the results contributing to the Best Average column.
 
-\begin{table}[h!]
+\begin{table}
 \caption{Absolute P@10 percent improvements for each of the four query runs
 (Summaries 2014, Descriptions 2014, Summaries 2015, Descriptions 2015), when using \textbf{supervised fusion (learning-to-rank)}
 for fusing the baseline relevance scores with the classifier scores.
@@ -567,7 +566,7 @@ three methods (above 11.25\%), which \emph{might} explain \emph{some} of the per
 Of course, we cannot
 be sure if this is indeed the cause, or if simply these methods are less suited for the task at hand.
 
-\begin{figure}[h!]
+\begin{figure}
 \centerline{
   \includegraphics[scale=0.3]{../../ranking/plots/unjudged.png}
   }
@@ -596,7 +595,7 @@ As discussed for the unsupervised fusion methods, this may be due to the much lo
 documents for Diagnosis and Test (1000 positive samples) vs Treatment (8000 positive samples).
 In addition, 2014 seems much easier to improve than 2015, especially the Diagnosis and Test queries.
 
-\begin{table}[h!]
+\begin{table}
 \centering
 \caption{Absolute P@10 percent improvements per intent type for each of the four query runs
 (Summaries 2014, Descriptions 2014, Summaries 2015, Descriptions 2015), when using \textbf{Linear Regression}
@@ -617,7 +616,7 @@ Average   & +7		 	    & +8.33			 & +2.67		   & +2.33			& \textbf{+5.08}	 \\
 }
 \end{table}
 
-\begin{figure}[h!]
+\begin{figure}
 \centerline{
   \includegraphics[scale=0.215]{../../ranking/plots/bar/regression.regression.png}
   }
@@ -633,7 +632,7 @@ Since for Linear Combination, both SVM classifiers with Precision@K and Recall@K
 losses give improvements of at least $6\%$, we list both of them in the comparison
 (Table \ref{fusion-comp}).
 
-\begin{table}[h!]
+\begin{table}
 \centering
 \caption{Comparison between the best fusion methods --- absolute P@10 percent improvements for each of the four query runs
 (Summaries 2014, Descriptions 2014, Summaries 2015, Descriptions 2015).}
@@ -668,7 +667,7 @@ We do need, however, training data and a search for the best hyper-parameters.
 Thus, there are trade-offs for each approach (supervised vs. unsupervised),
 but nevertheless they each give solid average improvements of at least 4-5\% over the baseline.
 
-% \begin{table}[h!]
+% \begin{table}
 % \caption{Learning to Rank Percentage of unjudged documents in Top 10.}
 % \label{l2r-res}
 % \resizebox{1.2\textwidth}{!}{%
@@ -693,7 +692,7 @@ but nevertheless they each give solid average improvements of at least 4-5\% ove
 
 \section{Comparison with Previous Research}
 We conclude this section by comparing our findings to previous research in the TREC CDS area.
-As discussed in Section \ref{related}, the most successful previous research using query intent types for reranking
+As discussed in Section \ref{related}, the most successful previous research using query intent types for re-ranking
 was conducted by Choi et al.~\cite{choi} for TREC 2014. However, they did not write a paper for TREC 2015,
 which means that we can only compare with their 2014 results.
 
@@ -701,15 +700,15 @@ Recall that \cite{choi} uses a similar idea as ours, namely fusing baseline scor
 classifier scores. They also use the Clinical Hedges Database for training and SVM for classification.
 Their SVM uses ROC-area loss and their fusion uses Borda with a weight $\lambda=0.5$.
 Like us, they also use the diagnosis samples for the test classifier.
-The runs that they rerank are the \emph{ExternalQE} runs, where
+The runs that they re-rank are the \emph{ExternalQE} runs, where
 they also use externally-tagged knowledge-based query expansion in addition to the baseline similarity score
 (runs \emph{Baseline}).
 
 Let us now list the runs involved in the comparison:
 \begin{itemize}
  \item from \cite{choi}, runs \emph{SNUMedinfo1} and \emph{SNUMedinfo4} for Summaries 2014 and Descriptions 2014, respectively.
-  In these runs --- like in our system --- all queries are reranked;
- \item from \cite{choi}, runs \emph{SNUMedinfo3} and \emph{SNUMedinfo6} where the Diagnosis queries are \emph{not} reranked;
+  In these runs --- like in our system --- all queries are re-ranked;
+ \item from \cite{choi}, runs \emph{SNUMedinfo3} and \emph{SNUMedinfo6} where the Diagnosis queries are \emph{not} re-ranked;
  \item our results using the approach from \cite{choi} --- Borda Fusion, SVM classifier with ROC-Area loss and $\lambda=0.5$;
  \item our results using the best unsupervised fusion method for 2014 --- Linear Combination, SVM classifier with Recall@K loss and $\lambda=0.7$;
  \item our results using the best supervised fusion method for 2014 --- Linear Regression trained on Summaries 2015.
@@ -723,7 +722,7 @@ not even having the same P@10 is enough for a definitive comparison, as exemplif
 We nevertheless do the comparison in order to see if we can recommend other approaches that \emph{seem}
 to perform better than the ones in \cite{choi}.
 
-\begin{table}[h!]
+\begin{table}
 \centering
 \caption{Comparison with previous research --- absolute P@10 percent improvements for Summaries 2014 and Descriptions 2014.}
 \label{choi-comp}
@@ -733,9 +732,9 @@ to perform better than the ones in \cite{choi}.
                           & \textbf{Summaries 2014} & \textbf{Descriptions 2014} \\\midrule
 Baseline from \cite{choi} P@10 (\%) 		& 32     			& 32                         \\\midrule
 Improvements from \cite{choi}
-- diagnosis reranked  				& +1.67  			& +1                          \\
+- diagnosis re-ranked  				& +1.67  			& +1                          \\
 Improvements from \cite{choi}
-- diagnosis not reranked 			& +2.67   			& +4.67                       \\\midrule
+- diagnosis not re-ranked 			& +2.67   			& +4.67                       \\\midrule
 %                           &                         &                            \\
 Our Baseline P@10 (\%)            			& 31.67                   	& 25                         \\\midrule
 Our improvements - method from \cite{choi} 	& +4.67                    	& +7                          \\
@@ -751,7 +750,7 @@ This might be due to the fact that they also performed externally-tagged knowled
 and possibly different data pre-processing for the
 run that we consider as baseline.
 
-Second, for \cite{choi}, reranking the Diagnosis queries is worse than \emph{not} reranking them, which means that
+Second, for \cite{choi}, re-ranking the Diagnosis queries is worse than \emph{not} re-ranking them, which means that
 their system did not work well for the Diagnosis queries and worsened the results.
 Our system, however, improves all three types of queries
 (see Tables \ref{change-per-query-table-lincomb} and \ref{change-per-query-table-regression}),
@@ -759,18 +758,17 @@ even though the Diagnosis and Test improvements are indeed lower than the Treatm
 
 Third, the absolute improvements are higher when using our methods.
 While the maximum improvement
-in \cite{choi} is +2.67\% for Summaries and +4.67\% for Descriptions (both in the runs not reranking Diagnosis queries),
+in \cite{choi} is +2.67\% for Summaries and +4.67\% for Descriptions (both in the runs not re-ranking Diagnosis queries),
 our improvements are consistently
 higher than that --- at least +7\% for Summaries and at least +8.33\% for Descriptions.
 
 As a result, our best P@10s for Summaries are 40\% and 38.67\%
 (unsupervised and supervised, respectively) compared to the best Summaries from~\cite{choi}, namely 34.67\%.
-
 For Descriptions, it is more difficult to compare, since our baseline has a much lower P@10.
-Still, our reranked P@10s for Descriptions are 35\% and 33.33\% (unsupervised and supervised, respectively)
- --- better than \cite{choi}'s P@10 of 33\% when reranking all three categories.
+Still, our re-ranked P@10s for Descriptions are 35\% and 33.33\% (unsupervised and supervised, respectively)
+ --- better than \cite{choi}'s P@10 of 33\% when re-ranking all three categories.
 Our Descriptions P@10s are, however, slightly worse
-than \cite{choi}'s P@10 of 36.67\% when reranking only the Test and Treatment queries, but keep in mind that:
+than \cite{choi}'s P@10 of 36.67\% when re-ranking only the Test and Treatment queries, but keep in mind that:
 1) we started with a baseline 7\% worse than theirs --- the absolute improvements themselves being much higher, +10\% and +8.33\%
 vs +4.67\% ---, and 2) about 13\% percent of the documents in Top 10 are unjudged for Linear Combination,
 some of which \emph{may} potentially be relevant.

@@ -35,7 +35,7 @@ The final score is given by:
 \end{equation}
 Our scoring function is therefore a \emph{fusion} of two other scoring functions (Figure \ref{diagram}).
 
-\begin{figure}[h!]
+\begin{figure}
 \centerline{
   \includegraphics[scale=0.25]{diagram.png}
   }
@@ -215,7 +215,7 @@ These algorithms are called \textbf{Learning-to-Rank} algorithms ---
 they take as input a list of features for each query-document pair $(Q,D)$ in the training
 set and learn how to rank documents based on the
 relevance judgments of those pairs.\footnote{We discuss in Chapter \ref{impl} how we choose the training set and relevance judgments.}
-At test time, they apply the learned model to rerank other query-document pairs.
+At test time, they apply the learned model to re-rank other query-document pairs.
 
 In our case, we use the $\textsf{Relevance}(Q_{\text{text}},D)$ and $\textsf{TypeClassifier}(Q_{\text{type}}, D)$
 scores as features for each $(Q,D)$-pair.
@@ -224,7 +224,7 @@ scores as features for each $(Q,D)$-pair.
 
 We have now given a complete formal definition of our retrieval system. We described the problem setting,
 the two main components of the scoring function --- the baseline relevance score and the type classifier score ---
-and also the various reranking algorithms used for fusing the two scores.
+and also the various re-ranking algorithms used for fusing the two scores.
 
 Figure \ref{diagram2} shows the entire system architecture with all the main components.
 
