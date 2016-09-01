@@ -97,21 +97,22 @@ Intent type scoring should indicate whether a particular document is useful for 
 binary classification and keyword-counting.
 
 For each intent type $T\in\{\textsf{diagnosis}, \textsf{test}, \textsf{treatment}\}$,
-we construct a machine-learning classifier and a keyword-counter in the following way:
+we construct a \emph{binary machine-learning classifier} and a \emph{keyword counter} in the following way:
 \begin{itemize}
- \item the machine-learning classifier computes an $\textsf{MLClassifier}(T,D)$ score which measures how much document $D$ conforms to type $T$;
+ \item the machine-learning classifier computes an $\textsf{MLClassifier}(T,D)$ score,
+ which measures how much document $D$ conforms to type $T$ (binary classification);
  \item the keyword counter computes a score which measures the frequency of certain \emph{keywords} related to type $T$ in document $D$:
  \begin{equation}\label{basic-formula}
   \textsf{KeywordCounter}(T,D) = \min\left(1,\,\, \displaystyle\frac{\displaystyle\mathlarger{\sum}_{w\in \textsf{Keywords}(T)} \textsf{count}(w,D)}{\textsf{cutoff}}\right),
  \end{equation}
-  where $\textsf{cutoff} > 0$ is determined empirically (the \textsf{min} and \textsf{cutoff} operations are used to
-  limit the $\textsf{KeywordCounter}$ scores that are above a certain threshold).
+  where $\textsf{cutoff} > 0$ is determined empirically, and the \textsf{min} and \textsf{cutoff} operations are used to
+  clip (limit) the scores.
 \end{itemize}
 
-The final intent type score is a linear combination of the two scores\footnote{The \textsf{MLClassifier} and \textsf{KeywordCounter}
+The final intent type score is a linear combination of the classifier and keyword counter scores\footnote{The \textsf{MLClassifier} and \textsf{KeywordCounter}
 scores are normalized before performing the combination, as described in Section \ref{unsup-fusion-theory}.}:
 \begin{equation}\label{clf-combine-formula}
- \textsf{TypeClassifier} = \alpha\cdot\textsf{MLClassifier} + (1-\alpha)\cdot\textsf{KeywordCounter},
+ \textsf{TypeClassifier} = (1-\alpha)\cdot\textsf{MLClassifier} + \alpha\cdot\textsf{KeywordCounter},
 \end{equation}
 where $\alpha\in (0,1)$ is determined empirically.
 
@@ -196,8 +197,9 @@ We separately investigate three unsupervised fusion methods:
   \end{itemize}
 
 The weight $\lambda$ measures the contribution of the baseline \textsf{Relevance} score (or rank) and
-is determined empirically for each of the three methods. For $\lambda=1$, the fused score is equal to the baseline score,
-while for $\lambda=0$, the fused score is equal to the type classifier score.
+is determined empirically for each of the three methods.
+In Linear Combination, for example, if $\lambda=1$, the fused score is equal to the baseline score,
+and if $\lambda=0$, the fused score is equal to the type classifier score.
 
 \subsection{Supervised Fusion}\label{sup-fusion}
 Let us now briefly list the various supervised fusion methods that we use:

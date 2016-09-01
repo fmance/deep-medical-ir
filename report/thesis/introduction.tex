@@ -47,8 +47,8 @@ A few participants did, nonetheless, incorporate intent type information into th
 
 A more elaborate idea was using a machine-learning \emph{classifier} to categorize the retrieved documents according
 to the three intent types and \emph{fuse} the classification scores
-with the textual similarity scores in order to improve the overall retrieval performance.
-The approach proved successful in some cases, leading to improvements compared to only using the textual similarity.
+with textual similarity scores in order to improve the overall retrieval performance.
+The approach proved successful in some cases, leading to improvements compared to only using textual similarity.
 
 However, TREC generally limits the number of submissions per team, which, in turn, restricts
 the number of configurations that participants can choose for their systems.
@@ -56,13 +56,13 @@ Indeed, as it turned out to be the case for systems using this approach,
 they only attempted one type of classifier (e.g., Support Vector Machines)
 and one type of fusion method (e.g., Borda).
 
-This means that even though the idea of using classification and fusion
-in retrieving medical articles for Clinical Decision Support looks promising,
+This means that even though the idea of using classification and score fusion
+for Clinical Decision Support looks promising,
 the amount of research carried out so far has been rather limited and fragmentary.
 
 The goal of this paper is, therefore, to
 explore this idea in a much more extensive and systematic way, both in breadth --- by experimenting
-with a wider range of machine-learning classifiers and fusion methods,
+with a wider range of machine-learning classifiers and fusion methods ---,
 and in depth --- by performing a more comprehensive analysis of the resulting models.
 
 In order to do this, we use a variety of classifiers, ranging from classical ones, like Support Vector Machines,
@@ -119,10 +119,10 @@ The next chapters detail how we build our system and evaluate our results.
 We begin by researching the previous work from the CDS area in Chapter \ref{related},
 with a strong focus on the papers from the TREC CDS track.
 In Chapter \ref{meth}, we give a formal definition of our retrieval system, discussing the ways in which we classify documents
-and incorporate the intent type scores into the ranking process.
+and incorporate intent types into the ranking process.
 In Chapter \ref{impl}, we present the practical realization of our retrieval system, including any external libraries
 and frameworks that we use.
-In Chapter \ref{exp}, we apply our system to the TREC 2014 and 2015 data, and evaluate each of our models.
+In Chapter \ref{exp}, we apply our system on the TREC 2014 and 2015 data, and evaluate each of our models.
 We conclude by making a comparison between our best methods and previous research.
 
 

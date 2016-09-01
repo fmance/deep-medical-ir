@@ -34,13 +34,13 @@ and \emph{score fusion} to combine the classification scores with textual releva
 We experiment with a wide range of classifiers
 (Support Vector Machines, Logistic Regression, Ridge Classification, Perceptrons, Passive-Aggressive Classification,
 Neural Networks, Multilayer Perceptrons),
-as well as with several supervised and unsupervised fusion methods (Linear Combination, Reciprocal Rank Fusion,
+as well as with several unsupervised and supervised fusion methods (Linear Combination, Reciprocal Rank Fusion,
 Borda, Linear Regression, AdaRank, RankNet, Coordinate Ascent, MART, LambdaMART and RankBoost).
 
 We analyze and compare each of these
 approaches in detail, by applying our retrieval system on the TREC CDS tracks from 2014 and 2015.
 Our results show that incorporating intent type information into the retrieval process
-(via classification and fusion) leads
+(via classification and score fusion) leads
 to solid improvements in Precision@10 compared to only using textual relevance:
 up to 8\% absolute improvement for 2014 and up to 4\% absolute improvement for 2015.
 % Our best method outperforms the best participating system
