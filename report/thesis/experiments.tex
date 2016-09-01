@@ -105,7 +105,8 @@ and \ref{impl-unsup}.
 We therefore produce seventeen sets of results for each of the four runs,
 one set of results per classifier.
 We then average for each classifier the results of the corresponding four runs, producing seventeen \emph{average results}.
-This shows which classifier leads to the highest average P@10 improvement for that fusion method.
+Comparing to the baseline results,
+we determine which classifier leads to the highest average P@10 improvement for that fusion method.
 
 Furthermore, we inspect the contribution of the keyword counter towards the overall P@10 improvement. More precisely,
 we look at what the improvement is \emph{with} (default) versus \emph{without} using the keyword counter, that is, using $\alpha=0.4$
@@ -152,7 +153,7 @@ Naive Bayes                        	& +3                       & +4             
 }
 \end{table}
 
-The best re-rankers are the ones using SVM classifiers, with the top two giving an average improvement in P@10 of at least 6 percentage
+The best results are obtained using SVM classifiers, with the top two giving average improvements in P@10 of at least 6 percentage
 points. For Summaries and Descriptions 2014, the best classifier is SVM with Recall@K loss (8.33\% and 10\% improvements),
 for Summaries 2015, the best classifier is SVM with Precision@K loss (4\% improvement),
 and for Descriptions 2015, the best classifier is Ridge (4\% improvement).
@@ -214,7 +215,7 @@ although the top one now uses the squared loss instead of Precision@K loss (whic
 RRF, however, gives lower improvements, with the highest one being 4.75\%
 (compared to 6\% for Linear Combination).
 This may be due to the fact that RRF loses some information by only using document ranks instead of raw scores. On the other hand, RRF
-is easier and more convenient to compute, since no score normalization is needed for \textsf{Relevance} and \textsf{TypeClassifier}.
+is easier and more convenient to compute, since no normalization is needed for the \textsf{Relevance} and \textsf{TypeClassifier} scores.
 
 
 \subsection{Borda Fusion Results}
@@ -254,7 +255,7 @@ Perceptron                                              & +1.33           & +2  
 }
 \end{table}
 
-Again, SVM classifiers work best, with the top one using a squared loss, like RRF.
+Again, SVM classifiers work best, with the top one using a squared loss, like with RRF.
 However, the results for Borda are generally lower than for RRF by around 0.5\%. This is mostly due
 to poorer results for 2015 (1.83\% vs. 3.33\% for the top result).
 On the other hand, Borda works slightly better for 2014 (6.67\% vs 6.16\% for the top result).
@@ -305,7 +306,9 @@ and \ref{borda-res}, respectively).}
 
 \end{figure}
 
-The first observation to make in Figure \ref{lambda-vary} is that the highest improvements generally happen for $\lambda \in [0.6, 0.8]$.
+The first observation to make in Figure \ref{lambda-vary} is that the highest improvements generally happen for $\lambda \in [0.6, 0.8]$,
+that is, the \textsf{Relevance} counts for about two thirds
+and the \textsf{TypeClassifier} counts for about one third.
 As also reflected in Tables \ref{interpolation-res}, \ref{rrf-res} and \ref{borda-res}, the 2014 improvements are much higher than
 the 2015 ones.
 
@@ -362,12 +365,12 @@ and \ref{borda-res}, respectively).}
 We conclude our analysis of unsupervised fusion methods by examining the improvement per query and intent type.
 
 Figures \ref{interp-query}, \ref{rrf-query}, \ref{borda-query} show the change (increase or decrease) in P@10 for each query,
-using Linear Combination, RRF and Borda fusion, respectively, using the best classifier for each method (SVM with
+using Linear Combination, RRF and Borda Fusion, respectively, using the best classifier for each method (SVM with
 Precision@K and squared losses, respectively) and for each of the four runs, \{Summaries, Descriptions\} $\times$ \{2014, 2015\}.
 
 We summarize the findings in Table \ref{change-per-query-table}, which counts
 how many queries are affected after the re-ranking,
-and reinforces the idea that $\textsf{Linear Combination} \gg \textsf{RRF} > \textsf{Borda}$
+reinforcing the idea that $\textsf{Linear Combination} \gg \textsf{RRF} > \textsf{Borda}$,
 and that 2014 is easier to re-rank than 2015.
 
 \begin{table}
@@ -393,9 +396,8 @@ which fared \emph{slightly} better than the test queries (11-20).
 This may be due to having only about 1000 positive samples for training the diagnosis classifier vs. 8000 positive samples
 for training the treatment classifier. Moreover, we did not have any training samples for the test classifier,
 so we had to use the diagnosis samples instead.
-
-We summarize these findings in Table \ref{change-per-query-table-lincomb},
-where we list the improvements in P@10 for each intent type using the Linear Combination method with SVM--Precision@K
+These findings are summarized in Table \ref{change-per-query-table-lincomb},
+which lists the improvements in P@10 for each intent type, using the Linear Combination method with SVM--Precision@K
 classifier.
 
 \begin{table}
@@ -575,7 +577,7 @@ be sure if this is indeed the cause, or if simply these methods are less suited 
 \end{figure}
 
 Let us now decide which training sets are better.
-Looking at Table \ref{l2r-res}, we see that for both Summaries 2014 and Descriptions 2015, the best
+Looking at Table \ref{l2r-res}, we see that for both Summaries 2014 and Descriptions 2014, the best
 training set is \emph{generally} Summaries 2015.
 For Summaries 2015, the best training set
 is Summaries 2014 for the top two methods and Descriptions 2014 for the other five,
@@ -658,7 +660,7 @@ RankNet				& +6.67		& +6		& +1.67			& +1.67		& \textbf{+4}		\\
 The best method overall is therefore Linear Combination using an SVM classifier. For 2014, the best loss function
 is Recall@K, while for 2015 the best loss function is Precision@K.
 
-Compared to the unsupervised fusion methods, both Linear Regression (+5.08\%) and AdaRank (+4.92\%) sit between
+Compared to the unsupervised fusion methods, both Linear Regression (+5.08\%) and AdaRank (+4.92\%) are between
 Linear Combination (+6\%) and RRF (+4.75\%). Of course, one advantage of the learning-to-rank algorithms
 is that we do not need to manually search for the best weight $\lambda$ between the two features,
 since it is automatically determined
@@ -701,7 +703,7 @@ classifier scores. They also use the Clinical Hedges Database for training and S
 Their SVM uses ROC-area loss and their fusion uses Borda with a weight $\lambda=0.5$.
 Like us, they also use the diagnosis samples for the test classifier.
 The runs that they re-rank are the \emph{ExternalQE} runs, where
-they also use externally-tagged knowledge-based query expansion in addition to the baseline similarity score
+they also use externally-tagged knowledge-based query expansion on top of the baseline relevance scores
 (runs \emph{Baseline}).
 
 Let us now list the runs involved in the comparison:
@@ -710,8 +712,8 @@ Let us now list the runs involved in the comparison:
   In these runs --- like in our system --- all queries are re-ranked;
  \item from \cite{choi}, runs \emph{SNUMedinfo3} and \emph{SNUMedinfo6} where the Diagnosis queries are \emph{not} re-ranked;
  \item our results using the approach from \cite{choi} --- Borda Fusion, SVM classifier with ROC-Area loss and $\lambda=0.5$;
- \item our results using the best unsupervised fusion method for 2014 --- Linear Combination, SVM classifier with Recall@K loss and $\lambda=0.7$;
- \item our results using the best supervised fusion method for 2014 --- Linear Regression trained on Summaries 2015.
+ \item our results using the best \emph{unsupervised} fusion method for 2014 --- Linear Combination, SVM classifier with Recall@K loss and $\lambda=0.7$;
+ \item our results using the best \emph{supervised} fusion method for 2014 --- Linear Regression trained on Summaries 2015.
 \end{itemize}
 
 Table \ref{choi-comp} summarizes the results of the comparison.
@@ -720,7 +722,7 @@ we cannot do a real, unequivocal comparison. Different baselines imply different
 not even having the same P@10 is enough for a definitive comparison, as exemplified by the difference in improvements for Summaries
 2014 vs. Descriptions 2014 for \cite{choi} (both baselines are 32\%, but the improvements are different).
 We nevertheless do the comparison in order to see if we can recommend other approaches that \emph{seem}
-to perform better than the ones in \cite{choi}.
+to perform better than the one from \cite{choi}.
 
 \begin{table}
 \centering
