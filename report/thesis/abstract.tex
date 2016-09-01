@@ -29,13 +29,13 @@ intent type} --- diagnosis, test or treatment).
 % Due to the limited number of submissions allowed by TREC, however, these systems only tried one type of classifier and one type
 % of fusion method, and did not investigate any further approaches.
 
-Our approach is to use \emph{machine-learning classifiers} and \emph{keyword counters} to compute the relevance of documents to the queries' intent types,
+We use \emph{machine-learning classifiers} and \emph{keyword counters} to compute the relevance of documents to the queries' intent types,
 and \emph{score fusion} to combine the classification scores with textual relevance scores (computed by BM25).
 We experiment with a wide range of classifiers
 (Support Vector Machines, Logistic Regression, Ridge Classification, Perceptrons, Passive-Aggressive Classification,
 Neural Networks, Multilayer Perceptrons),
 as well as with several unsupervised and supervised fusion methods (Linear Combination, Reciprocal Rank Fusion,
-Borda, Linear Regression, AdaRank, RankNet, Coordinate Ascent, MART, LambdaMART and RankBoost).
+Borda, Linear Regression, Ada Rank, Rank Net, Coordinate Ascent, MART, Lambda MART and Rank Boost).
 
 We analyze and compare each of these
 approaches in detail, by applying our retrieval system on the TREC CDS tracks from 2014 and 2015.

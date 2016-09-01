@@ -1,8 +1,8 @@
 \chapter{Experimental Results}\label{exp}
 
-Let us now present the experimental results of applying our system formally defined in Chapter \ref{meth} and implemented in Chapter
+Let us now present the experimental results of applying the system formally defined in Chapter \ref{meth} and implemented in Chapter
 \ref{impl}
-to the TREC 2014 and 2015 Clinical Decision Support tracks.
+on the TREC 2014 and 2015 Clinical Decision Support tracks.
 We first discuss the evaluation metric and the classifier parameters,
 and then proceed to analyzing
 the results of the unsupervised (Linear Combination, RRF and Borda)
@@ -25,13 +25,13 @@ We present a set of results for each of these runs and also three \emph{mean res
 \end{itemize}
 
 \section{Evaluation Metric}
-To evaluate the quality of the rankings produced by our scoring function, we use the Precision@10 metric (P@10), which counts for each query
+To evaluate the quality of the rankings produced by scoring Function \ref{fusion}, we use the Precision@10 metric (P@10), which counts for each query
 the percentage of
 relevant results from the top 10 retrieved results (for example, if four documents are relevant from the top 10 retrieved,
 then P@10 equals 40\%). The P@10 is then averaged over all queries in a run.
 
 As discussed in Section \ref{qrels}, the ground truths --- relevance judgments --- are provided by medical experts
-and stored in the (\emph{qrels}) files.
+and stored in the \emph{qrels} files.
 
 \section{Baseline and Re-ranked Results}
 For each of the four query runs listed in Section \ref{runs}, we compute:
@@ -116,7 +116,7 @@ Lastly, using the best classifier, we show for each run the improvement for each
 
 \subsection{Linear Combination Results}
 We begin by showing the results of the Linear Combination fusion method (Formula \ref{interp-formula}) in Table \ref{interpolation-res}.
-The weight $\lambda$ is set to $0.7\pm 0.02$.
+The best weight $\lambda$ is $0.7\pm 0.02$ (as we shall see in Section \ref{lambda-vary-results}).
 
 The first line shows the \emph{baseline} P@10 for each of the four runs.
 The next lines show the \emph{absolute} P@10 \emph{improvements} for each classifier.
@@ -159,7 +159,7 @@ for Summaries 2015, the best classifier is SVM with Precision@K loss (4\% improv
 and for Descriptions 2015, the best classifier is Ridge (4\% improvement).
 
 In particular, for Summaries 2014, the top re-ranked result is $31.67\%+8.33\% = 40\%$, which is better than the top automatic submission
-from TREC 2014 (39\%).
+from TREC 2014 (39\% --- \cite{novasearch}).
 
 Generally, the improvements for 2014 are at least
 twice as high as the ones for 2015, but this may be due to the lower baseline precisions from 2014 compared to 2015.
@@ -212,8 +212,8 @@ Perceptron                                     	& +2                       & +3 
 Similar to the linear combination method, SVM classifiers generally work best,
 although the top one now uses the squared loss instead of Precision@K loss (which takes fourth place instead).
 
-RRF, however, gives lower improvements, with the highest one being 4.75\%
-(compared to 6\% for Linear Combination).
+RRF, however, gives lower improvements, with the highest one being +4.75\%
+(compared to +6\% for Linear Combination).
 This may be due to the fact that RRF loses some information by only using document ranks instead of raw scores. On the other hand, RRF
 is easier and more convenient to compute, since no normalization is needed for the \textsf{Relevance} and \textsf{TypeClassifier} scores.
 
@@ -257,12 +257,12 @@ Perceptron                                              & +1.33           & +2  
 
 Again, SVM classifiers work best, with the top one using a squared loss, like with RRF.
 However, the results for Borda are generally lower than for RRF by around 0.5\%. This is mostly due
-to poorer results for 2015 (1.83\% vs. 3.33\% for the top result).
-On the other hand, Borda works slightly better for 2014 (6.67\% vs 6.16\% for the top result).
+to poorer results for 2015 (+1.83\% vs. +3.33\% for the top result).
+On the other hand, Borda works slightly better for 2014 (+6.67\% vs +6.16\% for the top result).
 
-Overall, the results of the three fusion methods indicate that \[\textsf{Linear Combination} \gg \textsf{RRF} > \textsf{Borda}.\]
+Overall, the results of the three fusion methods indicate that: \[\textsf{Linear Combination} \gg \textsf{RRF} > \textsf{Borda}.\]
 
-\subsection{Relation between Weight $\lambda$ and Improvement}
+\subsection{Relation between Weight $\lambda$ and Improvement}\label{lambda-vary-results}
 Let us now investigate the relation between weight $\lambda$ and the improvement in P@10 for each of the three unsupervised
 fusion methods, when using their best classifier (i.e., SVM with Precision@K loss for linear combination
 and SVM with squared loss for RRF and Borda).
@@ -327,10 +327,10 @@ Moving forward with the analysis of Figure \ref{lambda-vary}, we see that
 the improvements for 2014 and 2015 are more correlated with each other when using Linear Combination than when using
 RRF or Borda. By this we mean that the two weights that give the peak average improvements for 2014 and 2015 are closer to each other
 when using Linear Combination (both around $0.7$) than they are when using RRF or Borda ($0.4$ vs $0.6$ for 2014 and 2015, respectively).
-This ``mismatch'' might also contribute to the lower average peak precision for RRF and Borda ($<4.8\%$)
-vs. Linear Combination ($6\%$), despite the fact that they sometimes
+This ``mismatch'' might also contribute to the lower average peak P@10 improvements for RRF and Borda ($<+4.8\%$)
+vs. Linear Combination ($+6\%$), despite the fact that they sometimes
 give higher peak precisions for 2014 (e.g. peak Descriptions 2014 improvement
-is $\sim10\%$ for Borda vs. only $\sim9\%$ for Linear Combination). However, the 2015 improvements are always higher for
+is $\sim+10\%$ for Borda vs. only $\sim+9\%$ for Linear Combination). However, the 2015 improvements are always higher for
 Linear Combination.
 
 Looking beyond these granular differences and more at the overall picture, we can safely conclude
@@ -551,7 +551,7 @@ AdaRank is the best for 2015 overall (+2.67\%).
 
 The next two methods, RankNet and Coordinate Ascent, give similarly good
 improvements for 2014 (+6.33\% and +7.17\% respectively), but their performance is somewhat lower
-for 2015 (only +1.67\% and +0.7\% respectively).
+for 2015 (only +1.67\% and +0.7\%, respectively).
 
 The bottom three methods, Lambda MART, MART and RankBoost, do not give an improvement for 2015, being worse
 than the baselines by around 0.8\%, 4.5\% and 3.8\%, respectively. However, their 2014 improvements are large enough to compensate
@@ -560,7 +560,7 @@ for this, so they all give positive overall improvements.
 One potential reason for the lower performance of the latter three methods might be the fact that they retrieve in the top 10
 many documents for which we have no relevance judgments. Even though some of these documents \emph{might} be relevant,
 they are by default considered irrelevant.
-Figure \ref{unjudged-fig} shows for each learning to rank algorithm
+Figure \ref{unjudged-fig} shows for each learning-to-rank algorithm
 the relation between the average P@10 improvements and the average
 percentage of unjudged documents in Top 10. The top four methods
 have substantially lower percentages of unjudged documents (below 8.25\%) than the bottom

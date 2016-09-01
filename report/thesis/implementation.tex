@@ -1,7 +1,7 @@
 \chapter{Implementation}\label{impl}
 
 In this chapter, we discuss the implementation of the system formally defined in the previous section. We first
-introduce the data we are working on, then move on to the implementation of the similarity and type classifier scoring functions,
+introduce the data we are working on, then move on to the implementation of the relevance and type classifier scoring functions,
 and then conclude with the implementation of the various unsupervised and supervised fusion methods.
 
 \section{Data}
@@ -62,7 +62,7 @@ We have relevance judgments for approximately 38,000 topic-document pairs for 20
 being positive (relevant). The relevance judgments were assigned by medical experts after each edition of TREC CDS.
 
 Since not all 733,100 $\times$ 60 topic-document pairs could have possibly been evaluated, it sometimes happens that our system retrieves documents
-that are not judged, and by default are considered non-relevant. This \emph{may} negatively impact the performance evaluation of
+that are not judged, and by default are considered non-relevant. As we shall see in Chapter \ref{exp}, this \emph{may} negatively impact the performance evaluation of
 the system, since part of these documents may actually be relevant.
 
 \section{Scoring Function Implementation}
@@ -116,12 +116,12 @@ For the keyword counter, we use Formula \ref{basic-formula}, with the following 
 
 \subsubsection{Machine-Learning Classifier Implementation}
 \paragraph{Training Data}
-For the machine-learning classifier, we need training data for each of the three intent types (diagnosis, test and treatment).
-For this, we use the Clinical Hedges Database (CHD)
+For the machine-learning classifiers, we need training data for each of the three intent types (diagnosis, test and treatment).
+Like~\cite{choi,choi-prev,FDUMedSearch}, we use the Clinical Hedges Database (CHD)
 \cite{chd},
 which has diagnosis labels for around 1100 documents, and treatment labels for around 8000 documents. It does
-not have any test labels, but we can use the diagnosis labels for test, since the two intent types are relatively similar
-(this was also the approach taken by \cite{choi}).
+not have any test labels, but, like \cite{choi}, we can use the diagnosis labels for test, since the two intent types are relatively similar.
+% (this was also the approach taken by \cite{choi}).
 The CHD also has 37,000 documents of other types, which we use as \emph{negative} samples.
 One drawback of the CHD, however, is that the training documents are not part of the Open-Access subset, so their full text is not
 available for (programmatic) download. Therefore, we only use the titles and the abstracts for training.
@@ -138,7 +138,7 @@ for the SVM-based classifiers with zero/one, error-rate, $F_1$, Precision@K, Rec
 For the convolutional neural networks, we use the \texttt{gensim} package \cite{gensim} to learn the \texttt{word2vec}
 word embeddings (trained over the entire document collection)
 and the \texttt{tensorflow} package \cite{tf} for training the neural networks, based on the construction
-from \cite{cnn} and \cite{cnn-code}, with an additional hidden layer before the last (fully connected) layer.
+from \cite{cnn} and \cite{cnn-code}, but with an additional hidden layer before the last (fully connected) layer.
 
 The classifier scores are given by the (confidence) values of the decision function, or the predicted probabilities,
 when available (e.g., for Naive Bayes).

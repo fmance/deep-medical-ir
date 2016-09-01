@@ -13,7 +13,7 @@ The rank $r_Q(D)$ of document $D$ is the position of $D$ in the list of sorted s
 A performance function $\mathcal{P}:f\rightarrow\mathbb{R}$ measures the \emph{quality} of the rankings produced by
 $f$, averaged over all the queries in $ \mathcal{Q}$.
 
-Let us now define our scoring function.
+Let us now define the scoring function.
 Recall that the medical queries we are interested in have two components:
 \begin{enumerate*}[label=\arabic*)]
  \item the \emph{query text}, containing the medical case report (patient history, current symptoms, any test results) and
@@ -33,7 +33,12 @@ The final score is given by:
 \begin{equation}\label{fusion}
   \textsf{FinalScore}(Q, D) = \textsf{Fusion}\left(\textsf{Relevance}(Q_{\text{text}}, D), \textsf{TypeClassifier}(Q_{\text{type}}, D)\right)
 \end{equation}
-Our scoring function is therefore a \emph{fusion} of two other scoring functions (Figure \ref{diagram}).
+The scoring function, depicted in Figure \ref{diagram},
+is therefore a \emph{fusion} of two other scoring functions,
+similar to \cite{choi, choi-prev, limsi2015, FDUMedSearch} (see Section \ref{related-intent-type}).
+However, as we shall see in Sections \ref{intent-scoring} and \ref{fusion-theory},
+% in contrast to \cite{choi, choi-prev, limsi2015, FDUMedSearch},
+we explore a much wider range of $\textsf{TypeClassifiers}$ and $\textsf{Fusion}$ methods.
 
 \begin{figure}
 \centerline{
@@ -44,11 +49,7 @@ Our scoring function is therefore a \emph{fusion} of two other scoring functions
   \label{diagram}
 \end{figure}
 
-In contrast to \cite{choi, limsi2015, FDUMedSearch}, which experimented with only one
-$\textsf{TypeClassifier}$ and $\textsf{Fusion}$ method
-(Section \ref{related-intent-type}),
-we explore a much wider range of $\textsf{TypeClassifiers}$ and $\textsf{Fusion}$ methods, in order to maximize
-the \emph{performance improvement}
+Our goal is to maximize the \emph{performance improvement}:
 \begin{equation}\label{improvement-formula}
    \mathcal{I}_{\mathcal{P}}(\textsf{TypeClassifier}, \textsf{Fusion})
    =\mathcal{P}(\textsf{Fusion}(\textsf{Relevance}, \textsf{TypeClassifier})) - \mathcal{P}(\textsf{Relevance}),
@@ -76,7 +77,7 @@ Let us now study each of the three components in Formula \ref{fusion} individual
 
 \section{Relevance Scoring}
 To compute the textual relevance score of a document $D\in\mathcal{D}$ with respect to a query $Q\in\mathcal{Q}$,
-we use the well-known BM25 relevance scoring function \cite{bm25}:
+we use the well-known BM25 relevance scoring function~\cite{bm25}:
 \begin{equation}\label{bm25-formula}
 \textsf{BM25}(Q_{\text{text}},D)
  = \displaystyle\mathlarger{\mathlarger{\sum}}_{w\in Q_{\text{text}}} \textsf{idf}(w)\cdot\displaystyle\frac{\textsf{tf}(w,D)\cdot(k_1+1)}{\textsf{tf}(w,D)+k_1\cdot\left(1-b+b\cdot\frac{|D|}{\textsf{avgDocLen}}\right)}
@@ -210,7 +211,7 @@ Let us now briefly list the various supervised fusion methods that we use:
  \item {MART} \cite{mart};
  \item {Lambda MART} \cite{lambda-mart};
  \item {Rank Boost} \cite{rankBoost};
-  \item {Linear Regression}.
+  \item {Linear Regression} \cite{ranklib}.
 \end{itemize}
 
 These algorithms are called \textbf{Learning-to-Rank} algorithms ---
