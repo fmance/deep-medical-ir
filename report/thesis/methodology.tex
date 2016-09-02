@@ -23,29 +23,30 @@ Recall that the medical queries we are interested in have two components:
 We therefore represent a medical query $Q\in\mathcal{Q}$ as a tuple of text and intent type: \[Q = \left(Q_{\text{text}},\ Q_{\text{type}}\right),\]
 where $Q_{\text{type}} \in \{\textsf{diagnosis}, \textsf{test}, \textsf{treatment}\}$.
 
-Given a query $Q$, the retrieval system computes a relevance score for each document $D\in\mathcal{D}$.
+Given a query $Q$, the retrieval system computes a score for each document $D\in\mathcal{D}$.
 The scoring process takes into account both the query text \emph{and} the query intent type.
-More precisely, we use the
+Based on the idea from \cite{choi, choi-prev, limsi2015, FDUMedSearch} of fusing relevance and classification scores (discussed
+in Section \ref{related-intent-type}), we use the
 $\textsf{Relevance}(Q_{\text{text}}, D)$ and $\textsf{TypeClassifier}(Q_{\text{type}}, D)$
 scoring functions to compute the relevance of the document to the query text and to the query intent type, respectively.
-
 The final score is given by:
 \begin{equation}\label{fusion}
   \textsf{FinalScore}(Q, D) = \textsf{Fusion}\left(\textsf{Relevance}(Q_{\text{text}}, D), \textsf{TypeClassifier}(Q_{\text{type}}, D)\right)
 \end{equation}
 The scoring function, depicted in Figure \ref{diagram},
 is therefore a \emph{fusion} of two other scoring functions,
-similar to \cite{choi, choi-prev, limsi2015, FDUMedSearch} (see Section \ref{related-intent-type}).
-However, as we shall see in Sections \ref{intent-scoring} and \ref{fusion-theory},
+similar to \cite{choi, choi-prev, limsi2015, FDUMedSearch}.
+Compared to previous research, however,
 % in contrast to \cite{choi, choi-prev, limsi2015, FDUMedSearch},
-we explore a much wider range of $\textsf{TypeClassifiers}$ and $\textsf{Fusion}$ methods.
+we explore a much wider range of $\textsf{TypeClassifiers}$ and $\textsf{Fusion}$ methods,
+as we shall see in Sections \ref{intent-scoring} and \ref{fusion-theory}.
 
 \begin{figure}
 \centerline{
   \includegraphics[scale=0.25]{diagram.png}
   }
   \caption{The three main components of the scoring function:
-  relevance, intent type classification and score fusion.}
+  relevance, intent type classification and score fusion, based on the idea from \cite{choi, choi-prev, limsi2015, FDUMedSearch}.}
   \label{diagram}
 \end{figure}
 
@@ -177,7 +178,7 @@ $r_{\text{rel}}$ and $r_{\text{clf}}$ be its \textsf{Relevance} and \textsf{Type
 We separately investigate three unsupervised fusion methods:
 \begin{itemize}
 
- \item \textbf{Weighted Linear Combination} --- the fused score is given by:
+ \item \textbf{Weighted Linear Combination} \cite{borda} --- the fused score is given by:
  \begin{equation} \label{interp-formula}
  \textsf{LinComb}(s_{\text{rel}}, s_{\text{clf}}) =
 	      \lambda s_{\text{rel}} + (1-\lambda) s_{\text{clf}}, \text{ where } \lambda \in (0,1);
