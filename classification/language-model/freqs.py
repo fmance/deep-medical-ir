@@ -36,7 +36,7 @@ def writeWordCountsForTarget(target):
 		count = sum(1 for _ in re.finditer(r"\b%s" % target, text))
 		out.write("%d\n" % count)
 		counter += 1
-		if counter % 1000 == 0:
+		if counter % 10000 == 0:
 			print counter
 	out.close()
 	

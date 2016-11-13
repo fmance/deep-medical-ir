@@ -20,9 +20,9 @@ echo "-----------------------------------"
 echo "Trec-eval"
 ../../eval/trec_eval.9.0/trec_eval  ../../data/qrels/qrels-treceval-$year.txt $rerankedResultsFile
 
-echo "-----------------------------------"
-echo "Unjudged"
+#echo "-----------------------------------"
+#echo "Unjudged"
 
-cd ..
-python unjudged.py ../data/qrels/qrels-treceval-$year.txt supervised/$rerankedResultsFile
-cd -
+#cd ..
+#python unjudged.py ../data/qrels/qrels-treceval-$year.txt supervised/$rerankedResultsFile
+#cd -

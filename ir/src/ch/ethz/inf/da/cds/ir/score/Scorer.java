@@ -228,16 +228,7 @@ public class Scorer {
 
     private static Query constructLuceneQuery(TrecQuery trecQuery, String field) throws ParseException {
         QueryParser parser = new QueryParser(field, new EnglishAnalyzer(LuceneUtils.getIndriStopWords()));
-        Query summaryQuery = parser.parse(QueryParser.escape(trecQuery.getSummary()));
-        if (trecQuery.getDiagnosis().isPresent()) {
-            Query diagnosisQuery = parser.parse(QueryParser.escape(trecQuery.getDiagnosis().get()));
-            BooleanQuery.Builder queryBuilder = new BooleanQuery.Builder();
-            queryBuilder.add(summaryQuery, BooleanClause.Occur.MUST);
-            queryBuilder.add(diagnosisQuery, BooleanClause.Occur.MUST);
-            return queryBuilder.build();
-        } else {
-            return summaryQuery;
-        }
+        return parser.parse(QueryParser.escape(trecQuery.getDescription()));
     }
 
     public static List<Term> getQueryTerms(IndexReader reader, TrecQuery trecQuery, String field)

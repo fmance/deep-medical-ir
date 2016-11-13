@@ -24,6 +24,7 @@ CLASSIFICATION_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..
 QRELS_DIR = os.path.join(DATA_DIR, "qrels")
 QRELS_2014 = os.path.join(QRELS_DIR, "qrels-treceval-2014.txt")
 QRELS_2015 = os.path.join(QRELS_DIR, "qrels-treceval-2015.txt")
+QRELS_2016 = os.path.join(QRELS_DIR, "qrels-treceval-2016.txt")
 
 QUERIES_DIR = os.path.join(DATA_DIR, "queries")
 PLAINTEXT_DIR = os.path.join(DATA_DIR, "plaintext")
@@ -39,16 +40,13 @@ LONG_DOC_IDS_PATH = os.path.join(DATA_DIR, "doc-ids/long-doc-ids.txt")
 LONG_DOC_IDS = set(readInts(LONG_DOC_IDS_PATH))
 
 def readQrels(qrelFile):
-	if "2016" in qrelFile:
-		return defaultdict(defaultdict)
-
 	qrels = defaultdict(list)
 	for line in open(qrelFile):
 		parts = line.split()
 		qid = int(parts[0])
 		did = int(parts[2])
 		rel = int(parts[3])
-		if did in VALID_DOC_IDS:
+		if did in VALID_DOC_IDS or "2016" in qrelFile:
 			qrels[qid].append((did, rel))
 	return qrels
 
@@ -57,6 +55,9 @@ def readQrels2014():
 
 def readQrels2015():
 	return readQrels(QRELS_2015)
+
+def readQrels2016():
+	return readQrels(QRELS_2016)
 
 def getQrelsDocIds(qrels):
 	return [did for (_, docRelPairList) in qrels.items() for (did, _) in docRelPairList]
@@ -111,14 +112,14 @@ def readResults(resultsFile):
 def readResultsAllModels(year):
 	scores = []
 	if year == 2016:
-		models = ["-exp-sum", "-exp-desc", "-exp-note"]
+		models = ["-sum", "-desc", "-note", "-exp-sum", "-exp-desc", "-exp-note"]
 	else:
 		models = ["-sum", "-desc"] #, "-exp-sum", "-exp-desc"]
 	for model in models:
 		scoreFileBM25 = os.path.join(IR_RESULTS_DIR, "results-" + str(year) + model + ".txt")
 		scores.append(readResults(scoreFileBM25))
-		scoreFileLuceneSw = os.path.join(IR_RESULTS_DIR, "results-lucene-sw-" + str(year) + model + ".txt")
-		scores.append(readResults(scoreFileLuceneSw))
+#		scoreFileLuceneSw = os.path.join(IR_RESULTS_DIR, "results-lucene-sw-" + str(year) + model + ".txt")
+#		scores.append(readResults(scoreFileLuceneSw))
 #		scoreFileDirichlet = os.path.join(IR_RESULTS_DIR, "results-dirichlet-" + str(year) + model + ".txt")
 #		scores.append(readResults(scoreFileDirichlet))
 	return scores
@@ -174,7 +175,7 @@ def getBaselineScores(baselineResultsFile, queryRange):
 def combineBasicAndClassifierScores(basicWeight, basic, sgd):
 	return (1.0-basicWeight) * sgd + basicWeight * basic
 
-def getClassifierScores(classId, clfName, baselineScores, basicWeight, maxCutoff, divisionCutoff, normalize=True):
+def getClassifierScores(classId, clfName, baselineScores, basicWeight, maxCutoff, divisionCutoff, normalize=True, docFilter=None):
 	clfScores = readClassPredictions(clfName, classId, True, False)
 	basicScores = readClassPredictions("Basic", classId, False, False)
 	basicScores = {did: min(maxCutoff, float(score)/divisionCutoff) for did, score in basicScores.items()}
@@ -182,6 +183,8 @@ def getClassifierScores(classId, clfName, baselineScores, basicWeight, maxCutoff
 	finalScoresDict = {}
 	for qid, docScoresDict in baselineScores.items():
 		docs = list(set(docScoresDict.keys()) & set(clfScores.keys()))
+		if docFilter != None:
+			docs = list(set(docs) & docFilter)
 		
 		queryBasicScores = [basicScores[did] for did in docs]
 		queryBasicScores = maxNormalize(queryBasicScores) # TODO ? minmaxnormalize ?

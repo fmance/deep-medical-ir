@@ -45,6 +45,19 @@ import ch.ethz.inf.da.cds.ir.SearchResult;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 
+//class MyAnalyzer extends StopwordAnalyzerBase {
+//    @Override
+//    protected TokenStreamComponents createComponents(String fieldName) {
+//        final Tokenizer source = new StandardTokenizer();
+//        TokenStream result = new StandardFilter(source);
+//        result = new EnglishPossessiveFilter(result);
+//        result = new LowerCaseFilter(result);
+//        result = new StopFilter(result, stopwords);
+//        result = new PorterStemFilter(result);
+//        return new TokenStreamComponents(source, result);
+//    }
+//}
+
 public class LuceneUtils {
     public static final String PMCID_FIELD = "pmcid";
     public static final String TITLE_FIELD = "title";
@@ -78,7 +91,7 @@ public class LuceneUtils {
     }
 
     public static IndexWriter getLMDirichletIndexWriter() throws IOException {
-        return getIndexWriter(FilePaths.LM_DIRICHLET_INDEX_DIR, new LMDirichletSimilarity());
+        return getIndexWriter(FilePaths.LM_DIRICHLET_INDEX_DIR, new LMDirichletSimilarity(7000));
     }
 
     // public static IndexWriter getTFIDFIndexWriter() throws IOException {
@@ -129,7 +142,7 @@ public class LuceneUtils {
     public static List<SearchResult> searchLMDirichletIndex(String queryString, String field, int numResults)
             throws IOException, ParseException {
         Query luceneQuery = constructLuceneQuery(queryString, field);
-        return searchIndex(FilePaths.LM_DIRICHLET_INDEX_DIR, new LMDirichletSimilarity(), luceneQuery, numResults);
+        return searchIndex(FilePaths.LM_DIRICHLET_INDEX_DIR, new LMDirichletSimilarity(7000), luceneQuery, numResults);
     }
 
     // public static List<SearchResult> searchTFIDFIndex(TrecQuery trecQuery,

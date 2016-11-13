@@ -16,17 +16,17 @@ MAX_CUTOFFS = {"SVMPerf" : 1.0,
 			   "NN": 1.0,
 			   "RidgeClassifier": 1.0}
 			   
-BASIC_WEIGHTS = {"SVMPerf": 0.4,
-				 "SGDClassifier": 0.4,
-				 "LinearSVC" : 0.4,
-				 "LogisticRegression" : 0.4,
-				 "NN": 0.4,
-				 "PassiveAggressiveClassifier": 0.4,
-				 "Perceptron": 0.4,
-				 "RidgeClassifier": 0.4,
-				 "Pipeline": 0.4,
-				 "MultinomialNB": 0.4,
-				 "MLPClassifier": 0.4}
+BASIC_WEIGHTS = {"SVMPerf": 0.5,
+				 "SGDClassifier": 0.5,
+				 "LinearSVC" : 0.5,
+				 "LogisticRegression" : 0.5,
+				 "NN": 0.5,
+				 "PassiveAggressiveClassifier": 0.5,
+				 "Perceptron": 0.5,
+				 "RidgeClassifier": 0.5,
+				 "Pipeline": 0.5,
+				 "MultinomialNB": 0.5,
+				 "MLPClassifier": 0.5}
 
 def getBm25Weight(classId, target):
 	if "sum" in target:

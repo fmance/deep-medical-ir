@@ -49,7 +49,7 @@ else:
 	BASELINE_RESULTS_FILE = "../ir/results/results-" + TARGET.replace("-unexpanded", "") + ".txt"
 	FEATURE_FILE = "../ir/results/features-" + CLASS_ID + "-" + TARGET + "-" + opts.classifier + "-test.txt"
 	
-BM25_WEIGHT = 0.7	
+BM25_WEIGHT = 0.64	
 
 QRELS = utils.readQrels(QRELS_FILE)
 
@@ -65,7 +65,10 @@ BASIC_WEIGHT = weights.BASIC_WEIGHTS[CLASSIFFIER_ROOT]
 BAD_TRAINING_QUERIES = {"2014-sum": {17, 25}, # 0% prec: 17, 25; 10%: 3, 6, 10, 11, 13, 18, 19, 23, 29
 						"2014-desc": {3, 5, 12, 13, 18, 23, 29}, # 0% prec: 3, 5, 12, 13, 18, 23, 29;  10%: 1, 6, 17, 19, 25
 						"2015-sum": {5, 18, 20, 24, 25, 27}, # 0% prec: 5, 18, 20, 24, 25, 27; 10%: 2, 12, 28
-						"2015-desc" : {5, 18, 20, 24, 25, 27} # 0% prec: 5, 18, 20, 24, 25, 27; 10%: 7, 9, 10, 12
+						"2015-desc" : {5, 18, 20, 24, 25, 27}, # 0% prec: 5, 18, 20, 24, 25, 27; 10%: 7, 9, 10, 12
+						"2016-sum": {4, 10, 19, 21, 22, 23, 25, 27},
+						"2016-desc": {2, 3, 5, 10, 13, 19, 22, 23},
+						"2016-note": {2, 3, 5, 7, 12, 13, 14, 22, 28},
 					}
 
 def getFeatures(dids, bm25Scores, clfScores):
@@ -75,8 +78,13 @@ def getFeatures(dids, bm25Scores, clfScores):
 	return zip(dids, zip(bm25s, clfs, fused))
 	
 def writeFeatures(qid, relevances, features, out):
+	amendedQid = qid
+	if YEAR == "2015":
+		amendedQid = qid + 30
+	if YEAR == "2016":
+		amendedQid = qid + 60
 	for relevance, (did, scores) in zip(relevances, features):
-		out.write("%d qid:%d\t\t" % (relevance, qid))
+		out.write("%d qid:%d\t\t" % (relevance, amendedQid))
 		for fnum, fval in enumerate(scores, 1):
 			out.write("%d:%f\t\t" % (fnum, fval))
 		out.write("# %d" % did)
@@ -104,13 +112,18 @@ def writeTrainingFeatures(bm25Scores, clfScores, outFile):
 		positiveDocs = list(set([did for (did, rel) in queryQrels if rel > 0]) & availDocs)
 		negativeDocs = list(set([did for (did, rel) in queryQrels if rel == 0]) & availDocs)
 #		negativeDocs = negativeDocs[:len(positiveDocs)]
+		docFilter = set(positiveDocs)|set(negativeDocs)
+		
+		print "ClfScoresFilter"
+		clfScoresFiltered = utils.getClassifierScores(CLASS_ID, opts.classifier, bm25Scores, BASIC_WEIGHT, MAX_CUTOFF, DIVISION_CUTOFF,
+														normalize=False, docFilter=docFilter)
 	
 		positiveRels = [queryQrelsDict[did] for did in positiveDocs]
 	
 		print "Query %d: %d available docs, %d positive docs, %d negative docs" % (qid, len(availDocs), len(positiveDocs), len(negativeDocs))
 		
-		writeFeatures(qid, positiveRels, getFeatures(positiveDocs, queryScores, clfScores[qid]), out)
-		writeFeatures(qid, [0] * len(negativeDocs), getFeatures(negativeDocs, queryScores, clfScores[qid]), out)
+		writeFeatures(qid, positiveRels, getFeatures(positiveDocs, queryScores, clfScoresFiltered[qid]), out)
+		writeFeatures(qid, [0] * len(negativeDocs), getFeatures(negativeDocs, queryScores, clfScoresFiltered[qid]), out)
 		writeDocIds(positiveDocs + negativeDocs, didsOut)
 		
 	out.close()

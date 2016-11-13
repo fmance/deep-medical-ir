@@ -34,7 +34,7 @@ import com.google.common.primitives.Doubles;
 
 public class FeatureComputer {
     private static final TYPE CLASS_ID = TrecQuery.TYPE.DIAGNOSIS;
-    private static final List<String> CLASSIFIERS = Lists.newArrayList("Combined");
+    private static final List<String> CLASSIFIERS = Lists.newArrayList("SVMPerf.05.0.001.hedges");
     private static final String HEDGES = "";// "-hedges" or ""
 
     private static final Map<TYPE, String> CLASS_ID_TO_CLASSIFIER = ImmutableMap.of(TrecQuery.TYPE.DIAGNOSIS,

@@ -14,12 +14,12 @@ import ch.ethz.inf.da.cds.ir.util.DocUtils;
 import ch.ethz.inf.da.cds.ir.util.LuceneUtils;
 
 public class AnalyzerConverter {
-    private static final Analyzer ENGLISH_ANALYZER = new EnglishAnalyzer(LuceneUtils.getIndriStopWords());
+    private static final Analyzer ENGLISH_ANALYZER = new EnglishAnalyzer();
 
     public static void main(String[] args) throws Exception {
-        Path destRootDir = FilePaths.DATA_DIR.resolve("analyzed");
+        Path destRootDir = FilePaths.DATA_DIR.resolve("analyzed/analyzed-2016");
         destRootDir.toFile().mkdir();
-        ConverterUtils.convert(FilePaths.PLAINTEXT_DIR, destRootDir, AnalyzerConverter::analyzeFile);
+        ConverterUtils.convert(FilePaths.PLAINTEXT_DIR_2016, destRootDir, AnalyzerConverter::analyzeFile);
     }
 
     private static Optional<String> analyzeFile(File file) {

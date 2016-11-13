@@ -46,9 +46,11 @@ op.add_option("--no_basic",
 
 USE_HEDGES = False
 
-QUERY_OFFSETS = {"diag": 1, "test": 11, "treat": 21}
+QUERY_OFFSETS = {"diag": 1, "test": 11, "treat": 21, "all": 1}
 QUERY_OFFSET = QUERY_OFFSETS[CLASS_ID]
 QUERY_RANGE = range(QUERY_OFFSET, QUERY_OFFSET + 10)
+if CLASS_ID == "all":
+	QUERY_RANGE = range(1, 31)
 
 QRELS_FILE = "../data/qrels/qrels-treceval-" + YEAR + ".txt"
 BASELINE_RESULTS_FILE = "../ir/results/results-" + TARGET.replace("-unexpanded", "") + ".txt"
@@ -120,12 +122,13 @@ def qrelStr(rel):
 def classifierStr(scores):
 	return "%+.2f\t%+.2f\t%+.2f" % scores
 
-def rerankScores(bm25Weight, baselineScores, classifierScores, classifierRankings, rerankedFile, writeFile=False):
+def rerankScores(bm25Weight, baselineScores, classifierScores, classifierRankings, rerankedFile, writeFile=False, qrelsDict=QRELS, printUnjudged=False):
 	if writeFile:
 		out = open(rerankedFile, "w")
 	allP10s = []
+	unjudged = 0.0
 	for qid in QUERY_RANGE:
-		queryQrels = dict(QRELS[qid])
+		queryQrels = dict(qrelsDict[qid])
 		queryScores = baselineScores[qid]
 		queryTopicModel = defaultdict(float) # TOPIC_MODEL_SCORES[qid]
 		queryDoc2Vec = defaultdict(float) #DOC2VEC_SCORES[qid]
@@ -146,6 +149,9 @@ def rerankScores(bm25Weight, baselineScores, classifierScores, classifierRanking
 		p10 = float(len(top10Docs & relDocs)) / 10.0
 		allP10s.append(p10)
 		
+		judgedDocs = set(queryQrels.keys())
+		unjudged += float(len(top10Docs - judgedDocs)) / 10.0
+		
 		if writeFile:
 			rank = 1
 			for did, score in rerankedScores:
@@ -162,6 +168,9 @@ def rerankScores(bm25Weight, baselineScores, classifierScores, classifierRanking
 	
 	if writeFile:
 		out.close()
+	
+	if printUnjudged:
+		print "Weight = %.2f Unjudged = %.2f, P10 = %.2f" % (bm25Weight, unjudged / len(QUERY_RANGE), np.mean(allP10s))
 	
 	return np.mean(allP10s), allP10s
 
@@ -206,29 +215,13 @@ def run():
 
 run()
 
-#def varyCutoffs():
-#	baselineScores = getBaselineScores(BASELINE_RESULTS_FILE)
-#	rerankedFile = BASELINE_RESULTS_FILE + ".reranked." + CLASS_ID + "." + opts.classifier + "." + opts.fusion
-#	
-#	allP10Dict = defaultdict(float)
-#	for maxCutoff in np.linspace(1,3,9):
-#		for divisionCutoff in np.linspace(1,6,21):
-#			classifierScores = getClassifierScores(maxCutoff, divisionCutoff)
-#			classifierRankings = computeClassifierRankings(baselineScores, classifierScores)
-#		 	maxP10, allP10 = lambdaRerank(QRELS_FILE, baselineScores, classifierScores, classifierRankings, rerankedFile, suppresOutput=True)
-#		 	
-##		 	print "%.2f %.2f %.4f" % (maxCutoff, divisionCutoff, maxP10)
-#		 	print "%.4f" % maxP10
-
-#varyCutoffs()
-
 def rerankKnownWeights():
 	baselineScores = utils.getBaselineScores(BASELINE_RESULTS_FILE, QUERY_RANGE)
 	classifierScores = utils.getClassifierScores(CLASS_ID, opts.classifier, baselineScores, BASIC_WEIGHT, MAX_CUTOFF, DIVISION_CUTOFF)
 	classifierRankings = computeClassifierRankings(baselineScores, classifierScores)
 	rerankedFile = BASELINE_RESULTS_FILE + ".reranked." + CLASS_ID + "." + opts.classifier + "." + opts.fusion
 	
-	bm25Weight = 0.62 #weights.getBm25Weight(CLASS_ID, TARGET)
+	bm25Weight = 0.64 #weights.getBm25Weight(CLASS_ID, TARGET)
 	
 #	print "Weights: %.2f" % (bm25Weight, classifierWeight, topicModelWeight)
 	
@@ -238,35 +231,78 @@ def rerankKnownWeights():
 
 #rerankKnownWeights()
 
-def getRandomClassifiers(baselineScores, num):
-	classifiers = []
+def getRandomClassifiers(randomClfScoresAllDocs, baselineScores, num):
+	randomClassifiers = []
 	for _ in range(0, num):
 		randomClfDict = {}
 		for qid, docScoresDict in baselineScores.items():
 			docs = docScoresDict.keys()
-			randomNums = np.random.uniform(0, 1, size=len(docs))
-			randomClfDict[qid] = dict(zip(docs, zip(randomNums, randomNums, randomNums)))
-		classifiers.append(randomClfDict)
-	return classifiers
+			randomClfScores = [randomClfScoresAllDocs[doc] for doc in docs]
+			randomClfScores = utils.minMaxNormalizeList(randomClfScores)
+			randomClfDict[qid] = dict(zip(docs, zip(randomClfScores, randomClfScores, randomClfScores)))
+		randomClassifiers.append(randomClfDict)
+	return randomClassifiers
 
-def random(numIter):
-	baselineScores = utils.getBaselineScores(BASELINE_RESULTS_FILE, QUERY_RANGE)
-	rerankedFile = BASELINE_RESULTS_FILE + ".reranked." + CLASS_ID + ".random"
-#	classifiedDids = utils.readInts(os.path.join(utils.RES_AND_QRELS_DIR, "ids.txt"))
-	randomClassifiers = getRandomClassifiers(baselineScores, numIter)
-	maxP10 = 0.0
+def random(randomClfScoresAllDocs, baselineResultsFile, numIter, qrelsDict=QRELS):
+	baselineScores = utils.getBaselineScores(baselineResultsFile, QUERY_RANGE)
+	randomClassifiers = getRandomClassifiers(randomClfScoresAllDocs, baselineScores, numIter)
 	
-	for weight in np.linspace(0.2,1,41):
+#	print "Baseline = %.4f" % getP10(QRELS_FILE, BASELINE_RESULTS_FILE)
+	
+	maxP10 = 0.0
+	p10List = []
+	for weight in np.linspace(0,1,51):
 		sumP10 = 0.0
 		for i in range(0, numIter):
-			p10, _ = rerankScores(weight, baselineScores, randomClassifiers[i], defaultdict(float), rerankedFile)
+			p10, _ = rerankScores(weight, baselineScores, randomClassifiers[i], defaultdict(float), None, qrelsDict=qrelsDict, printUnjudged=True)
 			sumP10 += p10
 		avgP10 = sumP10/numIter
+		p10List.append(avgP10)
 		maxP10 = max(avgP10, maxP10)
-		print round(avgP10, 3)
-	print "MaxP10=%f" % maxP10
+#		print "%.2f %.4f" % (weight, round(avgP10, 4))
+	print "MaxP10=%.4f" % maxP10
+	return p10List
 	
-#random(50)
+def randomAllRuns(numIter):
+	qrels2014 = utils.readQrels("../data/qrels/qrels-treceval-2014.txt")
+	qrels2015 = utils.readQrels("../data/qrels/qrels-treceval-2015.txt")
 
+	maxTotal = 0.0
+	maxSum2014 = 0.0
+	maxDesc2014 = 0.0
+	maxSum2015 = 0.0
+	maxDesc2015 = 0.0
+	bestWeightTotal = 0.0
+
+	classifiedDocs = utils.readClassPredictions("Basic", "diag", False, False).keys()
+	
+	for it in range(numIter):
+		randomClfScoresAllDocs = dict(zip(classifiedDocs, np.random.uniform(0, 1, size=len(classifiedDocs))))
+		
+		sum2014 = random(randomClfScoresAllDocs, "../ir/results/results-2014-sum.txt", 1, qrelsDict=qrels2014)
+		desc2014 = random(randomClfScoresAllDocs, "../ir/results/results-2014-desc.txt", 1, qrelsDict=qrels2014)
+		sum2015 = random(randomClfScoresAllDocs, "../ir/results/results-2015-sum.txt", 1, qrelsDict=qrels2015)
+		desc2015 = random(randomClfScoresAllDocs, "../ir/results/results-2015-desc.txt", 1, qrelsDict=qrels2015)
+		
+		avgP10s = np.mean([sum2014, desc2014, sum2015, desc2015], axis=0)
+		maxAvgP10 = max(avgP10s)
+		argmax = np.argmax(avgP10s)
+		bestWeight = argmax*0.02
+		print "MaxWeight=%.2f MaxP10=%.4f (%.4f %.4f %.4f %.4f)" % (bestWeight, 
+																	maxAvgP10, sum2014[argmax], desc2014[argmax], sum2015[argmax], desc2015[argmax])
+		maxTotal += maxAvgP10
+		maxSum2014 += sum2014[argmax]
+		maxDesc2014 += desc2014[argmax]
+		maxSum2015 += sum2015[argmax]
+		maxDesc2015 += desc2015[argmax]
+		bestWeightTotal += bestWeight
+		
+	print "%.4f --> %.4f (%.4f %.4f %.4f %.4f)" % (bestWeightTotal/numIter, 
+													maxTotal/numIter, maxSum2014/numIter, maxDesc2014/numIter, maxSum2015/numIter, maxDesc2015/numIter)
+	
+#randomAllRuns(1)
+		
+		
+		
 
 

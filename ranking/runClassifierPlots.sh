@@ -6,6 +6,7 @@ declare -a classifiers=(
 "SVMPerf.10.0.001"
 "SVMPerf.05.0.001"
 "SVMPerf.04.0.001"
+"SVMPerf.03.10"
 "SVMPerf.02.1"
 "SVMPerf.01.1"
 "SVMPerf.00.0.01"

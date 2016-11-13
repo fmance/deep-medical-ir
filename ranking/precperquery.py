@@ -10,6 +10,7 @@ from matplotlib.ticker import MultipleLocator, FormatStrFormatter
 
 sys.path.insert(0, "../utils/")
 import utils
+from scipy import stats
 
 trecEval = "../eval/trec_eval.9.0/trec_eval"
 
@@ -112,6 +113,18 @@ def getPrecs(qrelsFile, resultsFile, rerankedResultsFile):
 		
 	print "-" * 120
 	print "avg\t%.2f\t%.2f\t%+.2f\tup %d\tdown %d\t\t%d\t%d\t\t%d\t%d\t%+d" % (sumPrec/len(QUERY_RANGE), sumPrecReranked/len(QUERY_RANGE), (sumPrecReranked-sumPrec)/len(QUERY_RANGE), sumUp, sumDown, positiveMoveSum, negativeMoveSum, sumRanksSum, sumRanksRerankedSum, sumRanksSum-sumRanksRerankedSum)
+	print "-" * 120
+	
+	diffPrecs = [rrPrec-bsPrec for (rrPrec, bsPrec) in zip(rerankedPrecs, baselinePrecs)]
+	print "Diag\t", np.mean(diffPrecs[:10]), " orig: ", np.mean(baselinePrecs[:10]), ", rel improvement: ", 
+	print "%.2f" % (100 * (np.mean(diffPrecs[:10]) / np.mean(baselinePrecs[:10])))
+	
+	print "Test\t", np.mean(diffPrecs[10:20]), " orig: ", np.mean(baselinePrecs[10:20]), ", rel improvement: ", 
+	print "%.2f" % (100 * (np.mean(diffPrecs[10:20]) / np.mean(baselinePrecs[10:20])))
+	
+	print "Treat\t", np.mean(diffPrecs[20:]), " orig: ", np.mean(baselinePrecs[20:]), ", rel improvement: ", 
+	print "%.2f" % (100 * (np.mean(diffPrecs[20:]) / np.mean(baselinePrecs[20:])))
+	
 	print "=" * 120
 	return baselinePrecs, rerankedPrecs, positiveMoves, negativeMoves
 
@@ -136,7 +149,7 @@ def barPlot(baselinePrecs, rerankedPrecs, title):
 	positiveDiffs = [diff if diff > 0 else 0 for diff in diffPerQuery]
 	negativeDiffs = [diff if diff < 0 else 0 for diff in diffPerQuery]
 	
-	plt.plot(range(0,32,1), [0] * len(range(0,32,1)), color="black")
+	plt.plot(range(0,32,1), [0] * len(range(0,32,1)), color="black", lw=2)
 	
 	baselineBar = plt.bar(QUERY_RANGE_NP, baselinePrecs, color="#99B6CF", align="center", label="Baseline")
 	posDiffBar = plt.bar(QUERY_RANGE_NP, positiveDiffs, color="#2A6FA8", align="center", bottom=baselinePrecs, label="Increase")
@@ -151,8 +164,8 @@ def barPlot(baselinePrecs, rerankedPrecs, title):
 	ax = plt.gca()
 	
 	plt.xlabel("Query")
-	plt.ylabel("P@10", rotation=0)
-	ax.yaxis.set_label_coords(-0.008,1.07)
+	plt.ylabel("P@10 (%)", rotation=0)
+	ax.yaxis.set_label_coords(0.011,1.07)
 	
 	ax.set_xticks(QUERY_RANGE_NP)
 	ax.set_xticklabels(QUERY_RANGE_NP)
@@ -183,7 +196,7 @@ def plot():
 	baseSum2015, rrSum2015, _, _ = run("2015-sum")
 	baseDesc2015, rrDesc2015, _, _ = run("2015-desc")
 	
-	titleExt = "P@10 change per query (mean change "
+	titleExt = "change in P@10 per Query (mean change "
 	
 	ax = plt.subplot(411)
 	barPlot(baseSum2014, rrSum2014, "Summaries 2014 " + titleExt + "%+.2f)" % (np.mean(rrSum2014)-np.mean(baseSum2014)))
@@ -208,7 +221,38 @@ def plot():
 	plt.savefig(saveDir + "/" + CLASS_ID + "." + CLASSIFIER + ".png", bbox_inches="tight")
 	plt.close()
 
-plot()
+#plot()
+
+def ttestPrecs(title, baseline, reranked):
+	print title
+	print "Baseline =", baseline
+	print "Reranked =", reranked
+	print "-" * 100
+	print "Average improvement =", np.mean(np.array(reranked) - np.array(baseline))
+	print stats.ttest_rel(baseline, reranked)
+	print "=" * 100
+
+def ttest():
+	baseSum2014, rrSum2014, _, _ = run("2014-sum")
+	baseDesc2014, rrDesc2014, _, _ = run("2014-desc")
+	baseSum2015, rrSum2015, _, _ = run("2015-sum")
+	baseDesc2015, rrDesc2015, posDesc2015, negDesc2015 = run("2015-desc")
+	baseSum2016, rrSum2016, _, _ = run("2016-sum")
+	baseDesc2016, rrDesc2016, _, _ = run("2016-desc")
+	baseNote2016, rrNote2016, _, _ = run("2016-note")
+	
+#	ttestPrecs("SUMMARIES 2014", 	baseSum2014, 	rrSum2014)
+#	ttestPrecs("DESCRIPTIONS 2014", baseDesc2014, 	rrDesc2014)
+#	ttestPrecs("SUMMARIES 2015", 	baseSum2015, 	rrSum2015)
+#	ttestPrecs("DESCRIPTIONS 2015", baseDesc2015, 	rrDesc2015)
+#	ttestPrecs("SUMMARIES 2016", 	baseSum2016, 	rrSum2016)
+#	ttestPrecs("DESCRIPTIONS 2016", baseDesc2016, 	rrDesc2016)
+#	ttestPrecs("NOTES 2016", 		baseNote2016, 	rrNote2016)
+	
+#	print "All 120"
+#	print stats.ttest_rel(baseSum2014 + baseDesc2014 + baseSum2015 + baseDesc2015,  rrSum2014 + rrDesc2014 + rrSum2015 + rrDesc2015)
+	
+ttest()
 
 
 
